@@ -136,13 +136,14 @@ export function Sudoku() {
       ]);
   }, [board, notes]);
 
-  const place = useCallback(
-    (num: number) => {
-      if (!board || !selected || won) return;
-      const [r, c] = selected;
-      if (isGiven(r, c)) return;
+  // Apply a value (1-9) or erase (0) to a cell. Returns true if it changed
+  // something — used to decide whether to clear the selection afterward.
+  const applyValue = useCallback(
+    (r: number, c: number, num: number): boolean => {
+      if (!board || won || isGiven(r, c)) return false;
 
       if (notesMode && num !== 0) {
+        if (board[r][c] !== 0) return false; // can't pencil into a filled cell
         pushHistory();
         setNotes((prev) => {
           const next = cloneNotes(prev);
@@ -152,17 +153,19 @@ export function Sudoku() {
             : [...cell, num].sort();
           return next;
         });
-        return;
+        return true;
       }
 
       // Block placements that would duplicate in the row/col/box.
-      if (num !== 0 && wouldDuplicate(board, r, c, num)) return;
+      if (num !== 0 && wouldDuplicate(board, r, c, num)) return false;
+      if (num === 0 && board[r][c] === 0 && notes[r][c].length === 0)
+        return false; // nothing to erase
 
       pushHistory();
       setBoard((prev) => {
         if (!prev) return prev;
         const next = cloneBoard(prev);
-        next[r][c] = num; // 0 erases
+        next[r][c] = num;
         return next;
       });
       setNotes((prev) => {
@@ -170,10 +173,47 @@ export function Sudoku() {
         next[r][c] = [];
         return next;
       });
+      return true;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [board, selected, notesMode, won, puzzle, pushHistory],
+    [board, notes, notesMode, won, puzzle, pushHistory],
   );
+
+  // Number pad: arm the digit (highlight), and if a cell is selected, fill it
+  // (cell-first). Clear the selection on a successful fill so the next pad
+  // click just re-arms instead of overwriting.
+  const onPad = useCallback(
+    (n: number) => {
+      setHighlightDigit(n);
+      if (selected && applyValue(selected[0], selected[1], n)) {
+        setSelected(null);
+      }
+    },
+    [selected, applyValue],
+  );
+
+  // Cell click: filled cell → highlight its number; empty cell with an armed
+  // digit → fill it (number-first); otherwise just select.
+  const onCell = useCallback(
+    (r: number, c: number) => {
+      if (!board) return;
+      const val = board[r][c];
+      if (val !== 0) {
+        setSelected([r, c]);
+        setHighlightDigit(val);
+      } else if (highlightDigit != null) {
+        const ok = applyValue(r, c, highlightDigit);
+        setSelected(ok ? null : [r, c]);
+      } else {
+        setSelected([r, c]);
+      }
+    },
+    [board, highlightDigit, applyValue],
+  );
+
+  const onErase = useCallback(() => {
+    if (selected) applyValue(selected[0], selected[1], 0);
+  }, [selected, applyValue]);
 
   const undo = useCallback(() => {
     if (history.length === 0) return;
@@ -215,12 +255,13 @@ export function Sudoku() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key >= "1" && e.key <= "9") {
-        setHighlightDigit(Number(e.key));
-        place(Number(e.key));
-      }
-      else if (e.key === "Backspace" || e.key === "Delete" || e.key === "0")
-        place(0);
-      else if (e.key.toLowerCase() === "n") setNotesMode((m) => !m);
+        const n = Number(e.key);
+        setHighlightDigit(n);
+        // Keyboard keeps the selection so arrow-key navigation keeps working.
+        if (selected) applyValue(selected[0], selected[1], n);
+      } else if (e.key === "Backspace" || e.key === "Delete" || e.key === "0") {
+        if (selected) applyValue(selected[0], selected[1], 0);
+      } else if (e.key.toLowerCase() === "n") setNotesMode((m) => !m);
       else if (e.key.toLowerCase() === "u") undo();
       else if (selected) {
         const [r, c] = selected;
@@ -232,7 +273,7 @@ export function Sudoku() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [place, undo, selected]);
+  }, [applyValue, undo, selected]);
 
   return (
     <div className="sudoku">
@@ -299,10 +340,7 @@ export function Sudoku() {
                     <button
                       key={key}
                       className={cls}
-                      onClick={() => {
-                        setSelected([r, c]);
-                        setHighlightDigit(val || null);
-                      }}
+                      onClick={() => onCell(r, c)}
                     >
                       {val !== 0 ? (
                         val
@@ -341,11 +379,8 @@ export function Sudoku() {
                   ]
                     .filter(Boolean)
                     .join(" ")}
-                  // Always highlight on click; placement is blocked separately.
-                  onClick={() => {
-                    setHighlightDigit(n);
-                    if (!cantPlace) place(n);
-                  }}
+                  // Arm the digit + highlight; fills the selected cell if any.
+                  onClick={() => onPad(n)}
                   aria-pressed={highlightDigit === n}
                 >
                   <span className="pad-num">{n}</span>
@@ -373,7 +408,7 @@ export function Sudoku() {
             >
               ✏️ Notes {notesMode ? "on" : "off"}
             </button>
-            <button className="btn ghost" onClick={() => place(0)}>
+            <button className="btn ghost" onClick={onErase}>
               ⌫ Erase
             </button>
           </div>
