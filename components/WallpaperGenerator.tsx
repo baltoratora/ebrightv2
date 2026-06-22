@@ -41,7 +41,8 @@ export function WallpaperGenerator({ seed }: { seed: string }) {
     if (!image) return;
     const a = document.createElement("a");
     a.href = image;
-    a.download = `baltoratora-wallpaper.${image.includes("image/svg") ? "svg" : "jpg"}`;
+    const ext = image.startsWith("data:image/svg") ? "svg" : "png";
+    a.download = `baltoratora-wallpaper.${ext}`;
     a.click();
   }
 

@@ -5,7 +5,8 @@ A daily STEM page:
 - 💡 **Fun fact of the day** — from [uselessfacts](https://uselessfacts.jsph.pl) (no key).
 - 📄 **Paper of the day** — the newest paper in your chosen topic from the
   [arXiv API](https://arxiv.org/help/api) (no key).
-- 🖼️ **Wallpaper generator** — AI art from **Cloudflare Workers AI** (Flux), with
+- 🖼️ **Wallpaper generator** — portrait phone wallpapers (~19.5:9) from
+  **Cloudflare Workers AI** (Stable Diffusion XL), with
   download.
 
 Pick a STEM topic (AI/ML, Computer Vision, Quantum, Astrophysics, Math, Bio) to
@@ -54,7 +55,7 @@ app/
 functions/api/
   fact.ts                  GET /api/fact   — daily fact (uselessfacts)
   paper.ts                 GET /api/paper  — newest arXiv paper for a topic
-  wallpaper.ts             POST /api/wallpaper — Workers AI Flux (env.AI)
+  wallpaper.ts             POST /api/wallpaper — Workers AI SDXL portrait (env.AI)
 lib/
   topics.ts                STEM topics -> arXiv category + wallpaper seed
   arxiv.ts                 buildArxivUrl + parseArxivFeed (pure, tested)

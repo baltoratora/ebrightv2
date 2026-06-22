@@ -305,10 +305,15 @@ body {
 
 .wallpaper-wrap {
   position: relative;
-  border-radius: 12px;
+  border-radius: 18px;
   overflow: hidden;
   border: 1px solid var(--border);
-  aspect-ratio: 1 / 1;
+  /* Portrait phone preview (~19.5:9); sized by height so it doesn't dominate. */
+  aspect-ratio: 896 / 1944;
+  height: min(58vh, 460px);
+  width: auto;
+  max-width: 100%;
+  margin: 0 auto;
   background: var(--bg-2);
   display: flex;
   align-items: center;
