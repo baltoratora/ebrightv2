@@ -16,7 +16,7 @@ const GAMES: Game[] = [
   { name: "Minesweeper", desc: "Clear the field", icon: "💣", href: "/minesweeper", ready: true },
   { name: "Wordle", desc: "Guess the word in 6", icon: "🟩", href: "/wordle", ready: true },
   { name: "Quordle", desc: "Four words at once", icon: "🟨", href: "/quordle", ready: true },
-  { name: "Solitaire", desc: "Classic Klondike", icon: "🃏", ready: false },
+  { name: "Solitaire", desc: "Classic Klondike", icon: "🃏", href: "/solitaire", ready: true },
 ];
 
 function Card({ g }: { g: Game }) {
