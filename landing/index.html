@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>BALTORATORA · Scientia Potentia Est</title>
+    <meta name="description" content="BALTORATORA — Scientia Potentia Est. The cosmos, daily." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #05060d;
+        --bg-2: #0a0c18;
+        --text: #eef1f8;
+        --muted: #9aa0b8;
+        --accent: #ff5d8f; /* pink-magenta glow, echoes the app */
+        --accent-2: #c2185b;
+        --border: rgba(255, 255, 255, 0.1);
+      }
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        background:
+          radial-gradient(1100px 700px at 80% -10%, rgba(194, 24, 91, 0.22), transparent),
+          radial-gradient(900px 600px at -10% 20%, rgba(91, 60, 255, 0.18), transparent),
+          var(--bg);
+        color: var(--text);
+        font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system,
+          "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+      /* starfield */
+      #stars {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .star {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        border-radius: 50%;
+        background: #fff;
+        opacity: 0.7;
+        animation: twinkle var(--dur) ease-in-out infinite alternate;
+      }
+      @keyframes twinkle {
+        from {
+          opacity: 0.15;
+        }
+        to {
+          opacity: 0.9;
+        }
+      }
+
+      .wrap {
+        position: relative;
+        z-index: 1;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: clamp(48px, 9vh, 110px) max(20px, env(safe-area-inset-left))
+          max(56px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-right));
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      /* hero */
+      h1 {
+        font-size: clamp(40px, 12vw, 132px);
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        margin: 0;
+        line-height: 1;
+        background: linear-gradient(180deg, #ffffff 0%, #ffd7e6 60%, var(--accent) 130%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 0 60px rgba(255, 93, 143, 0.25);
+        word-break: break-word;
+      }
+      .tagline {
+        margin-top: 18px;
+        font-style: italic;
+        font-weight: 400;
+        letter-spacing: 0.32em;
+        text-transform: uppercase;
+        font-size: clamp(11px, 2.4vw, 16px);
+        color: var(--muted);
+      }
+      .tagline::before,
+      .tagline::after {
+        content: "·";
+        margin: 0 0.7em;
+        color: var(--accent);
+      }
+
+      /* APOD */
+      .apod {
+        margin-top: clamp(44px, 8vh, 80px);
+        width: 100%;
+        max-width: 620px;
+      }
+      .apod-eyebrow {
+        font-size: 11px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin-bottom: 14px;
+        font-weight: 600;
+      }
+      .apod-frame {
+        position: relative;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        background: var(--bg-2);
+        aspect-ratio: 3 / 2;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .apod-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .apod-loading {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .apod-name {
+        margin-top: 16px;
+        font-size: clamp(18px, 3.6vw, 24px);
+        font-weight: 700;
+        line-height: 1.25;
+      }
+      .apod-meta {
+        margin-top: 6px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .apod-link {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      .apod-link:hover {
+        text-decoration: underline;
+      }
+
+      /* calendar */
+      .cal {
+        margin-top: clamp(44px, 8vh, 80px);
+        width: 100%;
+        max-width: 420px;
+      }
+      .cal-head {
+        font-size: 14px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 16px;
+        font-weight: 600;
+      }
+      .cal-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+      }
+      .cal-dow {
+        font-size: 11px;
+        color: var(--muted);
+        padding-bottom: 6px;
+        font-weight: 600;
+      }
+      .cal-day {
+        aspect-ratio: 1 / 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        color: var(--text);
+        border-radius: 50%;
+        border: 1px solid transparent;
+      }
+      .cal-day.empty {
+        visibility: hidden;
+      }
+      .cal-day.today {
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #fff;
+        font-weight: 700;
+        box-shadow: 0 0 24px rgba(255, 93, 143, 0.4);
+      }
+
+      footer {
+        margin-top: clamp(48px, 9vh, 90px);
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+      footer a {
+        color: var(--muted);
+        text-decoration: none;
+        border-bottom: 1px solid var(--border);
+      }
+      footer a:hover {
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stars" aria-hidden="true"></div>
+
+    <main class="wrap">
+      <h1>BALTORATORA</h1>
+      <div class="tagline">Scientia Potentia Est</div>
+
+      <section class="apod" aria-label="Astronomy Picture of the Day">
+        <div class="apod-eyebrow">The cosmos, today · via NASA</div>
+        <div class="apod-frame">
+          <span class="apod-loading" id="apod-loading">Aligning the telescope…</span>
+          <img id="apod-img" alt="" style="display: none" />
+        </div>
+        <div class="apod-name" id="apod-name"></div>
+        <div class="apod-meta" id="apod-meta"></div>
+      </section>
+
+      <section class="cal" aria-label="Calendar">
+        <div class="cal-head" id="cal-head"></div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </section>
+
+      <footer>
+        Explore the daily STEM dashboard at
+        <a href="https://demo.baltoratora.my">demo.baltoratora.my</a>
+      </footer>
+    </main>
+
+    <script>
+      // --- starfield ---
+      (function () {
+        const host = document.getElementById("stars");
+        const n = Math.min(160, Math.floor((window.innerWidth * window.innerHeight) / 9000));
+        const frag = document.createDocumentFragment();
+        for (let i = 0; i < n; i++) {
+          const s = document.createElement("div");
+          s.className = "star";
+          const size = Math.random() < 0.15 ? 3 : Math.random() < 0.5 ? 2 : 1;
+          s.style.width = s.style.height = size + "px";
+          s.style.left = Math.random() * 100 + "%";
+          s.style.top = Math.random() * 100 + "%";
+          s.style.setProperty("--dur", (2 + Math.random() * 4).toFixed(2) + "s");
+          s.style.animationDelay = (Math.random() * 4).toFixed(2) + "s";
+          frag.appendChild(s);
+        }
+        host.appendChild(frag);
+      })();
+
+      // --- current-month calendar (decorative) ---
+      (function () {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = now.getMonth();
+        const today = now.getDate();
+        const monthName = now.toLocaleString(undefined, { month: "long" });
+        document.getElementById("cal-head").textContent = monthName + " " + y;
+
+        const grid = document.getElementById("cal-grid");
+        const dows = ["S", "M", "T", "W", "T", "F", "S"];
+        dows.forEach((d) => {
+          const el = document.createElement("div");
+          el.className = "cal-dow";
+          el.textContent = d;
+          grid.appendChild(el);
+        });
+        const firstDow = new Date(y, m, 1).getDay();
+        const daysInMonth = new Date(y, m + 1, 0).getDate();
+        for (let i = 0; i < firstDow; i++) {
+          const e = document.createElement("div");
+          e.className = "cal-day empty";
+          grid.appendChild(e);
+        }
+        for (let d = 1; d <= daysInMonth; d++) {
+          const e = document.createElement("div");
+          e.className = "cal-day" + (d === today ? " today" : "");
+          e.textContent = d;
+          grid.appendChild(e);
+        }
+      })();
+
+      // --- NASA Astronomy Picture of the Day ---
+      (function () {
+        const img = document.getElementById("apod-img");
+        const loading = document.getElementById("apod-loading");
+        const name = document.getElementById("apod-name");
+        const meta = document.getElementById("apod-meta");
+
+        fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&thumbs=true")
+          .then((r) => {
+            if (!r.ok) throw new Error("NASA " + r.status);
+            return r.json();
+          })
+          .then((d) => {
+            const src = d.media_type === "image" ? d.url : d.thumbnail_url;
+            if (src) {
+              img.src = src;
+              img.alt = d.title || "Astronomy picture of the day";
+              img.onload = () => {
+                loading.style.display = "none";
+                img.style.display = "block";
+              };
+            } else {
+              loading.textContent = "Today's feature is a video.";
+            }
+            name.textContent = d.title || "";
+            const date = d.date || "";
+            const credit = d.copyright ? " · © " + d.copyright.trim() : "";
+            meta.innerHTML =
+              date +
+              credit +
+              (d.hdurl || d.url
+                ? ' · <a class="apod-link" href="' +
+                  (d.hdurl || d.url) +
+                  '" target="_blank" rel="noopener">view full ↗</a>'
+                : "");
+          })
+          .catch(() => {
+            loading.textContent = "The sky is cloudy right now — try again later.";
+          });
+      })();
+    </script>
+  </body>
+</html>
