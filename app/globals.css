@@ -767,6 +767,86 @@ a.game-card:hover {
   padding: 2px 8px;
 }
 
+/* ---------- Minesweeper ---------- */
+.ms-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  max-width: 440px;
+  margin: 0 auto 14px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.ms-counter {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+}
+.ms-face {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 20px;
+  width: 42px;
+  height: 38px;
+  cursor: pointer;
+  line-height: 1;
+}
+.ms-face:hover {
+  border-color: var(--accent);
+}
+
+.ms-board {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: 2px;
+  width: min(94vw, 440px);
+  margin: 0 auto;
+}
+.ms-cell {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: clamp(11px, 3.4vw, 16px);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 0;
+}
+.ms-cell:hover:not(.revealed) {
+  border-color: var(--accent);
+}
+.ms-cell.revealed {
+  background: var(--bg-2);
+  border-color: rgba(255, 255, 255, 0.05);
+  cursor: default;
+}
+.ms-cell.mine {
+  background: rgba(255, 93, 143, 0.3);
+}
+.ms-cell.n1 { color: #5b8cff; }
+.ms-cell.n2 { color: #4ade80; }
+.ms-cell.n3 { color: #ff6b6b; }
+.ms-cell.n4 { color: #b388ff; }
+.ms-cell.n5 { color: #fbbf24; }
+.ms-cell.n6 { color: #4dd0e1; }
+.ms-cell.n7 { color: #eef1f8; }
+.ms-cell.n8 { color: #9aa0b8; }
+
+.sudoku-win.lost {
+  color: #ff6b6b;
+}
+
 /* ---------- Mobile (iOS phones etc.) ---------- */
 @media (max-width: 560px) {
   .page {
