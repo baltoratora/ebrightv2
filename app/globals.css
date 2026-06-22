@@ -327,8 +327,25 @@ body {
 
 /* ---------- Sudoku ---------- */
 .sudoku {
-  max-width: 480px;
+  max-width: 860px;
   margin: 0 auto;
+}
+
+/* Puzzle left, number pad right; sized to avoid page scroll. */
+.sudoku-main {
+  display: flex;
+  gap: 26px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.sudoku-side {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(46vh, 300px);
 }
 
 .sudoku-bar {
@@ -370,6 +387,9 @@ body {
 }
 
 .sudoku-grid-wrap {
+  flex: 0 0 auto;
+  /* Bound by viewport height so the whole game fits without scrolling. */
+  width: min(64vh, 520px, 100%);
   aspect-ratio: 1 / 1;
 }
 
@@ -393,7 +413,7 @@ body {
   border: 1px solid var(--border);
   background: transparent;
   color: var(--accent);
-  font-size: clamp(16px, 5vw, 26px);
+  font-size: clamp(18px, 4.4vh, 32px);
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -427,8 +447,8 @@ body {
   background: rgba(122, 162, 255, 0.32);
   box-shadow: inset 0 0 0 2px var(--accent);
 }
-.cell.conflict {
-  color: var(--red, #ff5d5d);
+.cell.wrong {
+  color: #ff5d5d;
   background: rgba(255, 93, 93, 0.16);
 }
 
@@ -471,50 +491,56 @@ body {
 
 .pad {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 6px;
-  margin: 16px 0;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
 .pad-key {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
-  border-radius: 8px;
-  padding: 8px 0 4px;
+  border-radius: 12px;
+  padding: 10px 0 6px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  aspect-ratio: 1 / 1;
+  justify-content: center;
   transition: all 0.12s ease;
 }
 
 .pad-key:hover:not(:disabled) {
   border-color: var(--accent);
+  background: var(--surface-2);
 }
 
-.pad-key.done {
-  opacity: 0.35;
+.pad-key.disabled {
+  opacity: 0.3;
   cursor: default;
 }
 
 .pad-num {
-  font-size: clamp(15px, 4.5vw, 20px);
-  font-weight: 650;
+  font-size: clamp(22px, 5vh, 34px);
+  font-weight: 700;
   color: var(--accent);
+  line-height: 1;
 }
 
 .pad-rem {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--muted);
 }
 
 .sudoku-controls {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
+}
+
+.sudoku-controls .btn {
+  width: 100%;
 }
 
 .btn.ghost.on {
