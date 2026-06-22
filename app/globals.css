@@ -21,6 +21,20 @@ html,
 body {
   margin: 0;
   padding: 0;
+  /* Stop iOS from auto-inflating text in landscape. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Snappier taps on iOS: no gray flash, no 300ms double-tap delay. */
+button,
+a,
+.cell,
+.pad-key,
+.chip,
+.seg-btn {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 body {
@@ -39,7 +53,9 @@ body {
 .page {
   max-width: 920px;
   margin: 0 auto;
-  padding: 40px 24px 80px;
+  /* Respect iOS notch / home-indicator safe areas. */
+  padding: 40px max(24px, env(safe-area-inset-right)) max(80px, env(safe-area-inset-bottom))
+    max(24px, env(safe-area-inset-left));
 }
 
 /* Header / wordmark */
@@ -205,7 +221,8 @@ body {
   border-radius: 10px;
   color: var(--text);
   padding: 11px 14px;
-  font-size: 14px;
+  /* 16px avoids iOS Safari auto-zooming in when the field is focused. */
+  font-size: 16px;
 }
 
 .input:focus {
@@ -329,6 +346,9 @@ body {
 .sudoku {
   max-width: 860px;
   margin: 0 auto;
+  /* No accidental text selection when tapping cells/numbers quickly. */
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Puzzle left, number pad right; sized to avoid page scroll. */
@@ -578,4 +598,45 @@ kbd {
   padding: 1px 6px;
   font-size: 11px;
   font-family: inherit;
+}
+
+/* ---------- Mobile (iOS phones etc.) ---------- */
+@media (max-width: 560px) {
+  .page {
+    padding: 24px max(16px, env(safe-area-inset-right))
+      max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+
+  .brand h1 {
+    font-size: 26px;
+  }
+
+  /* Stack puzzle over the pad; both go full width. */
+  .sudoku-main {
+    gap: 16px;
+  }
+
+  .sudoku-grid-wrap {
+    width: min(96vw, 460px);
+  }
+
+  .sudoku-side {
+    width: 100%;
+    max-width: min(96vw, 460px);
+  }
+
+  /* Keep the 3x3 phone-style pad, but shorter keys so it isn't too tall. */
+  .pad-key {
+    aspect-ratio: auto;
+    padding: 12px 0 8px;
+    border-radius: 10px;
+  }
+
+  .pad-num {
+    font-size: 22px;
+  }
+
+  .thinking-link {
+    align-self: flex-start;
+  }
 }
