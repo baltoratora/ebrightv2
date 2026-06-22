@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { DEFAULT_TOPIC, topicById } from "@/lib/topics";
 import { FunFact } from "@/components/FunFact";
 import { TopicSelector } from "@/components/TopicSelector";
@@ -14,8 +15,13 @@ export default function Home() {
   return (
     <main className="page">
       <header className="brand">
-        <h1>baltoratora</h1>
-        <span className="tag">daily STEM · fact · paper · wallpaper</span>
+        <div>
+          <h1>baltoratora</h1>
+          <span className="tag">daily STEM · fact · paper · wallpaper</span>
+        </div>
+        <Link href="/sudoku" className="btn ghost thinking-link">
+          🧠 Thinking Mode
+        </Link>
       </header>
 
       <FunFact />
