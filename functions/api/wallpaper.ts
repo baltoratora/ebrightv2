@@ -14,10 +14,10 @@ interface Env {
 
 const MODEL = "@cf/stabilityai/stable-diffusion-xl-base-1.0";
 
-// 19.5:9 portrait. Height is capped at SDXL's 2048 max; the phone scales this
-// to its native resolution (e.g. 1206×2622), so the aspect ratio is what counts.
-const WIDTH = 896;
-const HEIGHT = 1944;
+// iPhone 17 Pro is 1206×2622 (~19.5:9). SDXL caps height at 2048, so we render
+// at that ratio at max height; the phone upscales to its native 2622 to fill.
+const WIDTH = 944;
+const HEIGHT = 2048;
 
 function arrayBufferToBase64(buf: ArrayBuffer): string {
   let binary = "";

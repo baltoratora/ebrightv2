@@ -308,8 +308,8 @@ body {
   border-radius: 18px;
   overflow: hidden;
   border: 1px solid var(--border);
-  /* Portrait phone preview (~19.5:9); sized by height so it doesn't dominate. */
-  aspect-ratio: 896 / 1944;
+  /* iPhone 17 Pro shape (1206:2622); sized by height so it doesn't dominate. */
+  aspect-ratio: 1206 / 2622;
   height: min(58vh, 460px);
   width: auto;
   max-width: 100%;
