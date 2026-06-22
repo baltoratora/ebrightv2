@@ -8,9 +8,9 @@ export interface Fact {
 
 const FACTS_API = "https://uselessfacts.jsph.pl/api/v2/facts";
 
-/** URL for today's fact (stable for the day, server-side). */
-export function buildFactUrl(): string {
-  return `${FACTS_API}/today`;
+/** URL for the fact: today's (stable for the day) or a random one (for refresh). */
+export function buildFactUrl(random = false): string {
+  return `${FACTS_API}/${random ? "random" : "today"}`;
 }
 
 /** Parse the uselessfacts JSON payload into our Fact shape. */
