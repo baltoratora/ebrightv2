@@ -237,14 +237,11 @@
       <h1>BALTORATORA</h1>
       <div class="tagline">Scientia Potentia Est</div>
 
-      <section class="apod" aria-label="Astronomy Picture of the Day">
-        <div class="apod-eyebrow">The cosmos, today · via NASA</div>
-        <div class="apod-frame">
-          <span class="apod-loading" id="apod-loading">Aligning the telescope…</span>
-          <img id="apod-img" alt="" style="display: none" />
-        </div>
-        <div class="apod-name" id="apod-name"></div>
-        <div class="apod-meta" id="apod-meta"></div>
+      <section class="apod" aria-label="Celestial object of the day">
+        <div class="apod-eyebrow">The cosmos · object of the day</div>
+        <div class="apod-frame" id="cosmos-frame"></div>
+        <div class="apod-name" id="cosmos-name"></div>
+        <div class="apod-meta" id="cosmos-meta"></div>
       </section>
 
       <section class="cal" aria-label="Calendar">
@@ -310,45 +307,98 @@
         }
       })();
 
-      // --- NASA Astronomy Picture of the Day ---
+      // --- Celestial object of the day (inline SVG, instant, no network) ---
       (function () {
-        const img = document.getElementById("apod-img");
-        const loading = document.getElementById("apod-loading");
-        const name = document.getElementById("apod-name");
-        const meta = document.getElementById("apod-meta");
+        const frame = document.getElementById("cosmos-frame");
+        const nameEl = document.getElementById("cosmos-name");
+        const metaEl = document.getElementById("cosmos-meta");
 
-        fetch("https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY&thumbs=true")
-          .then((r) => {
-            if (!r.ok) throw new Error("NASA " + r.status);
-            return r.json();
-          })
-          .then((d) => {
-            const src = d.media_type === "image" ? d.url : d.thumbnail_url;
-            if (src) {
-              img.src = src;
-              img.alt = d.title || "Astronomy picture of the day";
-              img.onload = () => {
-                loading.style.display = "none";
-                img.style.display = "block";
-              };
-            } else {
-              loading.textContent = "Today's feature is a video.";
-            }
-            name.textContent = d.title || "";
-            const date = d.date || "";
-            const credit = d.copyright ? " · © " + d.copyright.trim() : "";
-            meta.innerHTML =
-              date +
-              credit +
-              (d.hdurl || d.url
-                ? ' · <a class="apod-link" href="' +
-                  (d.hdurl || d.url) +
-                  '" target="_blank" rel="noopener">view full ↗</a>'
-                : "");
-          })
-          .catch(() => {
-            loading.textContent = "The sky is cloudy right now — try again later.";
-          });
+        // day-of-year, so the object is stable for the whole day and rotates.
+        const n = new Date();
+        const doy = Math.floor(
+          (Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) -
+            Date.UTC(n.getUTCFullYear(), 0, 0)) /
+            86400000
+        );
+
+        const bgDots = [
+          [30, 40], [260, 30], [200, 162], [50, 172], [284, 120],
+          [18, 100], [150, 26], [110, 178], [242, 78], [88, 52], [170, 150], [230, 168],
+        ]
+          .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1" fill="#fff" opacity="0.22"/>`)
+          .join("");
+
+        const starMark = (x, y, big) =>
+          `<circle cx="${x}" cy="${y}" r="${big ? 7 : 5}" fill="#fff" opacity="0.16"/>` +
+          `<circle cx="${x}" cy="${y}" r="${big ? 3 : 2}" fill="#fff"/>`;
+
+        function constellationArt(stars, lines) {
+          const L = lines
+            .map(
+              ([a, b]) =>
+                `<line x1="${stars[a][0]}" y1="${stars[a][1]}" x2="${stars[b][0]}" y2="${stars[b][1]}" stroke="rgba(255,93,143,0.55)" stroke-width="1.1"/>`
+            )
+            .join("");
+          const S = stars.map(([x, y, big]) => starMark(x, y, big)).join("");
+          return L + S;
+        }
+
+        const galaxyTilted = `
+          <defs><radialGradient id="ga" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fff"/><stop offset="20%" stop-color="#ffe3ee"/>
+            <stop offset="55%" stop-color="rgba(194,24,91,0.7)"/>
+            <stop offset="100%" stop-color="rgba(91,60,255,0)"/></radialGradient></defs>
+          <g transform="translate(150 100) rotate(-22)">
+            <ellipse rx="128" ry="34" fill="url(#ga)"/>
+            <ellipse rx="55" ry="14" fill="#fff" opacity="0.5"/>
+            <ellipse rx="26" ry="7" fill="#fff" opacity="0.95"/></g>`;
+
+        const whirlpool = `
+          <defs><radialGradient id="wp" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#fff"/><stop offset="30%" stop-color="#ffd7e6"/>
+            <stop offset="100%" stop-color="rgba(194,24,91,0)"/></radialGradient></defs>
+          <g transform="translate(150 100)">
+            <circle r="72" fill="url(#wp)" opacity="0.6"/>
+            <path d="M0,0 C 34,-22 64,-8 72,24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="3"/>
+            <path d="M0,0 C -34,22 -64,8 -72,-24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="3"/>
+            <path d="M0,0 C 22,32 8,58 -24,64" fill="none" stroke="rgba(255,93,143,0.55)" stroke-width="2.4"/>
+            <circle r="9" fill="#fff"/></g>`;
+
+        const sun = `
+          <defs>
+            <radialGradient id="su" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#fff8e6"/><stop offset="50%" stop-color="#ffce5c"/>
+              <stop offset="100%" stop-color="#ff7a2f"/></radialGradient>
+            <radialGradient id="cor" cx="50%" cy="50%" r="50%">
+              <stop offset="58%" stop-color="rgba(255,160,60,0.35)"/>
+              <stop offset="100%" stop-color="rgba(255,160,60,0)"/></radialGradient></defs>
+          <circle cx="150" cy="100" r="96" fill="url(#cor)"/>
+          <circle cx="150" cy="100" r="56" fill="url(#su)"/>`;
+
+        const OBJECTS = [
+          { name: "Orion", label: "Constellation", fact: "The Hunter",
+            stars: [[108,62,1],[188,72,0],[138,108,0],[150,114,0],[162,120,0],[124,162,0],[186,156,1]],
+            lines: [[0,1],[0,2],[1,4],[2,3],[3,4],[2,5],[4,6],[5,6]] },
+          { name: "Ursa Major", label: "Constellation", fact: "The Great Bear · the Big Dipper",
+            stars: [[78,150,0],[78,116,0],[124,108,0],[124,150,0],[162,98,0],[200,90,0],[236,96,1]],
+            lines: [[0,1],[1,2],[2,3],[3,0],[2,4],[4,5],[5,6]] },
+          { name: "Cassiopeia", label: "Constellation", fact: "The Queen · the celestial W",
+            stars: [[70,120,0],[110,92,0],[150,118,0],[190,90,0],[228,116,0]],
+            lines: [[0,1],[1,2],[2,3],[3,4]] },
+          { name: "Scorpius", label: "Constellation", fact: "The Scorpion · heart-star Antares",
+            stars: [[84,68,0],[104,80,0],[124,92,0],[142,106,1],[158,126,0],[152,150,0],[136,166,0],[120,172,0]],
+            lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]] },
+          { name: "Andromeda Galaxy", label: "Galaxy", fact: "Our nearest spiral neighbour", art: galaxyTilted },
+          { name: "Whirlpool Galaxy", label: "Galaxy", fact: "A face-on grand-design spiral", art: whirlpool },
+          { name: "The Sun", label: "Star", fact: "Our home star — a G-type main sequence", art: sun },
+        ];
+
+        const o = OBJECTS[doy % OBJECTS.length];
+        const inner = o.art ? o.art : constellationArt(o.stars, o.lines);
+        frame.innerHTML =
+          `<svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">${bgDots}${inner}</svg>`;
+        nameEl.textContent = o.name;
+        metaEl.textContent = o.label + " · " + o.fact;
       })();
     </script>
   </body>
