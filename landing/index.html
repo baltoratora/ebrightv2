@@ -84,17 +84,19 @@
 
       /* hero */
       h1 {
-        font-size: clamp(40px, 12vw, 132px);
+        /* Sized by viewport width + capped so BALTORATORA always fits on ONE
+           line — never wraps, never overflows. */
+        font-size: clamp(24px, 11vw, 104px);
+        white-space: nowrap;
         font-weight: 800;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.05em;
         margin: 0;
-        line-height: 1;
+        line-height: 1.05;
         background: linear-gradient(180deg, #ffffff 0%, #ffd7e6 60%, var(--accent) 130%);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
         text-shadow: 0 0 60px rgba(255, 93, 143, 0.25);
-        word-break: break-word;
       }
       .tagline {
         margin-top: 18px;
