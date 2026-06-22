@@ -128,45 +128,47 @@
         margin-bottom: 14px;
         font-weight: 600;
       }
-      .apod-frame {
-        position: relative;
-        border-radius: 18px;
+      .planets {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .planet {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+      .planet-img {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 16px;
         overflow: hidden;
         border: 1px solid var(--border);
-        background: var(--bg-2);
-        aspect-ratio: 3 / 2;
-        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.04);
+        background: #06070f;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5);
         display: flex;
         align-items: center;
         justify-content: center;
       }
-      .apod-frame img {
+      .planet-img img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
+        object-fit: contain;
         display: block;
       }
-      .apod-loading {
-        color: var(--muted);
-        font-size: 14px;
-      }
-      .apod-name {
-        margin-top: 16px;
-        font-size: clamp(18px, 3.6vw, 24px);
-        font-weight: 700;
-        line-height: 1.25;
-      }
-      .apod-meta {
-        margin-top: 6px;
+      .planet-name {
         font-size: 13px;
-        color: var(--muted);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--text);
       }
-      .apod-link {
-        color: var(--accent);
-        text-decoration: none;
-      }
-      .apod-link:hover {
-        text-decoration: underline;
+      @media (max-width: 520px) {
+        .planets {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
       }
 
       /* calendar */
@@ -237,11 +239,19 @@
       <h1>BALTORATORA</h1>
       <div class="tagline">Scientia Potentia Est</div>
 
-      <section class="apod" aria-label="Celestial object of the day">
-        <div class="apod-eyebrow">The cosmos · object of the day</div>
-        <div class="apod-frame" id="cosmos-frame"></div>
-        <div class="apod-name" id="cosmos-name"></div>
-        <div class="apod-meta" id="cosmos-meta"></div>
+      <section class="apod" aria-label="Our solar system">
+        <div class="apod-eyebrow">Our solar system</div>
+        <div class="planets">
+          <div class="planet"><div class="planet-img"><img src="img/sun.jpg" alt="The Sun" loading="lazy" /></div><div class="planet-name">Sun</div></div>
+          <div class="planet"><div class="planet-img"><img src="img/mercury.jpg" alt="Mercury" loading="lazy" /></div><div class="planet-name">Mercury</div></div>
+          <div class="planet"><div class="planet-img"><img src="img/venus.jpg" alt="Venus" loading="lazy" /></div><div class="planet-name">Venus</div></div>
+          <div class="planet"><div class="planet-img"><img src="img/earth.jpg" alt="Earth" loading="lazy" /></div><div class="planet-name">Earth</div></div>
+          <div class="planet"><div class="planet-img"><img src="img/mars.jpg" alt="Mars" loading="lazy" /></div><div class="planet-name">Mars</div></div>
+          <div class="planet"><div class="planet-img"><img src="img/jupiter.jpg" alt="Jupiter" loading="lazy" /></div><div class="planet-name">Jupiter</div></div>
+          <div class="planet"><div class="planet-img"><img src="img/saturn.jpg" alt="Saturn" loading="lazy" /></div><div class="planet-name">Saturn</div></div>
+          <div class="planet"><div class="planet-img"><img src="img/uranus.jpg" alt="Uranus" loading="lazy" /></div><div class="planet-name">Uranus</div></div>
+          <div class="planet"><div class="planet-img"><img src="img/neptune.jpg" alt="Neptune" loading="lazy" /></div><div class="planet-name">Neptune</div></div>
+        </div>
       </section>
 
       <section class="cal" aria-label="Calendar">
@@ -307,99 +317,6 @@
         }
       })();
 
-      // --- Celestial object of the day (inline SVG, instant, no network) ---
-      (function () {
-        const frame = document.getElementById("cosmos-frame");
-        const nameEl = document.getElementById("cosmos-name");
-        const metaEl = document.getElementById("cosmos-meta");
-
-        // day-of-year, so the object is stable for the whole day and rotates.
-        const n = new Date();
-        const doy = Math.floor(
-          (Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()) -
-            Date.UTC(n.getUTCFullYear(), 0, 0)) /
-            86400000
-        );
-
-        const bgDots = [
-          [30, 40], [260, 30], [200, 162], [50, 172], [284, 120],
-          [18, 100], [150, 26], [110, 178], [242, 78], [88, 52], [170, 150], [230, 168],
-        ]
-          .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1" fill="#fff" opacity="0.22"/>`)
-          .join("");
-
-        const starMark = (x, y, big) =>
-          `<circle cx="${x}" cy="${y}" r="${big ? 7 : 5}" fill="#fff" opacity="0.16"/>` +
-          `<circle cx="${x}" cy="${y}" r="${big ? 3 : 2}" fill="#fff"/>`;
-
-        function constellationArt(stars, lines) {
-          const L = lines
-            .map(
-              ([a, b]) =>
-                `<line x1="${stars[a][0]}" y1="${stars[a][1]}" x2="${stars[b][0]}" y2="${stars[b][1]}" stroke="rgba(255,93,143,0.55)" stroke-width="1.1"/>`
-            )
-            .join("");
-          const S = stars.map(([x, y, big]) => starMark(x, y, big)).join("");
-          return L + S;
-        }
-
-        const galaxyTilted = `
-          <defs><radialGradient id="ga" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#fff"/><stop offset="20%" stop-color="#ffe3ee"/>
-            <stop offset="55%" stop-color="rgba(194,24,91,0.7)"/>
-            <stop offset="100%" stop-color="rgba(91,60,255,0)"/></radialGradient></defs>
-          <g transform="translate(150 100) rotate(-22)">
-            <ellipse rx="128" ry="34" fill="url(#ga)"/>
-            <ellipse rx="55" ry="14" fill="#fff" opacity="0.5"/>
-            <ellipse rx="26" ry="7" fill="#fff" opacity="0.95"/></g>`;
-
-        const whirlpool = `
-          <defs><radialGradient id="wp" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#fff"/><stop offset="30%" stop-color="#ffd7e6"/>
-            <stop offset="100%" stop-color="rgba(194,24,91,0)"/></radialGradient></defs>
-          <g transform="translate(150 100)">
-            <circle r="72" fill="url(#wp)" opacity="0.6"/>
-            <path d="M0,0 C 34,-22 64,-8 72,24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="3"/>
-            <path d="M0,0 C -34,22 -64,8 -72,-24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="3"/>
-            <path d="M0,0 C 22,32 8,58 -24,64" fill="none" stroke="rgba(255,93,143,0.55)" stroke-width="2.4"/>
-            <circle r="9" fill="#fff"/></g>`;
-
-        const sun = `
-          <defs>
-            <radialGradient id="su" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#fff8e6"/><stop offset="50%" stop-color="#ffce5c"/>
-              <stop offset="100%" stop-color="#ff7a2f"/></radialGradient>
-            <radialGradient id="cor" cx="50%" cy="50%" r="50%">
-              <stop offset="58%" stop-color="rgba(255,160,60,0.35)"/>
-              <stop offset="100%" stop-color="rgba(255,160,60,0)"/></radialGradient></defs>
-          <circle cx="150" cy="100" r="96" fill="url(#cor)"/>
-          <circle cx="150" cy="100" r="56" fill="url(#su)"/>`;
-
-        const OBJECTS = [
-          { name: "Orion", label: "Constellation", fact: "The Hunter",
-            stars: [[108,62,1],[188,72,0],[138,108,0],[150,114,0],[162,120,0],[124,162,0],[186,156,1]],
-            lines: [[0,1],[0,2],[1,4],[2,3],[3,4],[2,5],[4,6],[5,6]] },
-          { name: "Ursa Major", label: "Constellation", fact: "The Great Bear · the Big Dipper",
-            stars: [[78,150,0],[78,116,0],[124,108,0],[124,150,0],[162,98,0],[200,90,0],[236,96,1]],
-            lines: [[0,1],[1,2],[2,3],[3,0],[2,4],[4,5],[5,6]] },
-          { name: "Cassiopeia", label: "Constellation", fact: "The Queen · the celestial W",
-            stars: [[70,120,0],[110,92,0],[150,118,0],[190,90,0],[228,116,0]],
-            lines: [[0,1],[1,2],[2,3],[3,4]] },
-          { name: "Scorpius", label: "Constellation", fact: "The Scorpion · heart-star Antares",
-            stars: [[84,68,0],[104,80,0],[124,92,0],[142,106,1],[158,126,0],[152,150,0],[136,166,0],[120,172,0]],
-            lines: [[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]] },
-          { name: "Andromeda Galaxy", label: "Galaxy", fact: "Our nearest spiral neighbour", art: galaxyTilted },
-          { name: "Whirlpool Galaxy", label: "Galaxy", fact: "A face-on grand-design spiral", art: whirlpool },
-          { name: "The Sun", label: "Star", fact: "Our home star — a G-type main sequence", art: sun },
-        ];
-
-        const o = OBJECTS[doy % OBJECTS.length];
-        const inner = o.art ? o.art : constellationArt(o.stars, o.lines);
-        frame.innerHTML =
-          `<svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block">${bgDots}${inner}</svg>`;
-        nameEl.textContent = o.name;
-        metaEl.textContent = o.label + " · " + o.fact;
-      })();
     </script>
   </body>
 </html>
