@@ -218,17 +218,47 @@
 
       footer {
         margin-top: clamp(48px, 9vh, 90px);
-        font-size: 12px;
-        color: var(--muted);
-        letter-spacing: 0.04em;
       }
-      footer a {
-        color: var(--muted);
+      .cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 15px 28px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #fff;
         text-decoration: none;
-        border-bottom: 1px solid var(--border);
+        font-weight: 700;
+        font-size: clamp(14px, 3.4vw, 16px);
+        letter-spacing: 0.01em;
+        box-shadow: 0 10px 30px rgba(255, 93, 143, 0.35);
+        animation: cta-float 2.8s ease-in-out infinite;
+        transition: filter 0.15s ease;
       }
-      footer a:hover {
-        color: var(--accent);
+      .cta:hover {
+        filter: brightness(1.08);
+      }
+      .cta-arrow {
+        transition: transform 0.2s ease;
+      }
+      .cta:hover .cta-arrow {
+        transform: translateX(4px);
+      }
+      @keyframes cta-float {
+        0%,
+        100% {
+          transform: translateY(0);
+          box-shadow: 0 10px 30px rgba(255, 93, 143, 0.3);
+        }
+        50% {
+          transform: translateY(-7px);
+          box-shadow: 0 20px 44px rgba(255, 93, 143, 0.5);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .cta {
+          animation: none;
+        }
       }
     </style>
   </head>
@@ -260,8 +290,9 @@
       </section>
 
       <footer>
-        Explore the daily STEM dashboard at
-        <a href="https://demo.baltoratora.my">demo.baltoratora.my</a>
+        <a class="cta" href="https://demo.baltoratora.my">
+          Explore the daily STEM dashboard <span class="cta-arrow">→</span>
+        </a>
       </footer>
     </main>
 
