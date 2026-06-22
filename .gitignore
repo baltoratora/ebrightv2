@@ -5,9 +5,8 @@
 /.next/
 /out/
 
-# cloudflare / opennext
+# cloudflare
 /.vercel
-/.open-next
 /.wrangler
 
 # production

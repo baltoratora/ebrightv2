@@ -11,11 +11,11 @@ A daily STEM page:
 Pick a STEM topic (AI/ML, Computer Vision, Quantum, Astrophysics, Math, Bio) to
 switch the paper feed and seed the wallpaper prompt.
 
-Built with Next.js, deployed to **Cloudflare Workers** via the
-[`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) adapter
-(`wrangler deploy`). No external API keys — arXiv and uselessfacts are keyless,
-and image generation uses a Cloudflare **Workers AI binding** (no token to
-manage).
+Built with Next.js as a **static export** (`out/`) plus **Cloudflare Pages
+Functions** (`functions/api/*`) for the API, deployed to **Cloudflare Pages**
+(`baltoratora.pages.dev`). No external API keys — arXiv and uselessfacts are
+keyless, and image generation uses a Cloudflare **Workers AI binding** (no token
+to manage).
 
 ## Local development
 
@@ -25,37 +25,36 @@ npm run dev          # http://localhost:3000
 npm test             # unit tests for the arXiv + fact parsers
 ```
 
-The fun fact and paper work locally (public APIs). The Workers AI binding is
-only available on Cloudflare, so locally the wallpaper generator returns a
-**deterministic gradient placeholder**. To build/preview the real Worker:
+`next dev` serves only the UI — Pages Functions (`/api/*`) are not served by it,
+so data fetches 404 locally. To run the full stack (UI + Functions + AI binding)
+locally, use the Wrangler preview:
 
 ```bash
-npm run cf:preview   # opennext build + local Worker preview (needs the AI binding)
+npm run preview      # next build (export) + wrangler pages dev (serves functions/)
 ```
 
-## Deploy to Cloudflare Workers
+## Deploy to Cloudflare Pages
 
-Deploys as a Worker via OpenNext. `wrangler deploy` runs the OpenNext build
-first (see `[build]` in `wrangler.toml`), then ships the Worker. The `AI`
-binding and `nodejs_compat` flag come from `wrangler.toml`, so no manual
-dashboard binding setup is needed. Production URL: `baltoratora.<account>.workers.dev`.
+Static export (`out/`) + Pages Functions (`functions/`). The `AI` binding and
+`nodejs_compat` come from `wrangler.toml`, so no manual dashboard binding setup
+is needed. Production URL: `baltoratora.pages.dev`.
 
-- **Connected repo (CI):** the build runs `npx wrangler deploy`, which builds +
-  deploys on every push to `main`.
-- **From a machine with Cloudflare auth:** `npm run deploy`.
+**One-time:** create a **Pages** project (Workers & Pages → Create → **Pages** →
+Connect to Git → `baltoratora/ebrightv2`), production branch `main`, build command
+`npx next build`, output directory `out`. Cloudflare then auto-deploys on every
+push to `main`, and PRs get preview URLs — no deploy command needed.
 
-> Note: this gives a `workers.dev` URL. For a `pages.dev` URL instead, the
-> project's deploy command must be `wrangler pages deploy .vercel/output/static`
-> with the `@cloudflare/next-on-pages` build — a different adapter.
+To deploy from a machine with Cloudflare auth instead: `npm run deploy`.
 
 ## Project structure
 
 ```
 app/
-  page.tsx                 layout + topic state
-  api/fact/route.ts        daily fact (uselessfacts proxy)
-  api/paper/route.ts       newest arXiv paper for a topic
-  api/wallpaper/route.ts   Workers AI Flux image (mock fallback locally)
+  page.tsx                 dashboard UI (client): fetch, charts, lists
+functions/api/
+  fact.ts                  GET /api/fact   — daily fact (uselessfacts)
+  paper.ts                 GET /api/paper  — newest arXiv paper for a topic
+  wallpaper.ts             POST /api/wallpaper — Workers AI Flux (env.AI)
 lib/
   topics.ts                STEM topics -> arXiv category + wallpaper seed
   arxiv.ts                 buildArxivUrl + parseArxivFeed (pure, tested)

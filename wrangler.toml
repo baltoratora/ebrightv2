@@ -1,13 +1,8 @@
 name = "baltoratora"
-main = ".open-next/worker.js"
+pages_build_output_dir = "out"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat"]
 
-# Static assets produced by OpenNext (Next.js client bundle, public/, etc.).
-[assets]
-directory = ".open-next/assets"
-binding = "ASSETS"
-
-# Workers AI binding used by app/api/wallpaper/route.ts (env.AI).
+# Workers AI binding used by functions/api/wallpaper.ts (env.AI).
 [ai]
 binding = "AI"
