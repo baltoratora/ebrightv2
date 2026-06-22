@@ -15,9 +15,11 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://demo.baltoratora.my"),
   title: "baltoratora",
   description:
     "Daily STEM fun fact, a freshly published research paper, and an AI wallpaper generator.",
+  alternates: { canonical: "/" },
 };
 
 export const viewport: Viewport = {

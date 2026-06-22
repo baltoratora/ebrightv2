@@ -14,7 +14,8 @@ switch the paper feed and seed the wallpaper prompt.
 
 Built with Next.js as a **static export** (`out/`) plus **Cloudflare Pages
 Functions** (`functions/api/*`) for the API, deployed to **Cloudflare Pages**
-(`baltoratora.pages.dev`). No external API keys — arXiv and uselessfacts are
+(primary domain `demo.baltoratora.my`; the `baltoratora.pages.dev` URL
+301-redirects to it). No external API keys — arXiv and uselessfacts are
 keyless, and image generation uses a Cloudflare **Workers AI binding** (no token
 to manage).
 
@@ -38,7 +39,8 @@ npm run preview      # next build (export) + wrangler pages dev (serves function
 
 Static export (`out/`) + Pages Functions (`functions/`). The `AI` binding and
 `nodejs_compat` come from `wrangler.toml`, so no manual dashboard binding setup
-is needed. Production URL: `baltoratora.pages.dev`.
+is needed. Primary URL: `demo.baltoratora.my` (the `baltoratora.pages.dev` host
+301-redirects to it via `functions/_middleware.ts`).
 
 **One-time:** create a **Pages** project (Workers & Pages → Create → **Pages** →
 Connect to Git → `baltoratora/ebrightv2`), production branch `main`, build command
