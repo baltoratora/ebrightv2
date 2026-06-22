@@ -216,13 +216,11 @@
         box-shadow: 0 0 24px rgba(255, 93, 143, 0.4);
       }
 
-      footer {
-        margin-top: clamp(48px, 9vh, 90px);
-      }
       .cta {
         display: inline-flex;
         align-items: center;
         gap: 10px;
+        margin-top: clamp(22px, 4vh, 34px);
         padding: 15px 28px;
         border-radius: 999px;
         background: linear-gradient(135deg, var(--accent), var(--accent-2));
@@ -269,6 +267,10 @@
       <h1>BALTORATORA</h1>
       <div class="tagline">Scientia Potentia Est</div>
 
+      <a class="cta" href="https://demo.baltoratora.my">
+        Explore the daily STEM dashboard <span class="cta-arrow">→</span>
+      </a>
+
       <section class="apod" aria-label="Our solar system">
         <div class="apod-eyebrow">Our solar system</div>
         <div class="planets">
@@ -289,11 +291,6 @@
         <div class="cal-grid" id="cal-grid"></div>
       </section>
 
-      <footer>
-        <a class="cta" href="https://demo.baltoratora.my">
-          Explore the daily STEM dashboard <span class="cta-arrow">→</span>
-        </a>
-      </footer>
     </main>
 
     <script>
