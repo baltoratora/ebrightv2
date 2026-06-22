@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { buildArxivUrl, parseArxivFeed } from "@/lib/arxiv";
 import { topicById } from "@/lib/topics";
 
-export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const topicId = new URL(request.url).searchParams.get("topic");

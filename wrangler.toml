@@ -1,7 +1,18 @@
 name = "baltoratora"
-pages_build_output_dir = ".vercel/output/static"
-compatibility_date = "2024-11-01"
+main = ".open-next/worker.js"
+compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat"]
+
+# Build the OpenNext Worker bundle right before deploying. `wrangler deploy`
+# runs this command first, so the CI's `npx wrangler deploy` step produces and
+# ships the Worker regardless of the dashboard build command.
+[build]
+command = "npx opennextjs-cloudflare build"
+
+# Static assets produced by OpenNext (Next.js client bundle, public/, etc.).
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
 
 # Workers AI binding used by app/api/wallpaper/route.ts (env.AI).
 [ai]

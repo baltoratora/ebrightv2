@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 const MODEL = "@cf/black-forest-labs/flux-1-schnell";
 
@@ -10,13 +10,14 @@ interface FluxResult {
 
 /**
  * Try to get the Cloudflare Workers AI binding. Only present when running on
- * Cloudflare (production or `wrangler pages dev`). Returns null under `next dev`.
+ * Cloudflare. Returns null under `next dev`, so the route falls back to a
+ * placeholder image locally.
  */
 async function getAI(): Promise<{ run: (model: string, input: unknown) => Promise<FluxResult> } | null> {
   try {
-    const mod = await import("@cloudflare/next-on-pages");
-    const ctx = mod.getRequestContext();
-    return (ctx.env as { AI?: { run: (m: string, i: unknown) => Promise<FluxResult> } }).AI ?? null;
+    const { getCloudflareContext } = await import("@opennextjs/cloudflare");
+    const { env } = getCloudflareContext();
+    return (env as { AI?: { run: (m: string, i: unknown) => Promise<FluxResult> } }).AI ?? null;
   } catch {
     return null;
   }
