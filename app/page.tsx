@@ -13,7 +13,7 @@ export default function Home() {
 
   return (
     <main className="page">
-      <BackBar href="https://baltoratora.my" label="← baltoratora.my" external />
+      <BackBar href="https://www.baltoratora.my" label="← baltoratora.my" external />
 
       <header className="brand">
         <div>
