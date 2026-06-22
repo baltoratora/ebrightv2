@@ -139,7 +139,7 @@ body {
 
 /* Panels */
 .panel {
-  background: var(--surface);
+  background: linear-gradient(155deg, #ffd3dc 0%, #ffe9ef 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 22px;
@@ -397,11 +397,11 @@ body {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
   grid-template-rows: repeat(9, 1fr);
-  border: 2px solid var(--muted);
+  border: 2px solid var(--accent);
   border-radius: 10px;
   overflow: hidden;
   aspect-ratio: 1 / 1;
-  background: var(--surface);
+  background: linear-gradient(155deg, #ffd3dc 0%, #ffe9ef 100%);
 }
 
 .sudoku-grid.won {
@@ -438,10 +438,10 @@ body {
 }
 
 .cell.peer {
-  background: rgba(132, 0, 43, 0.06);
+  background: rgba(132, 0, 43, 0.12);
 }
 .cell.same {
-  background: rgba(132, 0, 43, 0.15);
+  background: rgba(132, 0, 43, 0.32);
 }
 .cell.sel {
   background: rgba(132, 0, 43, 0.24);
@@ -519,6 +519,16 @@ body {
 .pad-key.disabled {
   opacity: 0.3;
   cursor: default;
+}
+
+.pad-key.done {
+  opacity: 0.5;
+}
+
+.pad-key.active {
+  border-color: var(--accent);
+  background: rgba(132, 0, 43, 0.12);
+  box-shadow: inset 0 0 0 2px var(--accent);
 }
 
 .pad-num {

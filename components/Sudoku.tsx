@@ -62,6 +62,7 @@ export function Sudoku() {
   const [notes, setNotes] = useState<Notes>(emptyNotes());
   const [history, setHistory] = useState<Snapshot[]>([]);
   const [selected, setSelected] = useState<[number, number] | null>(null);
+  const [highlightDigit, setHighlightDigit] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
   const [generating, setGenerating] = useState(true);
 
@@ -76,6 +77,7 @@ export function Sudoku() {
       setNotes(emptyNotes());
       setHistory([]);
       setSelected(null);
+      setHighlightDigit(null);
       setGenerating(false);
     }, 20);
   }, []);
@@ -86,6 +88,21 @@ export function Sudoku() {
   }, []);
 
   const won = useMemo(() => (board ? isComplete(board) : false), [board]);
+
+  // Rows/columns that contain the highlighted digit (for the click-to-highlight).
+  const { hiRows, hiCols } = useMemo(() => {
+    const rows = new Set<number>();
+    const cols = new Set<number>();
+    if (board && highlightDigit) {
+      for (let r = 0; r < 9; r++)
+        for (let c = 0; c < 9; c++)
+          if (board[r][c] === highlightDigit) {
+            rows.add(r);
+            cols.add(c);
+          }
+    }
+    return { hiRows: rows, hiCols: cols };
+  }, [board, highlightDigit]);
 
   const remaining = useMemo(() => {
     const rem = Array<number>(10).fill(9);
@@ -197,7 +214,10 @@ export function Sudoku() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key >= "1" && e.key <= "9") place(Number(e.key));
+      if (e.key >= "1" && e.key <= "9") {
+        setHighlightDigit(Number(e.key));
+        place(Number(e.key));
+      }
       else if (e.key === "Backspace" || e.key === "Delete" || e.key === "0")
         place(0);
       else if (e.key.toLowerCase() === "n") setNotesMode((m) => !m);
@@ -213,8 +233,6 @@ export function Sudoku() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [place, undo, selected]);
-
-  const selectedValue = board && selected ? board[selected[0]][selected[1]] : 0;
 
   return (
     <div className="sudoku">
@@ -253,13 +271,13 @@ export function Sudoku() {
                   const given = isGiven(r, c);
                   const isSel =
                     selected && selected[0] === r && selected[1] === c;
-                  const inPeer =
-                    selected &&
-                    (selected[0] === r ||
-                      selected[1] === c ||
-                      (Math.floor(selected[0] / 3) === Math.floor(r / 3) &&
-                        Math.floor(selected[1] / 3) === Math.floor(c / 3)));
-                  const sameNum = val !== 0 && val === selectedValue;
+                  const same =
+                    highlightDigit !== null &&
+                    val !== 0 &&
+                    val === highlightDigit;
+                  const inLine =
+                    highlightDigit !== null &&
+                    (hiRows.has(r) || hiCols.has(c));
                   const wrong =
                     val !== 0 &&
                     !given &&
@@ -269,8 +287,8 @@ export function Sudoku() {
                     "cell",
                     given ? "given" : "",
                     isSel ? "sel" : "",
-                    inPeer && !isSel ? "peer" : "",
-                    sameNum && !isSel ? "same" : "",
+                    same && !isSel ? "same" : "",
+                    inLine && !same && !isSel ? "peer" : "",
                     wrong ? "wrong" : "",
                     c % 3 === 2 && c !== 8 ? "br" : "",
                     r % 3 === 2 && r !== 8 ? "bb" : "",
@@ -281,7 +299,10 @@ export function Sudoku() {
                     <button
                       key={key}
                       className={cls}
-                      onClick={() => setSelected([r, c])}
+                      onClick={() => {
+                        setSelected([r, c]);
+                        setHighlightDigit(val || null);
+                      }}
                     >
                       {val !== 0 ? (
                         val
@@ -307,13 +328,25 @@ export function Sudoku() {
         <div className="sudoku-side">
           <div className="pad">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
-              const disabled = remaining[n] <= 0 || blocked.has(n);
+              const cantPlace = blocked.has(n); // would duplicate in selected cell
+              const done = remaining[n] <= 0; // all nine placed
               return (
                 <button
                   key={n}
-                  className={`pad-key${disabled ? " disabled" : ""}`}
-                  onClick={() => place(n)}
-                  disabled={disabled}
+                  className={[
+                    "pad-key",
+                    cantPlace ? "disabled" : "",
+                    done ? "done" : "",
+                    highlightDigit === n ? "active" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  // Always highlight on click; placement is blocked separately.
+                  onClick={() => {
+                    setHighlightDigit(n);
+                    if (!cantPlace) place(n);
+                  }}
+                  aria-pressed={highlightDigit === n}
                 >
                   <span className="pad-num">{n}</span>
                   <span className="pad-rem">{Math.max(0, remaining[n])}</span>
