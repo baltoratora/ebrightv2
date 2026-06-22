@@ -1,15 +1,19 @@
 import { Sudoku } from "@/components/Sudoku";
+import { BackBar } from "@/components/BackBar";
 
 export const metadata = {
-  title: "Thinking Mode",
+  title: "Sudoku",
 };
 
 export default function SudokuPage() {
   return (
     <main className="page">
+      <BackBar href="/thinking" label="← Thinking Mode" />
       <header className="brand">
-        <h1>Thinking Mode</h1>
-        <span className="tag">one puzzle, full focus</span>
+        <div>
+          <h1>Sudoku</h1>
+          <span className="tag">fill the grid 1–9</span>
+        </div>
       </header>
       <Sudoku />
     </main>

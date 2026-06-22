@@ -1,15 +1,16 @@
 :root {
-  --bg: #ffffff;          /* page background — standard white */
-  --bg-2: #fff5f7;        /* inputs / cells — faint pink tint */
-  --surface: #ffd3dc;     /* panels / cards — pastel pink */
-  --surface-2: #ffc1ce;   /* secondary surfaces / ghost buttons */
-  --border: #f2acbd;      /* soft pink borders */
-  --text: #3a0a18;        /* dark plum — readable on white & pastel pink */
-  --muted: #8a4658;       /* muted mauve */
-  --accent: #84002b;      /* highlights — dark magenta-pink */
-  --accent-2: #c2185b;    /* brighter magenta for gradients */
-  --green: #1f9d57;       /* readable green on light */
-  --amber: #b45309;       /* readable amber on light */
+  /* Dark cosmic — matches the baltoratora.my landing page. */
+  --bg: #05060d;          /* deep space */
+  --bg-2: #0a0c18;        /* inputs / cells */
+  --surface: #11141f;     /* panels / cards */
+  --surface-2: #1a1f2e;   /* secondary surfaces / ghost buttons */
+  --border: rgba(255, 255, 255, 0.1);
+  --text: #eef1f8;        /* light text */
+  --muted: #9aa0b8;       /* muted slate */
+  --accent: #ff5d8f;      /* pink-magenta glow */
+  --accent-2: #b388ff;    /* violet, for gradients */
+  --green: #4ade80;
+  --amber: #fbbf24;
   --radius: 16px;
 }
 
@@ -39,8 +40,8 @@ a,
 
 body {
   background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(255, 192, 205, 0.5), transparent),
-    radial-gradient(900px 500px at -10% 10%, rgba(132, 0, 43, 0.06), transparent),
+    radial-gradient(1100px 700px at 80% -10%, rgba(194, 24, 91, 0.22), transparent),
+    radial-gradient(900px 600px at -10% 20%, rgba(91, 60, 255, 0.18), transparent),
     var(--bg);
   color: var(--text);
   font-family:
@@ -50,7 +51,57 @@ body {
   min-height: 100vh;
 }
 
+/* Starfield (matches the landing page) */
+.stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.7;
+  animation-name: twinkle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+@keyframes twinkle {
+  from {
+    opacity: 0.12;
+  }
+  to {
+    opacity: 0.85;
+  }
+}
+
+/* Top-left home/back control */
+.backbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  text-decoration: none;
+  margin-bottom: 20px;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+.backbar:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
 .page {
+  position: relative;
+  z-index: 1;
   max-width: 920px;
   margin: 0 auto;
   /* Respect iOS notch / home-indicator safe areas. */
@@ -88,8 +139,8 @@ body {
 .fact {
   background: linear-gradient(
     100deg,
-    rgba(255, 211, 220, 0.75),
-    rgba(194, 24, 91, 0.1)
+    rgba(255, 93, 143, 0.12),
+    rgba(179, 136, 255, 0.08)
   );
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -128,7 +179,7 @@ body {
 
 .fact-refresh:hover:not(:disabled) {
   border-color: var(--accent);
-  background: rgba(132, 0, 43, 0.08);
+  background: rgba(255, 93, 143, 0.08);
 }
 
 .fact-refresh:disabled {
@@ -191,7 +242,7 @@ body {
 
 /* Panels */
 .panel {
-  background: linear-gradient(155deg, #ffd3dc 0%, #ffe9ef 100%);
+  background: linear-gradient(155deg, #141826 0%, #0e111b 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 22px;
@@ -227,7 +278,7 @@ body {
     Consolas, monospace;
   font-size: 12.5px;
   line-height: 1.7;
-  color: #5a3540;
+  color: #b9b3c8;
   margin: 0 0 16px;
   /* OCD-clean block: justified edges, hyphenated to avoid big gaps. */
   text-align: justify;
@@ -471,7 +522,7 @@ body {
   border-radius: 10px;
   overflow: hidden;
   aspect-ratio: 1 / 1;
-  background: linear-gradient(155deg, #ffd3dc 0%, #ffe9ef 100%);
+  background: linear-gradient(155deg, #141826 0%, #0e111b 100%);
 }
 
 .sudoku-grid.won {
@@ -508,17 +559,17 @@ body {
 }
 
 .cell.peer {
-  background: rgba(132, 0, 43, 0.12);
+  background: rgba(255, 93, 143, 0.12);
 }
 .cell.same {
-  background: rgba(132, 0, 43, 0.32);
+  background: rgba(255, 93, 143, 0.32);
 }
 .cell.sel {
-  background: rgba(132, 0, 43, 0.24);
+  background: rgba(255, 93, 143, 0.24);
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 .cell.wrong {
-  color: #c1121f;
+  color: #ff6b6b;
   background: rgba(193, 18, 31, 0.14);
 }
 
@@ -597,7 +648,7 @@ body {
 
 .pad-key.active {
   border-color: var(--accent);
-  background: rgba(132, 0, 43, 0.12);
+  background: rgba(255, 93, 143, 0.12);
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 
@@ -648,6 +699,72 @@ kbd {
   padding: 1px 6px;
   font-size: 11px;
   font-family: inherit;
+}
+
+/* ---------- Games hub ---------- */
+.games {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 560px) {
+  .games {
+    grid-template-columns: 1fr;
+  }
+}
+
+.game-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: linear-gradient(155deg, #141826 0%, #0e111b 100%);
+  color: var(--text);
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+a.game-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.game-card.soon {
+  opacity: 0.55;
+}
+
+.game-icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.game-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.game-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.soon-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 2px 8px;
 }
 
 /* ---------- Mobile (iOS phones etc.) ---------- */

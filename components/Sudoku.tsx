@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   generatePuzzle,
   isComplete,
@@ -418,9 +417,6 @@ export function Sudoku() {
       {won ? <div className="sudoku-win">🎉 Solved! Nice thinking.</div> : null}
 
       <div className="sudoku-foot">
-        <Link href="/" className="btn ghost">
-          ← Back
-        </Link>
         <span className="muted sudoku-hint">
           Wrong entries turn red · duplicates are blocked · <kbd>N</kbd> notes ·
           <kbd>U</kbd> undo

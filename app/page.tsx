@@ -2,35 +2,32 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { DEFAULT_TOPIC, topicById } from "@/lib/topics";
+import { DEFAULT_TOPIC } from "@/lib/topics";
+import { BackBar } from "@/components/BackBar";
 import { FunFact } from "@/components/FunFact";
 import { TopicSelector } from "@/components/TopicSelector";
 import { PaperOfDay } from "@/components/PaperOfDay";
-import { WallpaperGenerator } from "@/components/WallpaperGenerator";
 
 export default function Home() {
   const [topicId, setTopicId] = useState(DEFAULT_TOPIC.id);
-  const topic = topicById(topicId);
 
   return (
     <main className="page">
+      <BackBar href="https://baltoratora.my" label="← baltoratora.my" external />
+
       <header className="brand">
         <div>
           <h1>baltoratora</h1>
-          <span className="tag">daily STEM · fact · paper · wallpaper</span>
+          <span className="tag">daily STEM · fact · paper</span>
         </div>
-        <Link href="/sudoku" className="btn ghost thinking-link">
+        <Link href="/thinking" className="btn ghost thinking-link">
           🧠 Thinking Mode
         </Link>
       </header>
 
       <FunFact />
-
       <TopicSelector active={topicId} onChange={setTopicId} />
-
       <PaperOfDay topic={topicId} />
-
-      <WallpaperGenerator seed={topic.wallpaperSeed} />
     </main>
   );
 }

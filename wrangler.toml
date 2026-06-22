@@ -2,7 +2,3 @@ name = "baltoratora"
 pages_build_output_dir = "out"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat"]
-
-# Workers AI binding used by functions/api/wallpaper.ts (env.AI).
-[ai]
-binding = "AI"

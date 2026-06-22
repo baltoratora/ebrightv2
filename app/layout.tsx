@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Starfield } from "@/components/Starfield";
 import "./globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
@@ -36,7 +37,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${jakarta.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <Starfield />
+        {children}
+      </body>
     </html>
   );
 }
