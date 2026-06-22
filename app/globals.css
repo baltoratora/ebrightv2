@@ -847,6 +847,143 @@ a.game-card:hover {
   color: #ff6b6b;
 }
 
+/* ---------- Wordle / Quordle ---------- */
+.wg {
+  max-width: 520px;
+  margin: 0 auto;
+}
+.wg-progress {
+  font-size: 13px;
+  color: var(--muted);
+}
+.wg-msg {
+  width: fit-content;
+  margin: 0 auto 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+}
+.wg-boards {
+  display: flex;
+  justify-content: center;
+}
+.wg-boards.quad {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  max-width: 440px;
+  margin: 0 auto;
+}
+.wg-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.wg-boards:not(.quad) .wg-grid {
+  width: min(86vw, 320px);
+}
+.wg-boards.quad .wg-grid {
+  width: 100%;
+  gap: 3px;
+}
+.wg-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+}
+.wg-boards.quad .wg-row {
+  gap: 3px;
+}
+.wg-tile {
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: clamp(16px, 5vw, 28px);
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.wg-boards.quad .wg-tile {
+  font-size: clamp(10px, 3vw, 15px);
+  border-width: 1.5px;
+  border-radius: 4px;
+}
+.wg-tile.filled {
+  border-color: var(--accent);
+}
+.wg-tile.correct {
+  background: #538d4e;
+  border-color: #538d4e;
+  color: #fff;
+}
+.wg-tile.present {
+  background: #b59f3b;
+  border-color: #b59f3b;
+  color: #fff;
+}
+.wg-tile.absent {
+  background: #3a3f4b;
+  border-color: #3a3f4b;
+  color: #cbd0dc;
+}
+.wg-grid.solved {
+  opacity: 0.7;
+}
+
+.wg-keyboard {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wg-krow {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+.wg-key {
+  flex: 1;
+  max-width: 40px;
+  height: 50px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0;
+}
+.wg-key:hover {
+  border-color: var(--accent);
+}
+.wg-key.wide {
+  flex: 1.6;
+  max-width: 62px;
+  font-size: 12px;
+}
+.wg-key.correct {
+  background: #538d4e;
+  border-color: #538d4e;
+  color: #fff;
+}
+.wg-key.present {
+  background: #b59f3b;
+  border-color: #b59f3b;
+  color: #fff;
+}
+.wg-key.absent {
+  background: #2a2f3b;
+  border-color: #2a2f3b;
+  color: #6b7280;
+}
+
 /* ---------- Mobile (iOS phones etc.) ---------- */
 @media (max-width: 560px) {
   .page {

@@ -14,7 +14,8 @@ type Game = {
 const GAMES: Game[] = [
   { name: "Sudoku", desc: "Fill the grid 1–9", icon: "🔢", href: "/sudoku", ready: true },
   { name: "Minesweeper", desc: "Clear the field", icon: "💣", href: "/minesweeper", ready: true },
-  { name: "Wordle", desc: "Guess the word", icon: "🟩", ready: false },
+  { name: "Wordle", desc: "Guess the word in 6", icon: "🟩", href: "/wordle", ready: true },
+  { name: "Quordle", desc: "Four words at once", icon: "🟨", href: "/quordle", ready: true },
   { name: "Solitaire", desc: "Classic Klondike", icon: "🃏", ready: false },
 ];
 
