@@ -6,9 +6,9 @@ import { bounceOffRect, makeBricks, type Ball, type Brick } from "@/lib/breakout
 const W = 320;
 const H = 440;
 const BALL_R = 6;
-const SPEED = 2.3; // chiller pace
+const SPEED = 1.5; // very chill pace
 const SUB = 3;
-const PADDLE_W = 66;
+const PADDLE_W = 84; // wider paddle
 const PADDLE_H = 12;
 const PADDLE_Y = H - 26;
 const ROWS = 5;
