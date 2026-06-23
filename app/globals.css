@@ -466,7 +466,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  width: min(38vh, 220px);
+  width: min(40vh, 240px);
 }
 
 .sudoku-bar {
@@ -509,8 +509,7 @@ body {
 
 .sudoku-grid-wrap {
   flex: 0 0 auto;
-  /* Smaller cap so grid + pad always sit side-by-side without wrapping. */
-  width: min(52vh, 400px, 100%);
+  width: min(56vh, 460px, 100%);
   aspect-ratio: 1 / 1;
 }
 
@@ -1577,6 +1576,9 @@ a.game-card:hover {
 .game-layout--col {
   flex-direction: column;
   align-items: center;
+}
+.game-layout--col .lb {
+  width: min(92vw, 460px);
 }
 .lb {
   width: min(92vw, 250px);

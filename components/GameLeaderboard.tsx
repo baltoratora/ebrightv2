@@ -42,6 +42,7 @@ export function GameLeaderboard({
   useEffect(() => {
     if (!over || value == null) {
       handledRef.current = false;
+      setPromptOpen(false); // close stale modal on game reset
       return;
     }
     if (handledRef.current) return;

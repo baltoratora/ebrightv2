@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  R, CANVAS_W, ROW_H, DANGER_ROW,
+  R, CANVAS_W, DANGER_ROW,
   bubbleX, bubbleY, colsForRow,
   newGrid, randomColor, placeBubble, isDanger, isCleared, snapToGrid,
   type BubbleColor, type Grid,
@@ -18,12 +18,14 @@ const MIN_UP = 20 * (Math.PI / 180); // minimum upward angle from horizontal
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
+const _lightenCache: Record<string, string> = {};
 function lighten(hex: string): string {
+  if (_lightenCache[hex]) return _lightenCache[hex];
   const n = parseInt(hex.slice(1), 16);
   const r = Math.min(255, (n >> 16) + 70);
   const g = Math.min(255, ((n >> 8) & 0xff) + 70);
   const b = Math.min(255, (n & 0xff) + 70);
-  return `rgb(${r},${g},${b})`;
+  return (_lightenCache[hex] = `rgb(${r},${g},${b})`);
 }
 
 function drawBubble(
@@ -83,6 +85,7 @@ export function PuzzleBobble() {
   const nextColorRef = useRef<BubbleColor>(randomColor());
   const aimRef = useRef<[number, number]>([0, -1]); // normalised direction
   const rafRef = useRef(0);
+  const aimRafRef = useRef(0);
   const runningRef = useRef(false);
   const scoreRef = useRef(0);
 
@@ -314,7 +317,9 @@ export function PuzzleBobble() {
     if (ballRef.current.active || over) return;
     const { x, y } = cvCoords(e);
     aimRef.current = clampDir(x - SX, y - SY);
-    draw();
+    // Coalesce rapid mousemove events to one draw per frame.
+    cancelAnimationFrame(aimRafRef.current);
+    aimRafRef.current = requestAnimationFrame(() => draw());
   };
 
   const onClick = (e: React.MouseEvent) => {

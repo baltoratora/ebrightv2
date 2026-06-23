@@ -66,10 +66,12 @@ export function Checkers() {
     if (thinking || !history.length) return;
     const h = [...history];
     let snap = h.pop()!;
-    while (snap.turn !== "r" && h.length) snap = h.pop()!;
+    let undone = 1;
+    while (snap.turn !== "r" && h.length) { snap = h.pop()!; undone++; }
     setBoard(snap.board);
     setTurn(snap.turn);
     setHistory(h);
+    setMoveCount((m) => Math.max(0, m - undone));
     setSel(null);
   }, [thinking, history]);
 
