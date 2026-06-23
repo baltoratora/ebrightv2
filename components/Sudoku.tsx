@@ -245,6 +245,7 @@ export function Sudoku() {
     }
     if (!target) return;
     const [r, c] = target;
+    setSeconds((s) => s + 42); // hint penalty
     pushHistory();
     setBoard((prev) => {
       if (!prev) return prev;
