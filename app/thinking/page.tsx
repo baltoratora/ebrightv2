@@ -23,6 +23,7 @@ const GAMES: Game[] = [
   { name: "Battleship", desc: "Sink the fleet", icon: "🚢", href: "/battleship", ready: true },
   { name: "Carrom", desc: "Flick & pocket", icon: "🎯", href: "/carrom", ready: true },
   { name: "Pool", desc: "Sink them all", icon: "🎱", href: "/pool", ready: true },
+  { name: "Tetris", desc: "Stack & clear lines", icon: "🟦", href: "/tetris", ready: true },
 ];
 
 function Card({ g }: { g: Game }) {
