@@ -285,7 +285,7 @@ export function Sudoku() {
   }, [applyValue, undo, selected]);
 
   return (
-    <div className="game-layout">
+    <div className="game-layout game-layout--col">
     <div className="sudoku">
       <div className="sudoku-bar">
         <div className="seg">

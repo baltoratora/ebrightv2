@@ -466,7 +466,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  width: min(46vh, 300px);
+  width: min(38vh, 220px);
 }
 
 .sudoku-bar {
@@ -509,8 +509,8 @@ body {
 
 .sudoku-grid-wrap {
   flex: 0 0 auto;
-  /* Bound by viewport height so the whole game fits without scrolling. */
-  width: min(64vh, 520px, 100%);
+  /* Smaller cap so grid + pad always sit side-by-side without wrapping. */
+  width: min(52vh, 400px, 100%);
   aspect-ratio: 1 / 1;
 }
 
@@ -569,8 +569,9 @@ body {
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 .cell.wrong {
-  color: #ff6b6b;
-  background: rgba(193, 18, 31, 0.14);
+  color: #ff2222;
+  background: rgba(255, 34, 34, 0.22);
+  box-shadow: inset 0 -3px 0 #ff2222;
 }
 
 .notes {
@@ -872,8 +873,8 @@ a.game-card:hover {
 .wg-boards.quad {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  max-width: 440px;
+  gap: 16px;
+  width: min(100%, 680px);
   margin: 0 auto;
 }
 .wg-grid {
@@ -894,7 +895,7 @@ a.game-card:hover {
   gap: 5px;
 }
 .wg-boards.quad .wg-row {
-  gap: 3px;
+  gap: 4px;
 }
 .wg-tile {
   aspect-ratio: 1 / 1;
@@ -909,7 +910,7 @@ a.game-card:hover {
   color: var(--text);
 }
 .wg-boards.quad .wg-tile {
-  font-size: clamp(10px, 3vw, 15px);
+  font-size: clamp(14px, 2.4vw, 22px);
   border-width: 1.5px;
   border-radius: 4px;
 }
@@ -948,8 +949,8 @@ a.game-card:hover {
 }
 .wg-key {
   flex: 1;
-  max-width: 40px;
-  height: 50px;
+  max-width: 44px;
+  height: 54px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--surface-2);
@@ -959,13 +960,16 @@ a.game-card:hover {
   text-transform: uppercase;
   cursor: pointer;
   padding: 0;
+  /* iOS tap feedback */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .wg-key:hover {
   border-color: var(--accent);
 }
 .wg-key.wide {
   flex: 1.6;
-  max-width: 62px;
+  max-width: 68px;
   font-size: 12px;
 }
 .wg-key.correct {
@@ -1570,6 +1574,10 @@ a.game-card:hover {
   justify-content: center;
   flex-wrap: wrap;
 }
+.game-layout--col {
+  flex-direction: column;
+  align-items: center;
+}
 .lb {
   width: min(92vw, 250px);
   background: var(--surface);
@@ -1695,12 +1703,12 @@ a.game-card:hover {
   }
 
   .sudoku-grid-wrap {
-    width: min(96vw, 460px);
+    width: min(96vw, 400px);
   }
 
   .sudoku-side {
     width: 100%;
-    max-width: min(96vw, 460px);
+    max-width: min(96vw, 400px);
   }
 
   /* Keep the 3x3 phone-style pad, but shorter keys so it isn't too tall. */
