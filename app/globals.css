@@ -1502,6 +1502,34 @@ a.game-card:hover {
   border-color: var(--accent);
 }
 
+/* ---------- Pinball ---------- */
+.pinball {
+  max-width: 360px;
+  margin: 0 auto;
+}
+.pinball-canvas {
+  display: block;
+  height: min(64vh, 540px);
+  aspect-ratio: 300 / 460;
+  width: auto;
+  margin: 0 auto;
+  border-radius: 12px;
+  touch-action: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.pinball-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 14px;
+}
+.pinball-controls .t-btn {
+  flex: 1;
+  max-width: 160px;
+  height: 56px;
+  touch-action: none;
+}
+
 /* ---------- Mobile (iOS phones etc.) ---------- */
 @media (max-width: 560px) {
   .page {
