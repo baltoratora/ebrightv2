@@ -1399,6 +1399,22 @@ a.game-card:hover {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
+/* ---------- Pool (canvas) ---------- */
+.pool {
+  max-width: 480px;
+  margin: 0 auto;
+}
+.pool-canvas {
+  display: block;
+  width: min(96vw, 460px);
+  aspect-ratio: 11 / 6;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 12px;
+  touch-action: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
 /* ---------- Mobile (iOS phones etc.) ---------- */
 @media (max-width: 560px) {
   .page {
