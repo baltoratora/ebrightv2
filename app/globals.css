@@ -1686,6 +1686,21 @@ a.game-card:hover {
   justify-content: center;
 }
 
+/* ---------- Puzzle Bobble ---------- */
+.pb-wrap {
+  width: min(100%, 320px);
+  margin: 0 auto;
+}
+
+.pb-canvas {
+  display: block;
+  border-radius: 10px;
+  cursor: crosshair;
+  border: 1px solid var(--border);
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* ---------- Mobile (iOS phones etc.) ---------- */
 @media (max-width: 560px) {
   .page {

@@ -26,6 +26,7 @@ const GAMES: Game[] = [
   { name: "Tetris", desc: "Stack & clear lines", icon: "🟦", href: "/tetris", ready: true },
   { name: "Pinball", desc: "Keep it alive", icon: "🕹️", href: "/pinball", ready: true },
   { name: "Brick Breaker", desc: "Clear the wall", icon: "🧱", href: "/breakout", ready: true },
+  { name: "Puzzle Bobble", desc: "Shoot & match bubbles", icon: "🫧", href: "/puzzle-bobble", ready: true },
 ];
 
 function Card({ g }: { g: Game }) {
