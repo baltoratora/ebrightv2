@@ -1818,6 +1818,45 @@ a.game-card:hover {
     grid-column: 3;
     width: auto;
   }
+  /* Quordle: drop info column so boards+keyboard get the full width */
+  .page--game .game-layout:has(.wg-boards.quad) {
+    grid-template-columns: 1fr 260px;
+  }
+  .page--game .game-layout:has(.wg-boards.quad) .game-info {
+    display: none;
+  }
+  .page--game .game-layout:has(.wg-boards.quad) .lb {
+    grid-column: 2;
+  }
+}
+
+/* Quordle desktop: keyboard to the right of the 4 boards */
+@media (min-width: 768px) {
+  .wg:has(.wg-boards.quad) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 28px;
+    row-gap: 0;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  /* Bar, messages, win notice span full width */
+  .wg:has(.wg-boards.quad) .sudoku-bar,
+  .wg:has(.wg-boards.quad) .wg-msg,
+  .wg:has(.wg-boards.quad) .sudoku-win {
+    flex: 0 0 100%;
+  }
+  /* Boards: fixed-width flex item on the left */
+  .wg:has(.wg-boards.quad) .wg-boards {
+    flex: 0 0 auto;
+  }
+  /* Keyboard: fixed-width flex item on the right, vertically centered */
+  .wg:has(.wg-boards.quad) .wg-keyboard {
+    flex: 0 0 auto;
+    margin-top: 0;
+    align-self: center;
+  }
 }
 
 /* ---------- Mobile (iOS phones etc.) ---------- */
