@@ -9,6 +9,7 @@ import {
   WORD_LENGTH,
   type LetterStatus,
 } from "@/lib/wordle";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 const KEY_ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
 
@@ -139,6 +140,7 @@ export function WordGame({
   }, [guesses, targets]);
 
   return (
+    <div className="game-layout">
     <div className="wg">
       <div className="sudoku-bar">
         <span className="wg-progress">
@@ -202,6 +204,13 @@ export function WordGame({
           </div>
         ))}
       </div>
+    </div>
+      <GameLeaderboard
+        game={boards === 1 ? "wordle" : "quordle"}
+        value={guesses.length}
+        over={allSolved}
+        title={boards === 1 ? "Wordle" : "Quordle"}
+      />
     </div>
   );
 }

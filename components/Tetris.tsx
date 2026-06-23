@@ -14,6 +14,7 @@ import {
   type Game,
   type Cell,
 } from "@/lib/tetris";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 const COLOR: Record<string, string> = {
   I: "#22d3ee",
@@ -83,6 +84,7 @@ export function Tetris() {
   };
 
   return (
+    <div className="game-layout">
     <div className="tetris">
       <div className="sudoku-bar">
         <span className="wg-progress">
@@ -147,6 +149,8 @@ export function Tetris() {
           the buttons.
         </span>
       </div>
+    </div>
+      <GameLeaderboard game="tetris" value={g.score} over={g.over} title="Tetris" />
     </div>
   );
 }

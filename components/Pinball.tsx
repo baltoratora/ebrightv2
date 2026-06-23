@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { collideSeg, collideCircle, flipperSeg, type Ball, type Seg } from "@/lib/pinball";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 const W = 300;
 const H = 460;
@@ -193,6 +194,7 @@ export function Pinball() {
   };
 
   return (
+    <div className="game-layout">
     <div className="pinball">
       <div className="sudoku-bar">
         <span className="wg-progress">
@@ -231,6 +233,8 @@ export function Pinball() {
           bumper points · 3 balls.
         </span>
       </div>
+    </div>
+      <GameLeaderboard game="pinball" value={score} over={over} title="Pinball" />
     </div>
   );
 }
