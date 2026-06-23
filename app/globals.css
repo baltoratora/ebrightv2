@@ -1530,6 +1530,38 @@ a.game-card:hover {
   touch-action: none;
 }
 
+/* ---------- Brick Breaker ---------- */
+.breakout {
+  max-width: 360px;
+  margin: 0 auto;
+}
+.breakout-stage {
+  position: relative;
+  width: fit-content;
+  margin: 0 auto;
+}
+.breakout-canvas {
+  display: block;
+  height: min(64vh, 540px);
+  aspect-ratio: 320 / 440;
+  width: auto;
+  border-radius: 12px;
+  touch-action: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+}
+.breakout-hint-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
 /* ---------- Mobile (iOS phones etc.) ---------- */
 @media (max-width: 560px) {
   .page {

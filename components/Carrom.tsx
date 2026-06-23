@@ -10,8 +10,8 @@ const POCKET_R = 22;
 const BASE_Y = DIM - 46;
 const BASE_MIN = 60;
 const BASE_MAX = DIM - 60;
-const DAMPING = 0.985;
-const MAX_SPEED = 16;
+const DAMPING = 0.972; // more friction — slower, settles sooner
+const MAX_SPEED = 11;
 const POCKETS: Pocket[] = [
   { x: 24, y: 24, r: POCKET_R },
   { x: DIM - 24, y: 24, r: POCKET_R },

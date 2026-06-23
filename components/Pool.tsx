@@ -7,8 +7,8 @@ const W = 440;
 const H = 240;
 const BALL_R = 10;
 const POCKET_R = 17;
-const DAMPING = 0.99;
-const MAX_SPEED = 18;
+const DAMPING = 0.98; // slower roll
+const MAX_SPEED = 12;
 
 const POCKETS: Pocket[] = [
   { x: 18, y: 18, r: POCKET_R },

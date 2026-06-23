@@ -6,21 +6,21 @@ import { collideSeg, collideCircle, flipperSeg, type Ball, type Seg } from "@/li
 const W = 300;
 const H = 460;
 const BALL_R = 7;
-const G = 0.1;
+const G = 0.055; // floatier
 const SUB = 6;
-const MAX_SPEED = 8;
-const WALL_REST = 0.55;
-const FLIP_REST = 0.35;
-const FLIP_KICK = 5.5;
+const MAX_SPEED = 6; // slower ball, more reaction time
+const WALL_REST = 0.45; // less bouncy
+const FLIP_REST = 0.3;
+const FLIP_KICK = 3.4; // gentler flip
 
 const LX = 96;
 const RX = W - 96;
 const LY = H - 70;
-const FLEN = 58;
-const L_REST = 0.5;
-const L_UP = -0.5;
-const R_REST = Math.PI - 0.5;
-const R_UP = Math.PI + 0.5;
+const FLEN = 64; // longer flippers cover more of the bottom
+const L_REST = 0.45;
+const L_UP = -0.55;
+const R_REST = Math.PI - 0.45;
+const R_UP = Math.PI + 0.55;
 
 const WALLS: Seg[] = [
   { x1: 0, y1: 0, x2: 0, y2: H },
