@@ -2,3 +2,9 @@ name = "baltoratora"
 pages_build_output_dir = "out"
 compatibility_date = "2024-12-30"
 compatibility_flags = ["nodejs_compat"]
+
+# Leaderboard store (functions/api/scores.ts uses env.DB).
+[[d1_databases]]
+binding = "DB"
+database_name = "baltoratora-scores"
+database_id = "f4b11b0d-f418-47ef-8b5d-7719b1b7e8b6"

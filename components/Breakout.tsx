@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { bounceOffRect, makeBricks, type Ball, type Brick } from "@/lib/breakout";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 const W = 320;
 const H = 440;
@@ -178,6 +179,7 @@ export function Breakout() {
   };
 
   return (
+    <div className="game-layout">
     <div className="breakout">
       <div className="sudoku-bar">
         <span className="wg-progress">
@@ -211,6 +213,13 @@ export function Breakout() {
           clear all the bricks.
         </span>
       </div>
+    </div>
+      <GameLeaderboard
+        game="breakout"
+        value={score}
+        over={status === "over" || status === "won"}
+        title="Brick Breaker"
+      />
     </div>
   );
 }

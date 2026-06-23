@@ -1562,6 +1562,122 @@ a.game-card:hover {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
+/* ---------- Leaderboard (shared) ---------- */
+.game-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.lb {
+  width: min(92vw, 250px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.lb-title {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+.lb-empty {
+  color: var(--muted);
+  font-size: 13px;
+}
+.lb-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.lb-row:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.03);
+}
+.lb-row.me {
+  background: rgba(255, 93, 143, 0.18);
+  outline: 1px solid var(--accent);
+}
+.lb-rank {
+  width: 20px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.lb-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lb-val {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+}
+.lb-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(5, 6, 13, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.lb-modal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  width: min(90vw, 320px);
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+.lb-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+.lb-modal-val {
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--accent);
+  margin: 8px 0 16px;
+}
+.lb-input {
+  width: 100%;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 11px 14px;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.lb-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.lb-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
 /* ---------- Mobile (iOS phones etc.) ---------- */
 @media (max-width: 560px) {
   .page {
