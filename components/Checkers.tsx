@@ -11,6 +11,7 @@ import {
   type Color,
   type Move,
 } from "@/lib/checkers";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 type Difficulty = "easy" | "medium" | "hard";
 const DEPTH: Record<Difficulty, number> = { easy: 2, medium: 4, hard: 6 };
@@ -27,6 +28,7 @@ export function Checkers() {
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
   const [thinking, setThinking] = useState(false);
   const [history, setHistory] = useState<Snap[]>([]);
+  const [moveCount, setMoveCount] = useState(0);
 
   const counts = useMemo(() => countPieces(board), [board]);
   const legal = useMemo(() => generateMoves(board, turn), [board, turn]);
@@ -57,6 +59,7 @@ export function Checkers() {
     setSel(null);
     setThinking(false);
     setHistory([]);
+    setMoveCount(0);
   }, []);
 
   const undo = useCallback(() => {
@@ -81,6 +84,7 @@ export function Checkers() {
         setHistory((hh) => [...hh, { board, turn }]);
         setBoard(applyMove(board, move));
         setTurn("b");
+        setMoveCount((m) => m + 1);
         setSel(null);
         return;
       }
@@ -115,6 +119,7 @@ export function Checkers() {
       : "Your move";
 
   return (
+    <div className="game-layout">
     <div className="chess">
       <div className="sudoku-bar">
         <div className="seg">
@@ -170,6 +175,13 @@ export function Checkers() {
           king.
         </span>
       </div>
+    </div>
+      <GameLeaderboard
+        game="checkers"
+        value={moveCount}
+        over={winnerColor === "r"}
+        title="Checkers · moves to win"
+      />
     </div>
   );
 }

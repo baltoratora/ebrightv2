@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type Square } from "chess.js";
 import { bestMove } from "@/lib/chessAI";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 const GLYPH: Record<string, string> = {
   p: "♟",
@@ -99,6 +100,7 @@ export function Chessboard() {
   const board = game.board();
 
   return (
+    <div className="game-layout">
     <div className="chess">
       <div className="sudoku-bar">
         <div className="seg">
@@ -156,6 +158,13 @@ export function Chessboard() {
           auto-promote to a queen.
         </span>
       </div>
+    </div>
+      <GameLeaderboard
+        game="chess"
+        value={Math.ceil(game.history().length / 2)}
+        over={game.isCheckmate() && game.turn() === "b"}
+        title="Chess · moves to win"
+      />
     </div>
   );
 }

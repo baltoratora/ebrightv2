@@ -8,6 +8,7 @@ import {
   type Board,
   type Difficulty,
 } from "@/lib/sudoku";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 type Notes = number[][][]; // notes[r][c] = candidate numbers
 type Snapshot = { board: Board; notes: Notes };
@@ -64,6 +65,7 @@ export function Sudoku() {
   const [highlightDigit, setHighlightDigit] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
   const [generating, setGenerating] = useState(true);
+  const [seconds, setSeconds] = useState(0);
 
   const newGame = useCallback((diff: Difficulty) => {
     setGenerating(true);
@@ -77,6 +79,7 @@ export function Sudoku() {
       setHistory([]);
       setSelected(null);
       setHighlightDigit(null);
+      setSeconds(0);
       setGenerating(false);
     }, 20);
   }, []);
@@ -87,6 +90,12 @@ export function Sudoku() {
   }, []);
 
   const won = useMemo(() => (board ? isComplete(board) : false), [board]);
+
+  useEffect(() => {
+    if (generating || won) return;
+    const id = setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, [generating, won]);
 
   // Rows/columns that contain the highlighted digit (for the click-to-highlight).
   const { hiRows, hiCols } = useMemo(() => {
@@ -275,6 +284,7 @@ export function Sudoku() {
   }, [applyValue, undo, selected]);
 
   return (
+    <div className="game-layout">
     <div className="sudoku">
       <div className="sudoku-bar">
         <div className="seg">
@@ -422,6 +432,13 @@ export function Sudoku() {
           <kbd>U</kbd> undo
         </span>
       </div>
+    </div>
+      <GameLeaderboard
+        game={`sudoku:${difficulty}`}
+        value={seconds}
+        over={won}
+        title={`Sudoku · ${difficulty}`}
+      />
     </div>
   );
 }
