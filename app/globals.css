@@ -1383,6 +1383,22 @@ a.game-card:hover {
   outline-offset: -1px;
 }
 
+/* ---------- Carrom (canvas) ---------- */
+.carrom {
+  max-width: 460px;
+  margin: 0 auto;
+}
+.carrom-canvas {
+  display: block;
+  width: min(94vw, 420px);
+  aspect-ratio: 1 / 1;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 12px;
+  touch-action: none; /* let drags aim instead of scrolling */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
 /* ---------- Mobile (iOS phones etc.) ---------- */
 @media (max-width: 560px) {
   .page {
