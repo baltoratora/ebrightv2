@@ -1318,6 +1318,71 @@ a.game-card:hover {
   border: 2px solid #000;
 }
 
+/* ---------- Battleship ---------- */
+.bs {
+  max-width: 420px;
+  margin: 0 auto;
+}
+.bs-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-align: center;
+  margin: 16px 0 8px;
+}
+.bs-board {
+  width: min(92vw, 340px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+}
+.bs-cell {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  background: rgba(91, 130, 255, 0.12);
+}
+.bs-board.enemy .bs-cell.water {
+  cursor: pointer;
+}
+.bs-board.enemy .bs-cell.water:hover {
+  border-color: var(--accent);
+  background: rgba(255, 93, 143, 0.15);
+}
+.bs-cell.ship {
+  background: #3a4055;
+}
+.bs-cell.hit {
+  background: #c0233a;
+}
+.bs-cell.hit::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 34%;
+  height: 34%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+}
+.bs-cell.miss::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 24%;
+  height: 24%;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.bs-cell.reveal {
+  outline: 1px dashed rgba(255, 255, 255, 0.3);
+  outline-offset: -1px;
+}
+
 /* ---------- Mobile (iOS phones etc.) ---------- */
 @media (max-width: 560px) {
   .page {
