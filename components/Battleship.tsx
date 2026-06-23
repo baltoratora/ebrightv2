@@ -11,6 +11,7 @@ import {
   SIZE,
   type Board,
 } from "@/lib/battleship";
+import { GameInfo } from "@/components/GameInfo";
 
 type Phase = "setup" | "playing" | "over";
 
@@ -116,7 +117,15 @@ export function Battleship() {
   );
 
   return (
-    <div className="bs">
+    <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "Click", desc: "Fire torpedo at that cell" },
+          { key: "Randomize", desc: "Shuffle your ship placement" },
+        ]}
+        tips={["Attack in a checkerboard pattern to cover the grid faster", "Larger ships are easier to find first"]}
+      />
+      <div className="bs">
       <div className="sudoku-bar">
         <span className="wg-progress">{status}</span>
         <div style={{ display: "flex", gap: 8 }}>
@@ -158,6 +167,7 @@ export function Battleship() {
             : "Tap a cell in enemy waters to fire · sink all 5 ships to win."}
         </span>
       </div>
+    </div>
     </div>
   );
 }

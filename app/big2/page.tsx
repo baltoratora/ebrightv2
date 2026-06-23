@@ -5,7 +5,7 @@ export const metadata = { title: "Big 2" };
 
 export default function Big2Page() {
   return (
-    <main className="page">
+    <main className="page page--game">
       <BackBar href="/thinking" label="← Thinking Mode" />
       <header className="brand">
         <div>

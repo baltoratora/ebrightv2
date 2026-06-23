@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { stepOnce, allStopped, type Disc, type Pocket } from "@/lib/physics";
+import { GameInfo } from "@/components/GameInfo";
 
 const W = 440;
 const H = 240;
@@ -183,7 +184,15 @@ export function Pool() {
   }, [draw]);
 
   return (
-    <div className="pool">
+    <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "Drag", desc: "Aim & set shot power" },
+          { key: "Release", desc: "Shoot the cue ball" },
+        ]}
+        tips={["Play for position — leave the cue ball where you need it", "A scratch returns the cue ball to you"]}
+      />
+      <div className="pool">
       <div className="sudoku-bar">
         <span className="wg-progress">
           {won ? `🎉 Cleared in ${shots} shots!` : `Balls left: ${ballsLeft} · Shots: ${shots}`}
@@ -208,6 +217,7 @@ export function Pool() {
           sink all the balls · scratch returns the cue ball.
         </span>
       </div>
+    </div>
     </div>
   );
 }

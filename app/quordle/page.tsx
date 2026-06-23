@@ -5,7 +5,7 @@ export const metadata = { title: "Quordle" };
 
 export default function QuordlePage() {
   return (
-    <main className="page">
+    <main className="page page--game">
       <BackBar href="/thinking" label="← Thinking Mode" />
       <header className="brand">
         <div>

@@ -15,6 +15,7 @@ import {
   type Cell,
 } from "@/lib/tetris";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
+import { GameInfo } from "@/components/GameInfo";
 
 const COLOR: Record<string, string> = {
   I: "#22d3ee",
@@ -85,6 +86,16 @@ export function Tetris() {
 
   return (
     <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "← →", desc: "Move" },
+          { key: "↑ / Z", desc: "Rotate" },
+          { key: "↓", desc: "Soft drop" },
+          { key: "Space", desc: "Hard drop" },
+          { key: "P", desc: "Pause" },
+        ]}
+        tips={["Clear 4 rows at once for a Tetris"]}
+      />
     <div className="tetris">
       <div className="sudoku-bar">
         <span className="wg-progress">

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { stepOnce, allStopped, type Disc, type Pocket } from "@/lib/physics";
+import { GameInfo } from "@/components/GameInfo";
 
 const DIM = 400;
 const STRIKER_R = 18;
@@ -222,7 +223,15 @@ export function Carrom() {
   }, [draw]);
 
   return (
-    <div className="carrom">
+    <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "Drag", desc: "Aim & set shot power" },
+          { key: "Release", desc: "Flick the striker" },
+        ]}
+        tips={["Aim for clusters to pocket multiple coins at once", "Pocket the Queen before your last coin"]}
+      />
+      <div className="carrom">
       <div className="sudoku-bar">
         <span className="wg-progress">
           {won ? `🎉 Cleared in ${strikes} strikes!` : `Coins left: ${coinsLeft} · Strikes: ${strikes}`}
@@ -248,6 +257,7 @@ export function Carrom() {
           (longer = harder) and release to flick · pocket all the coins.
         </span>
       </div>
+    </div>
     </div>
   );
 }

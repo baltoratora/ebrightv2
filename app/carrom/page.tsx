@@ -5,7 +5,7 @@ export const metadata = { title: "Carrom" };
 
 export default function CarromPage() {
   return (
-    <main className="page">
+    <main className="page page--game">
       <BackBar href="/thinking" label="← Thinking Mode" />
       <header className="brand">
         <div>

@@ -13,6 +13,7 @@ import {
   type Board,
   type Difficulty,
 } from "@/lib/minesweeper";
+import { GameInfo } from "@/components/GameInfo";
 
 type Status = "ready" | "playing" | "won" | "lost";
 const ORDER: Difficulty[] = ["easy", "medium", "hard"];
@@ -86,7 +87,15 @@ export function Minesweeper() {
   const face = status === "lost" ? "😵" : status === "won" ? "😎" : "🙂";
 
   return (
-    <div className="sudoku ms">
+    <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "Click", desc: "Reveal cell" },
+          { key: "Right-click", desc: "Flag/unflag" },
+        ]}
+        tips={["First tap is always safe", "Start near the center for the most information"]}
+      />
+      <div className="sudoku ms">
       <div className="sudoku-bar">
         <div className="seg">
           {ORDER.map((d) => (
@@ -176,6 +185,7 @@ export function Minesweeper() {
           (right-click also flags) · first tap is always safe.
         </span>
       </div>
+    </div>
     </div>
   );
 }

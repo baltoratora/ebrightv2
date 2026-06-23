@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type Square } from "chess.js";
 import { bestMove } from "@/lib/chessAI";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
+import { GameInfo } from "@/components/GameInfo";
 
 const GLYPH: Record<string, string> = {
   p: "♟",
@@ -101,6 +102,12 @@ export function Chessboard() {
 
   return (
     <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "Click", desc: "Select piece, then click destination" },
+        ]}
+        tips={["Control the center; castle early for king safety"]}
+      />
     <div className="chess">
       <div className="sudoku-bar">
         <div className="seg">

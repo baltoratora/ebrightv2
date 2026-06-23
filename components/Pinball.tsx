@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { collideSeg, collideCircle, flipperSeg, type Ball, type Seg } from "@/lib/pinball";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
+import { GameInfo } from "@/components/GameInfo";
 
 const W = 300;
 const H = 460;
@@ -195,6 +196,13 @@ export function Pinball() {
 
   return (
     <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "← / A / Z", desc: "Left flipper" },
+          { key: "→ / L", desc: "Right flipper" },
+        ]}
+        tips={["Keep the ball away from the center drain", "Hit bumpers for combo points"]}
+      />
     <div className="pinball">
       <div className="sudoku-bar">
         <span className="wg-progress">

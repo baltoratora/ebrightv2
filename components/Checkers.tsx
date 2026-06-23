@@ -12,6 +12,7 @@ import {
   type Move,
 } from "@/lib/checkers";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
+import { GameInfo } from "@/components/GameInfo";
 
 type Difficulty = "easy" | "medium" | "hard";
 const DEPTH: Record<Difficulty, number> = { easy: 2, medium: 4, hard: 6 };
@@ -122,6 +123,12 @@ export function Checkers() {
 
   return (
     <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "Click", desc: "Select piece, then click destination" },
+        ]}
+        tips={["Captures are mandatory — plan ahead", "Reach the far end to king your piece"]}
+      />
     <div className="chess">
       <div className="sudoku-bar">
         <div className="seg">

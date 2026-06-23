@@ -9,6 +9,7 @@ import {
   type Difficulty,
 } from "@/lib/sudoku";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
+import { GameInfo } from "@/components/GameInfo";
 
 type Notes = number[][][]; // notes[r][c] = candidate numbers
 type Snapshot = { board: Board; notes: Notes };
@@ -286,6 +287,16 @@ export function Sudoku() {
 
   return (
     <div className="game-layout game-layout--col">
+      <GameInfo
+        controls={[
+          { key: "1–9", desc: "Fill selected cell" },
+          { key: "← → ↑ ↓", desc: "Navigate cells" },
+          { key: "N", desc: "Toggle notes mode" },
+          { key: "U", desc: "Undo last move" },
+          { key: "Del", desc: "Erase cell" },
+        ]}
+        tips={["Start with rows or columns that already have 7+ numbers"]}
+      />
     <div className="sudoku">
       <div className="sudoku-bar">
         <div className="seg">

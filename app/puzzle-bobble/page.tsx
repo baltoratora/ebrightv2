@@ -5,7 +5,7 @@ export const metadata = { title: "Puzzle Bobble" };
 
 export default function PuzzleBobbblePage() {
   return (
-    <main className="page">
+    <main className="page page--game">
       <BackBar href="/thinking" label="← Games" />
       <PuzzleBobble />
     </main>

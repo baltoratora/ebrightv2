@@ -8,6 +8,7 @@ import {
   type BubbleColor, type Grid,
 } from "@/lib/bubblebobble";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
+import { GameInfo } from "@/components/GameInfo";
 
 const W = CANVAS_W;        // 308
 const H = 500;
@@ -339,6 +340,13 @@ export function PuzzleBobble() {
 
   return (
     <div className="game-layout game-layout--col">
+      <GameInfo
+        controls={[
+          { key: "Mouse", desc: "Aim direction" },
+          { key: "Click", desc: "Fire bubble" },
+        ]}
+        tips={["Bank shots off walls to reach tricky spots", "Popping 3+ same-color bubbles scores chain points"]}
+      />
       <div className="pb-wrap">
         <div className="sudoku-bar">
           <span className="wg-progress">Score {score}</span>

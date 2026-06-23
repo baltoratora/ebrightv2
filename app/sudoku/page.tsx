@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function SudokuPage() {
   return (
-    <main className="page">
+    <main className="page page--game">
       <BackBar href="/thinking" label="← Thinking Mode" />
       <header className="brand">
         <div>

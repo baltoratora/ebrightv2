@@ -14,6 +14,7 @@ import {
   type Card,
   type GameState,
 } from "@/lib/solitaire";
+import { GameInfo } from "@/components/GameInfo";
 
 const RANKS = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 const SYM: Record<string, string> = { S: "♠", H: "♥", D: "♦", C: "♣" };
@@ -151,7 +152,15 @@ export function Solitaire() {
   const wasteTop = game.waste[game.waste.length - 1];
 
   return (
-    <div className="sol">
+    <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "Click", desc: "Select card, then click destination" },
+          { key: "Click stock", desc: "Draw new card" },
+        ]}
+        tips={["Uncover face-down cards before moving to foundations", "Keep aces and deuces accessible"]}
+      />
+      <div className="sol">
       <div className="sudoku-bar">
         <div className="seg">
           {([1, 3] as const).map((m) => (
@@ -244,6 +253,7 @@ export function Solitaire() {
           foundation · ↻ recycles the stock.
         </span>
       </div>
+    </div>
     </div>
   );
 }

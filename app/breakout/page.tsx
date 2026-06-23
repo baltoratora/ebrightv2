@@ -5,7 +5,7 @@ export const metadata = { title: "Brick Breaker" };
 
 export default function BreakoutPage() {
   return (
-    <main className="page">
+    <main className="page page--game">
       <BackBar href="/thinking" label="← Thinking Mode" />
       <header className="brand">
         <div>

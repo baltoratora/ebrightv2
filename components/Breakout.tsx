@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { bounceOffRect, makeBricks, type Ball, type Brick } from "@/lib/breakout";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
+import { GameInfo } from "@/components/GameInfo";
 
 const W = 320;
 const H = 440;
@@ -180,6 +181,13 @@ export function Breakout() {
 
   return (
     <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "← →", desc: "Move paddle" },
+          { key: "Space", desc: "Launch ball" },
+        ]}
+        tips={["Angle into corners to chain multiple bricks"]}
+      />
     <div className="breakout">
       <div className="sudoku-bar">
         <span className="wg-progress">

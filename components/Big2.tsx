@@ -11,6 +11,7 @@ import {
   SUIT_SYM,
   type Card,
 } from "@/lib/big2";
+import { GameInfo } from "@/components/GameInfo";
 
 interface G {
   hands: Card[][];
@@ -146,7 +147,16 @@ export function Big2() {
   }, [g]);
 
   return (
-    <div className="b2">
+    <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "Click card", desc: "Select / deselect" },
+          { key: "Play", desc: "Submit selected hand" },
+          { key: "Pass", desc: "Skip your turn" },
+        ]}
+        tips={["Save your 2s for when you need to beat strong hands", "Singles first, combos when behind"]}
+      />
+      <div className="b2">
       <div className="sudoku-bar">
         <span className="wg-progress">{status}</span>
         <button className="btn ghost" onClick={newGame}>
@@ -207,6 +217,7 @@ export function Big2() {
           hands · 2 is highest · ♦&lt;♣&lt;♥&lt;♠.
         </span>
       </div>
+    </div>
     </div>
   );
 }

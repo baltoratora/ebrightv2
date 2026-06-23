@@ -10,6 +10,7 @@ import {
   type LetterStatus,
 } from "@/lib/wordle";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
+import { GameInfo } from "@/components/GameInfo";
 
 const KEY_ROWS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
 
@@ -141,6 +142,14 @@ export function WordGame({
 
   return (
     <div className="game-layout">
+      <GameInfo
+        controls={[
+          { key: "A–Z", desc: "Type a letter" },
+          { key: "Enter", desc: "Submit guess" },
+          { key: "←", desc: "Delete letter" },
+        ]}
+        tips={["CRANE or SLATE covers the most common letters"]}
+      />
     <div className="wg">
       <div className="sudoku-bar">
         <span className="wg-progress">

@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function MinesweeperPage() {
   return (
-    <main className="page">
+    <main className="page page--game">
       <BackBar href="/thinking" label="← Thinking Mode" />
       <header className="brand">
         <div>

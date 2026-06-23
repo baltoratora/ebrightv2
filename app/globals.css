@@ -1703,6 +1703,112 @@ a.game-card:hover {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ---------- Game Info Panel (desktop sidebar) ---------- */
+.game-info {
+  display: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  width: 220px;
+  flex-shrink: 0;
+}
+.gi-section {
+  margin-bottom: 20px;
+}
+.gi-section:last-child {
+  margin-bottom: 0;
+}
+.gi-heading {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.gi-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.gi-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.gi-key {
+  display: inline-block;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: var(--text);
+  white-space: nowrap;
+  flex-shrink: 0;
+  line-height: 1.6;
+}
+.gi-desc {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+  padding-top: 3px;
+}
+.gi-tips {
+  list-style: disc;
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.gi-tips li {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ---------- Wide-desktop 3-column game layout ---------- */
+@media (min-width: 1280px) {
+  .page--game {
+    max-width: 1400px;
+  }
+  .page--game .game-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr 260px;
+    align-items: start;
+  }
+  /* Games without a leaderboard: 2-col */
+  .page--game .game-layout:not(:has(.lb)) {
+    grid-template-columns: 220px 1fr;
+  }
+  .page--game .game-info {
+    display: block;
+    width: auto;
+    grid-column: 1;
+    position: sticky;
+    top: 24px;
+  }
+  /* Center the game element in the middle column */
+  .page--game .game-layout > *:not(.game-info):not(.lb) {
+    justify-self: center;
+  }
+  .page--game .game-layout .lb {
+    grid-column: 3;
+    width: auto;
+  }
+  /* game-layout--col: lb goes to the right column instead of below */
+  .page--game .game-layout--col .lb {
+    grid-column: 3;
+    width: auto;
+  }
+}
+
 /* ---------- Mobile (iOS phones etc.) ---------- */
 @media (max-width: 560px) {
   .page {
