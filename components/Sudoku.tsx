@@ -286,7 +286,7 @@ export function Sudoku() {
   }, [applyValue, undo, selected]);
 
   return (
-    <div className="game-layout game-layout--col">
+    <div className="game-layout">
       <GameInfo
         controls={[
           { key: "1–9", desc: "Fill selected cell" },

@@ -458,7 +458,7 @@ body {
   gap: 26px;
   align-items: flex-start;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .sudoku-side {
@@ -466,7 +466,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  width: min(40vh, 240px);
+  width: min(36vh, 196px);
 }
 
 .sudoku-bar {
@@ -509,7 +509,7 @@ body {
 
 .sudoku-grid-wrap {
   flex: 0 0 auto;
-  width: min(56vh, 460px, 100%);
+  width: min(50vh, 420px);
   aspect-ratio: 1 / 1;
 }
 
@@ -871,9 +871,10 @@ a.game-card:hover {
 }
 .wg-boards.quad {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, fit-content(50%));
   gap: 16px;
-  width: min(100%, 680px);
+  width: auto;
+  justify-content: center;
   margin: 0 auto;
 }
 .wg-grid {
@@ -908,8 +909,18 @@ a.game-card:hover {
   text-transform: uppercase;
   color: var(--text);
 }
+.wg-boards.quad .wg-row {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
 .wg-boards.quad .wg-tile {
-  font-size: clamp(14px, 2.4vw, 22px);
+  /* Size tiles so 2×9 rows + keyboard fit in one viewport — no scroll */
+  height: clamp(22px, calc((100dvh - 480px) / 18), 44px);
+  width: clamp(22px, calc((100dvh - 480px) / 18), 44px);
+  aspect-ratio: unset;
+  flex-shrink: 0;
+  font-size: clamp(10px, calc((100dvh - 480px) / 37), 22px);
   border-width: 1.5px;
   border-radius: 4px;
 }
@@ -1823,6 +1834,7 @@ a.game-card:hover {
   /* Stack puzzle over the pad; both go full width. */
   .sudoku-main {
     gap: 16px;
+    flex-wrap: wrap;
   }
 
   .sudoku-grid-wrap {
@@ -1848,4 +1860,12 @@ a.game-card:hover {
   .thinking-link {
     align-self: flex-start;
   }
+}
+
+/* Quordle: compact keyboard + uncap container so boards can grow */
+.wg:has(.wg-boards.quad) {
+  max-width: none;
+}
+.wg:has(.wg-boards.quad) .wg-keyboard .wg-key {
+  height: clamp(34px, 4dvh, 46px);
 }
