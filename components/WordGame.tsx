@@ -152,10 +152,6 @@ export function WordGame({
       />
     <div className="wg">
       <div className="sudoku-bar">
-        <span className="wg-progress">
-          {solved.filter(Boolean).length}/{boards} solved · {guesses.length}/
-          {guessLimit} guesses
-        </span>
         <button className="btn ghost" onClick={newGame}>
           New
         </button>
@@ -189,6 +185,10 @@ export function WordGame({
       ) : null}
 
       <div className="wg-keyboard">
+        <div className="wg-stat">
+          {solved.filter(Boolean).length}/{boards} solved · {guesses.length}/
+          {guessLimit} guesses
+        </div>
         {KEY_ROWS.map((row, ri) => (
           <div key={ri} className="wg-krow">
             {ri === 2 ? (
