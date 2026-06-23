@@ -1263,6 +1263,61 @@ a.game-card:hover {
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
 }
 
+/* ---------- Checkers (reuses chess board sizing) ---------- */
+.ck-board {
+  width: min(94vw, 440px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(8, 1fr);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.ck-sq {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ck-sq.light {
+  background: #cfc9e6;
+}
+.ck-sq.dark {
+  background: #5d5286;
+  cursor: pointer;
+}
+.ck-sq.sel {
+  box-shadow: inset 0 0 0 3px var(--accent);
+}
+.ck-sq.dest::after {
+  content: "";
+  width: 26%;
+  height: 26%;
+  border-radius: 50%;
+  background: rgba(255, 93, 143, 0.7);
+}
+.ck-piece {
+  width: 72%;
+  height: 72%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(14px, 4vw, 22px);
+  color: #ffd54a;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.55);
+}
+.ck-piece.r {
+  background: radial-gradient(circle at 35% 30%, #ff7a8f, #c0233a);
+  border: 2px solid #8e1828;
+}
+.ck-piece.b {
+  background: radial-gradient(circle at 35% 30%, #4a4a55, #15151c);
+  border: 2px solid #000;
+}
+
 /* ---------- Mobile (iOS phones etc.) ---------- */
 @media (max-width: 560px) {
   .page {
