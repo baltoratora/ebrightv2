@@ -10,6 +10,9 @@ const BALL_R = 10;
 const POCKET_R = 17;
 const DAMPING = 0.98; // slower roll
 const MAX_SPEED = 12;
+// Physics steps simulated per rendered frame. Lower = slower real-time motion
+// for the same shot (same roll distance/bounces, just spread over more frames).
+const SUBSTEPS = 2;
 
 const POCKETS: Pocket[] = [
   { x: 18, y: 18, r: POCKET_R },
@@ -104,7 +107,7 @@ export function Pool() {
   const loop = useCallback(() => {
     const discs = discsRef.current;
     let potted = false;
-    for (let k = 0; k < 4; k++) {
+    for (let k = 0; k < SUBSTEPS; k++) {
       const got = stepOnce(discs, W, H, POCKETS, DAMPING);
       for (const id of got) {
         if (id === "cue") {
