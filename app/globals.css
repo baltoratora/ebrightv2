@@ -1979,3 +1979,58 @@ a.game-card:hover {
 .wg:has(.wg-boards.quad) {
   max-width: none;
 }
+
+/* ---------- Multiplayer (Chess "Play a friend") ---------- */
+.mp-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.mp-code {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.mp-code strong {
+  color: var(--text);
+  letter-spacing: 0.12em;
+  font-variant-numeric: tabular-nums;
+}
+.mp-copy {
+  padding: 3px 9px;
+  font-size: 12px;
+}
+.mp-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #6b7280;
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.18);
+}
+.mp-dot.on {
+  background: #2ecc71;
+  box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.25);
+}
+.mp-presence {
+  font-size: 13px;
+}
+.mp-setup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 4px 0 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.mp-join-input {
+  width: 120px;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}

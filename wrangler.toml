@@ -8,3 +8,11 @@ compatibility_flags = ["nodejs_compat"]
 binding = "DB"
 database_name = "baltoratora-scores"
 database_id = "f4b11b0d-f418-47ef-8b5d-7719b1b7e8b6"
+
+# Multiplayer rooms. The GameRoom Durable Object lives in the separate
+# baltoratora-rooms Worker (worker/); Pages can only bind to it, not host it.
+# functions/api/room/[code].ts forwards WebSocket upgrades here.
+[[durable_objects.bindings]]
+name = "ROOMS"
+class_name = "GameRoom"
+script_name = "baltoratora-rooms"
