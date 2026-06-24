@@ -1835,20 +1835,28 @@ a.game-card:hover {
     grid-column: 3;
     width: auto;
   }
-  /* Quordle: drop the info column. An empty left spacer balances the
-     leaderboard column on the right, so the boards+keyboard sit dead-centre
-     of the viewport instead of being pushed left. */
+  /* Quordle: give the boards + keyboard the FULL viewport width so the tiles
+     can be as large as the height allows, and centre them in the whole
+     viewport. The leaderboard is lifted out of flow into the top-right corner
+     so it doesn't steal width (which would shrink the tiles or wrap the
+     keyboard below the boards). */
   .page--game .game-layout:has(.wg-boards.quad) {
-    grid-template-columns: 260px minmax(0, 1fr) 260px;
+    display: block;
+    position: relative;
   }
   .page--game .game-layout:has(.wg-boards.quad) .game-info {
     display: none;
   }
-  .page--game .game-layout:has(.wg-boards.quad) > *:not(.game-info):not(.lb) {
-    grid-column: 2;
-  }
   .page--game .game-layout:has(.wg-boards.quad) .lb {
-    grid-column: 3;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 240px;
+  }
+  /* Keep the New button on the left so it doesn't collide with the
+     absolutely-positioned leaderboard in the top-right corner. */
+  .page--game .game-layout:has(.wg-boards.quad) .sudoku-bar {
+    justify-content: flex-start;
   }
 }
 
@@ -1860,7 +1868,7 @@ a.game-card:hover {
    board columns + ~10 keyboard columns sitting side by side). */
 @media (min-width: 768px) {
   .wg:has(.wg-boards.quad) {
-    --tile: min((100dvh - 340px) / 18, (100vw - 440px) / 20, 58px);
+    --tile: min((100dvh - 215px) / 18, (100vw - 140px) / 20, 80px);
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -1901,6 +1909,27 @@ a.game-card:hover {
     width: calc(var(--tile) * 1.6);
     max-width: none;
     font-size: calc(var(--tile) * 0.28);
+  }
+  /* Reclaim vertical space from the page chrome so tiles + keys can grow.
+     The header is deliberately compacted (smaller title, no tagline, tight
+     margins) on the quordle board, matching the --tile budget above. */
+  .page--game:has(.wg-boards.quad) {
+    padding-top: 14px;
+  }
+  .page--game:has(.wg-boards.quad) .brand {
+    margin-bottom: 6px;
+  }
+  .page--game:has(.wg-boards.quad) .brand h1 {
+    font-size: 22px;
+  }
+  .page--game:has(.wg-boards.quad) .brand .tag {
+    display: none;
+  }
+  .page--game:has(.wg-boards.quad) .backbar {
+    margin-bottom: 6px;
+  }
+  .wg:has(.wg-boards.quad) .sudoku-bar {
+    margin: 0;
   }
 }
 
