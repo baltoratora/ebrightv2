@@ -1835,64 +1835,72 @@ a.game-card:hover {
     grid-column: 3;
     width: auto;
   }
-  /* Quordle: drop info column so boards+keyboard get the full width */
+  /* Quordle: drop the info column. An empty left spacer balances the
+     leaderboard column on the right, so the boards+keyboard sit dead-centre
+     of the viewport instead of being pushed left. */
   .page--game .game-layout:has(.wg-boards.quad) {
-    grid-template-columns: 1fr 260px;
+    grid-template-columns: 260px minmax(0, 1fr) 260px;
   }
   .page--game .game-layout:has(.wg-boards.quad) .game-info {
     display: none;
   }
-  .page--game .game-layout:has(.wg-boards.quad) .lb {
+  .page--game .game-layout:has(.wg-boards.quad) > *:not(.game-info):not(.lb) {
     grid-column: 2;
+  }
+  .page--game .game-layout:has(.wg-boards.quad) .lb {
+    grid-column: 3;
   }
 }
 
-/* Quordle desktop: keyboard to the right of the 4 boards */
+/* Quordle desktop: 4 boards centered, keyboard to the right.
+   One shared --tile size drives both the tiles and the keys, so a tile is
+   exactly the same size as a keyboard key. It grows up to 58px on tall
+   screens and shrinks to fit on short/narrow ones, so the page never scrolls.
+   Bounded by: board height (18 stacked tile-rows) and total width (the 10
+   board columns + ~10 keyboard columns sitting side by side). */
 @media (min-width: 768px) {
   .wg:has(.wg-boards.quad) {
+    --tile: min((100dvh - 340px) / 18, (100vw - 440px) / 20, 58px);
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    column-gap: 56px;
+    column-gap: clamp(20px, 4vw, 56px);
     row-gap: 0;
-    align-items: flex-start;
-    justify-content: center;
+    align-items: center;     /* keyboard centers vertically against the boards */
+    justify-content: center; /* center the boards + keyboard group */
   }
-  /* Bar, messages, win notice span full width */
+  /* Bar, messages, win notice span the full width above the boards+keyboard */
   .wg:has(.wg-boards.quad) .sudoku-bar,
   .wg:has(.wg-boards.quad) .wg-msg,
   .wg:has(.wg-boards.quad) .sudoku-win {
     flex: 0 0 100%;
   }
-  /* Boards: fixed-width flex item on the left */
   .wg:has(.wg-boards.quad) .wg-boards {
     flex: 0 0 auto;
   }
-  /* Keyboard: fixed-width flex item on the right, vertically centered,
-     nudged a little further right */
   .wg:has(.wg-boards.quad) .wg-keyboard {
     flex: 0 0 auto;
-    margin-top: 0;
-    margin-left: 24px;
+    margin: 0;
     align-self: center;
   }
-  /* Boards fill the middle of the screen height — 18 stacked tile-rows
-     plus header/bar all fit without vertical scroll */
+  /* Tiles use the shared size so the boards always fit the viewport height */
   .wg-boards.quad .wg-tile {
-    height: min(calc((100dvh - 280px) / 18), 56px);
-    width: min(calc((100dvh - 280px) / 18), 56px);
-    font-size: min(calc((100dvh - 280px) / 36), 28px);
+    height: var(--tile);
+    width: var(--tile);
+    font-size: calc(var(--tile) * 0.5);
   }
-  /* Wider keys */
+  /* Keys are exactly the same per-letter size as a tile */
   .wg:has(.wg-boards.quad) .wg-key {
-    max-width: 80px;
-    min-width: 52px;
-    height: clamp(48px, 6dvh, 64px);
-    font-size: 20px;
+    width: var(--tile);
+    height: var(--tile);
+    min-width: 0;
+    max-width: none;
+    font-size: calc(var(--tile) * 0.38);
   }
   .wg:has(.wg-boards.quad) .wg-key.wide {
-    max-width: 120px;
-    font-size: 16px;
+    width: calc(var(--tile) * 1.6);
+    max-width: none;
+    font-size: calc(var(--tile) * 0.28);
   }
 }
 
