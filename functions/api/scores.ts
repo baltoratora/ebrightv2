@@ -1,26 +1,20 @@
 // Global leaderboard API (Cloudflare D1). GET top 10, POST a score.
 // Game keys may include a difficulty suffix, e.g. "sudoku:hard".
+//
+// Game direction ("desc" = higher is better, "asc" = lower is better) comes
+// from the single shared source in lib/leaderboard.ts, so the set of games the
+// API accepts can never drift from what the client submits.
+
+import { GAME_META } from "../../lib/leaderboard";
 
 interface Env {
   DB: D1Database;
 }
 
-// Direction per base game: "desc" = higher is better, "asc" = lower is better.
-const DIRECTION: Record<string, "asc" | "desc"> = {
-  tetris: "desc",
-  pinball: "desc",
-  breakout: "desc",
-  sudoku: "asc",
-  minesweeper: "asc",
-  wordle: "asc",
-  quordle: "asc",
-  chess: "asc",
-  checkers: "asc",
-};
-
-const baseGame = (g: string) => g.split(":")[0];
-const known = (g: string) => DIRECTION[baseGame(g)] !== undefined;
-const orderSql = (g: string) => (DIRECTION[baseGame(g)] === "asc" ? "ASC" : "DESC");
+export const baseGame = (g: string) => g.split(":")[0];
+export const known = (g: string) => GAME_META[baseGame(g)] !== undefined;
+export const orderSql = (g: string) =>
+  GAME_META[baseGame(g)]?.dir === "asc" ? "ASC" : "DESC";
 
 async function top10(env: Env, game: string) {
   const { results } = await env.DB.prepare(
