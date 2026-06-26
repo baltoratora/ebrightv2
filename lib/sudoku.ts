@@ -10,9 +10,6 @@ export type Difficulty =
   | "master"
   | "grandmaster";
 
-/** Target clues left in the puzzle per difficulty (out of 81). Fewer = harder.
- * The generator removes cells while a unique solution is preserved, so very low
- * targets are approached but not always reached exactly. */
 const CLUES: Record<Difficulty, number> = {
   easy: 45,
   medium: 38,
@@ -30,7 +27,6 @@ export function emptyBoard(): Board {
   return Array.from({ length: 9 }, () => Array<number>(9).fill(0));
 }
 
-/** Can `num` go at (row,col) without breaking row/col/box rules? */
 export function isValidPlacement(
   board: Board,
   row: number,
@@ -69,7 +65,6 @@ function shuffled(arr: number[]): number[] {
   return a;
 }
 
-/** Solve in place via backtracking. Returns true if solved. */
 export function solve(board: Board): boolean {
   const spot = firstEmpty(board);
   if (!spot) return true;
@@ -84,7 +79,6 @@ export function solve(board: Board): boolean {
   return false;
 }
 
-/** Count solutions, stopping early once `limit` is reached. */
 export function countSolutions(board: Board, limit = 2): number {
   const spot = firstEmpty(board);
   if (!spot) return 1;
@@ -100,7 +94,6 @@ export function countSolutions(board: Board, limit = 2): number {
   return count;
 }
 
-/** Generate a complete, valid solved board (randomized). */
 export function generateSolved(): Board {
   const board = emptyBoard();
   fillRandom(board);
@@ -121,10 +114,6 @@ function fillRandom(board: Board): boolean {
   return false;
 }
 
-/**
- * Generate a puzzle with a unique solution by removing cells from a solved
- * board while a unique solution is preserved.
- */
 export function generatePuzzle(difficulty: Difficulty): {
   puzzle: Board;
   solution: Board;
@@ -152,15 +141,8 @@ export function generatePuzzle(difficulty: Difficulty): {
   return { puzzle, solution };
 }
 
-/** Notes type: per-cell array of candidate numbers (mirrors component usage). */
 export type Notes = number[][][];
 
-/**
- * Compute candidate numbers for every empty cell (value === 0) in the board.
- * Returns a Notes grid where each cell contains the numbers 1–9 that do not
- * already appear in the same row, column, or 3×3 box.
- * Non-empty cells get an empty candidates array.
- */
 export function computeCandidates(board: Board): Notes {
   return board.map((row, r) =>
     row.map((val, c) => {
@@ -174,7 +156,6 @@ export function computeCandidates(board: Board): Notes {
   );
 }
 
-/** True when the board is completely and correctly filled. */
 export function isComplete(board: Board): boolean {
   for (let r = 0; r < 9; r++) {
     for (let c = 0; c < 9; c++) {
