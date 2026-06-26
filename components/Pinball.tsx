@@ -204,6 +204,9 @@ export function Pinball() {
     const lSeg = flipperSeg(LX, LY, FLEN, lAng.current);
     const rSeg = flipperSeg(RX, LY, FLEN, rAng.current);
 
+    // debounce slingshot scoring: at most one score per sling per frame
+    const slingScoredThisFrame = [false, false];
+
     for (let k = 0; k < SUB; k++) {
       ball.vy += G;
       const sp = Math.hypot(ball.vx, ball.vy);
@@ -216,9 +219,14 @@ export function Pinball() {
       ball.vx *= 0.999;
 
       for (const s of OUTER_WALLS) collideSeg(ball, s, WALL_REST);
-      // slingshot walls: kick ball away and award points
-      for (const s of SLINGS) {
-        if (collideSeg(ball, s, WALL_REST, SLING_KICK)) gained += 50;
+      // slingshot walls: kick ball away every sub-step (physics), score at most once per frame
+      for (let si = 0; si < SLINGS.length; si++) {
+        if (collideSeg(ball, SLINGS[si], WALL_REST, SLING_KICK)) {
+          if (!slingScoredThisFrame[si]) {
+            gained += 50;
+            slingScoredThisFrame[si] = true;
+          }
+        }
       }
       collideSeg(ball, lSeg, FLIP_REST, leftUp.current ? FLIP_KICK : 0);
       collideSeg(ball, rSeg, FLIP_REST, rightUp.current ? FLIP_KICK : 0);
@@ -245,6 +253,7 @@ export function Pinball() {
           Object.assign(ball, makeLaunchBall());
           launchingRef.current = true;
           plungerPowerRef.current = 0;
+          plungerChargingRef.current = false;
           ballSaveUntilRef.current = 0;
           setBallSaveOn(false);
         } else {
@@ -258,6 +267,7 @@ export function Pinball() {
             Object.assign(ball, makeLaunchBall());
             launchingRef.current = true;
             plungerPowerRef.current = 0;
+            plungerChargingRef.current = false;
             // grant ball save for the new ball
             ballSaveUntilRef.current = Date.now() + BALL_SAVE_MS;
             setBallSaveOn(true);
