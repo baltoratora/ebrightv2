@@ -277,7 +277,7 @@ export function hardDrop(g: Game): Game {
   if (g.over) return g;
   let r = g.r;
   while (!collides(g.grid, g.matrix, r + 1, g.c)) r++;
-  return lockAndNext({ ...g, r, score: g.score + (r - g.r) * 2, lastWasRotation: false });
+  return lockAndNext({ ...g, r, score: g.score + (r - g.r) * 2 });
 }
 
 export function dropInterval(level: number): number {

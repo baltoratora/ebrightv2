@@ -198,58 +198,95 @@ describe("3-piece next preview", () => {
 });
 
 describe("T-spin detection", () => {
-  it("awards T-spin bonus and sets tspinFlash when T locks with 3 occupied corners after rotation", () => {
-    const base = newGame();
-    // Build a T-spin setup: place T piece at row 17, col 4 (rotation 0)
-    // Fill 3 diagonal corners: (17,4), (17,6), (19,4) — leaving (19,6) open
-    const grid: Grid = emptyGrid();
-    grid[17][4] = "X"; // top-left corner of T center
-    grid[17][6] = "X"; // top-right corner
-    grid[19][4] = "X"; // bottom-left corner
-    // (19,6) is empty — 3 out of 4 corners occupied = T-spin
+  // T rotation-2 matrix (pointing down, stem south):
+  //   [[0,0,0],
+  //    [1,1,1],
+  //    [0,1,0]]
+  // Computed by rotateCW(rotateCW(PIECES.T.matrix)).
+  const tRot2 = rotateCW(rotateCW(PIECES.T.matrix));
 
-    // Create a state where T is at r=17, c=4, lastWasRotation=true
-    // and one line will be cleared
-    grid[18] = Array(COLS).fill("X") as (string | null)[];
-    grid[18][5] = null; // T will fill this with its center-bottom cell... actually
-    // T at rotation 0 occupies: (r+0,c+1), (r+1,c), (r+1,c+1), (r+1,c+2)
-    // At r=17, c=4: (17,5), (18,4), (18,5), (18,6)
-    // Row 18 already has all cols filled except col 5 — T fills (18,5) to complete it? No:
-    // T fills (18,4) and (18,5) and (18,6) but row 18 already has those as "X"
-    // Let me simplify: just use hardDrop path through lockAndNext
+  // Shared T-spin board: T at rot=2, r=17, c=4.
+  //   T cells: (18,4),(18,5),(18,6) and (19,5)
+  //   Row 18 cols 0-3 and 7-9 prefilled → T completes row 18 (1 line cleared).
+  //   Corner cells for T center at (17,4):
+  //     (17,4)=X, (17,6)=X, (19,4)=X, (19,6)=empty → 3/4 occupied = T-spin.
+  //   (19,4)=X also blocks the piece from dropping below r=17.
+  function makeTspinBoard(): Grid {
+    const grid = emptyGrid();
+    for (let col = 0; col < COLS; col++) {
+      if (col < 4 || col > 6) grid[18][col] = "X";
+    }
+    grid[17][4] = "X"; // top-left corner
+    grid[17][6] = "X"; // top-right corner
+    grid[19][4] = "X"; // bottom-left corner (also prevents dropping past r=17)
+    return grid;
+  }
+
+  it("awards T-spin bonus and increments tspinCount when T locks with 3 occupied corners after rotation", () => {
+    const base = newGame();
+    const grid = makeTspinBoard();
 
     const state: Game = {
       ...base,
       type: "T",
-      matrix: PIECES.T.matrix,
-      rot: 2, // pointing down after several rotations
+      matrix: tRot2,  // consistent with rot: 2
+      rot: 2,
       r: 17,
       c: 4,
       grid,
-      lastWasRotation: true,
+      score: 0,
+      level: 1,
+      tspinCount: 0,
+      lastWasRotation: true, // rotation immediately preceded the lock
     };
 
-    // Force hardDrop which calls lockAndNext which calls detectTspin
+    // hardDrop now preserves lastWasRotation=true → detectTspin fires
     const after = hardDrop(state);
-    // If T-spin detected and lines cleared, tspinFlash is set
-    // (whether lines are cleared depends on the grid setup)
-    // The tspinCount should have incremented if a T-spin with lines occurred
-    // We at least verify the game doesn't crash and state is valid
-    expect(after.over).toBe(false);
-    expect(typeof after.tspinCount).toBe("number");
+
+    // 3 corners occupied + lastWasRotation=true → T-spin with 1 line cleared
+    expect(after.tspinCount).toBe(1); // incremented from 0
+    expect(after.tspinFlash).toBe("T-Spin!");
+    // TSPIN_SCORE[1] * level=1 = 200; hard-drop distance = 0 pts
+    expect(after.score).toBe(200);
   });
 
-  it("no T-spin bonus when last move was not a rotation", () => {
+  it("no T-spin bonus when last move was not a rotation (same board, lastWasRotation=false)", () => {
+    const base = newGame();
+    const grid = makeTspinBoard();
+
+    const state: Game = {
+      ...base,
+      type: "T",
+      matrix: tRot2,  // consistent with rot: 2
+      rot: 2,
+      r: 17,
+      c: 4,
+      grid,
+      score: 0,
+      level: 1,
+      tspinCount: 0,
+      lastWasRotation: false, // no rotation before lock
+    };
+
+    const after = hardDrop(state);
+
+    // detectTspin returns false → normal LINE_SCORE[1]*1 = 100 applied
+    expect(after.tspinCount).toBe(0); // unchanged
+    expect(after.tspinFlash).toBeNull();
+    expect(after.score).toBe(100);
+  });
+
+  it("no T-spin bonus when last move was not a rotation (rot=0 matrix)", () => {
     const base = newGame();
     const grid: Grid = emptyGrid();
-    // Fill corners around T center at r=17, c=4
+    // Fill corners around T center at r=17, c=4 (3 corners occupied)
     grid[17][4] = "X";
     grid[17][6] = "X";
     grid[19][4] = "X";
     const state: Game = {
       ...base,
       type: "T",
-      matrix: PIECES.T.matrix,
+      matrix: PIECES.T.matrix, // rot=0 spawn orientation, consistent with rot:0
       rot: 0,
       r: 17,
       c: 4,
@@ -260,5 +297,39 @@ describe("T-spin detection", () => {
     const after = hardDrop(state);
     expect(after.tspinCount).toBe(before); // no T-spin increment
     expect(after.tspinFlash).toBeNull();
+  });
+});
+
+describe("I-piece SRS kick table order", () => {
+  it("uses kick offset [0,-2] (index 1) before [0,+1] (index 2) when rotating 0→R", () => {
+    // I-piece horizontal (rot=0) at r=5, c=5.
+    // In rot=1, active matrix column is index 2 → grid col = c + dc + 2.
+    // Block the [0,0] kick (col 7) and [0,+1] kick (col 8) → only [0,-2] (col 5) is free.
+    // If kick order were wrong and [0,+1] were tried before [0,-2], rotation would fail
+    // since col 8 is blocked.
+    const base = newGame();
+    const grid: Grid = emptyGrid();
+    // Block col 7 at rows 5-8 (defeats kick [0,0]: c+0+2=7)
+    for (let row = 5; row <= 8; row++) grid[row][7] = "X";
+    // Block col 8 at rows 5-8 (defeats kick [0,+1]: c+1+2=8)
+    for (let row = 5; row <= 8; row++) grid[row][8] = "X";
+    // Col 5 at rows 5-8 remains empty (kick [0,-2]: c-2+2=5)
+
+    const state: Game = {
+      ...base,
+      type: "I",
+      matrix: PIECES.I.matrix,
+      rot: 0,
+      r: 5,
+      c: 5,
+      grid,
+    };
+
+    const after = rotate(state);
+
+    // Kick [0,-2] applied: rot advances, c moves from 5 to 5-2=3
+    expect(after.rot).toBe(1);
+    expect(after.c).toBe(3);  // c + dc = 5 + (-2) = 3
+    expect(after.r).toBe(5);  // no row change
   });
 });
