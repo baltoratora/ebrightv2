@@ -4,7 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   R, CANVAS_W, DANGER_ROW,
   bubbleX, bubbleY, colsForRow,
-  newGrid, randomColor, placeBubble, isDanger, isCleared, snapToGrid,
+  newGridForLevel, randomColorForLevel, placeBubbleEx,
+  advanceCeiling, gridFromLevel, LEVELS,
+  isDanger, isCleared, snapToGrid,
+  BOMB, WILD,
   type BubbleColor, type Grid,
 } from "@/lib/bubblebobble";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
@@ -15,13 +18,14 @@ const H = 500;
 const SX = W / 2;          // shooter x
 const SY = H - 44;         // shooter y
 const SPEED = 7;
-const MIN_UP = 20 * (Math.PI / 180); // minimum upward angle from horizontal
+const MIN_UP = 20 * (Math.PI / 180);
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
 const _lightenCache: Record<string, string> = {};
 function lighten(hex: string): string {
   if (_lightenCache[hex]) return _lightenCache[hex];
+  if (hex.length < 4 || hex[0] !== "#") return hex;
   const n = parseInt(hex.slice(1), 16);
   const r = Math.min(255, (n >> 16) + 70);
   const g = Math.min(255, ((n >> 8) & 0xff) + 70);
@@ -49,6 +53,55 @@ function drawBubble(
   ctx.restore();
 }
 
+// Draw a bubble that may be a special type (bomb or wild).
+function drawBubbleOfColor(
+  ctx: CanvasRenderingContext2D,
+  x: number, y: number, radius: number,
+  color: BubbleColor, alpha = 1,
+) {
+  if (color === BOMB) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const grd = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.35, radius * 0.05, x, y, radius);
+    grd.addColorStop(0, "#636e72");
+    grd.addColorStop(1, "#2d3436");
+    ctx.beginPath();
+    ctx.arc(x, y, radius - 0.5, 0, Math.PI * 2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,100,100,0.5)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.font = `${Math.round(radius * 1.1)}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("💥", x, y + 1);
+    ctx.restore();
+  } else if (color === WILD) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const grd = ctx.createRadialGradient(x - radius * 0.3, y - radius * 0.35, radius * 0.05, x, y, radius);
+    grd.addColorStop(0, "#fff");
+    grd.addColorStop(0.35, "#ffa502");
+    grd.addColorStop(0.65, "#1e90ff");
+    grd.addColorStop(1, "#2ed573");
+    ctx.beginPath();
+    ctx.arc(x, y, radius - 0.5, 0, Math.PI * 2);
+    ctx.fillStyle = grd;
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255,255,255,0.35)";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.font = `${Math.round(radius * 1.1)}px sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("⭐", x, y + 1);
+    ctx.restore();
+  } else {
+    drawBubble(ctx, x, y, radius, color, alpha);
+  }
+}
+
 /** Trace a bounced aim-line from (sx,sy) in direction (nx,ny). */
 function aimPath(nx: number, ny: number): [number, number][] {
   const pts: [number, number][] = [[SX, SY]];
@@ -68,7 +121,6 @@ function clampDir(dx: number, dy: number): [number, number] {
   const len = Math.hypot(dx, dy);
   if (len < 1) return [0, -1];
   let nx = dx / len, ny = dy / len;
-  // Must shoot upward; clamp to MIN_UP from horizontal
   if (ny > -Math.sin(MIN_UP)) {
     ny = -Math.sin(MIN_UP);
     nx = nx < 0 ? -Math.cos(MIN_UP) : Math.cos(MIN_UP);
@@ -76,23 +128,33 @@ function clampDir(dx: number, dy: number): [number, number] {
   return [nx, ny];
 }
 
+// ── types ──────────────────────────────────────────────────────────────────
+
+interface Floater { id: number; x: number; y: number; text: string; }
+
 // ── component ──────────────────────────────────────────────────────────────
 
 export function PuzzleBobble() {
   const cvRef = useRef<HTMLCanvasElement>(null);
-  const gridRef = useRef<Grid>(newGrid());
+  const gridRef = useRef<Grid>(gridFromLevel(LEVELS[0]));
   const ballRef = useRef({ x: SX, y: SY, vx: 0, vy: 0, active: false });
-  const curColorRef = useRef<BubbleColor>(randomColor());
-  const nextColorRef = useRef<BubbleColor>(randomColor());
-  const aimRef = useRef<[number, number]>([0, -1]); // normalised direction
+  const curColorRef = useRef<BubbleColor>(randomColorForLevel(1));
+  const nextColorRef = useRef<BubbleColor>(randomColorForLevel(1));
+  const aimRef = useRef<[number, number]>([0, -1]);
   const rafRef = useRef(0);
   const aimRafRef = useRef(0);
   const runningRef = useRef(false);
   const scoreRef = useRef(0);
+  const levelRef = useRef(1);
+  const shotsRef = useRef(0);
+  const floaterIdRef = useRef(0);
 
   const [score, setScore] = useState(0);
   const [over, setOver] = useState(false);
-  const [cleared, setCleared] = useState(false);
+  const [level, setLevel] = useState(1);
+  const [shots, setShots] = useState(0);
+  const [levelComplete, setLevelComplete] = useState(false);
+  const [floaters, setFloaters] = useState<Floater[]>([]);
 
   // ── draw ─────────────────────────────────────────────────────────────────
 
@@ -108,12 +170,12 @@ export function PuzzleBobble() {
 
     const grid = gridRef.current;
 
-    // Grid bubbles
+    // Grid bubbles (special types rendered distinctly)
     for (let r = 0; r < grid.length; r++) {
       for (let c = 0; c < grid[r].length; c++) {
         const col = grid[r][c];
         if (!col) continue;
-        drawBubble(ctx, bubbleX(r, c), bubbleY(r), R, col);
+        drawBubbleOfColor(ctx, bubbleX(r, c), bubbleY(r), R, col);
       }
     }
 
@@ -132,8 +194,7 @@ export function PuzzleBobble() {
 
     const ball = ballRef.current;
 
-    if (!ball.active && !over) {
-      // Aim trajectory
+    if (!ball.active && !over && !levelComplete) {
       const [nx, ny] = aimRef.current;
       const pts = aimPath(nx, ny);
       ctx.save();
@@ -150,7 +211,7 @@ export function PuzzleBobble() {
     }
 
     // Active ball or waiting ball at shooter
-    drawBubble(
+    drawBubbleOfColor(
       ctx,
       ball.active ? ball.x : SX,
       ball.active ? ball.y : SY,
@@ -174,8 +235,8 @@ export function PuzzleBobble() {
     ctx.font = "10px sans-serif";
     ctx.textAlign = "left";
     ctx.fillText("NEXT", W - 46, SY - 18);
-    drawBubble(ctx, W - 28, SY, R * 0.72, nextColorRef.current);
-  }, [over]);
+    drawBubbleOfColor(ctx, W - 28, SY, R * 0.72, nextColorRef.current);
+  }, [over, levelComplete]);
 
   // ── land ─────────────────────────────────────────────────────────────────
 
@@ -193,15 +254,55 @@ export function PuzzleBobble() {
     }
 
     const [row, col] = snap;
-    const pts = placeBubble(grid, row, col, curColorRef.current);
-    scoreRef.current += pts;
+    const result = placeBubbleEx(grid, row, col, curColorRef.current);
+    scoreRef.current += result.points;
     setScore(scoreRef.current);
+
+    // Show combo floater for group pop
+    if (result.groupCells.length > 0) {
+      const cx = result.groupCells.reduce((s, [r, c]) => s + bubbleX(r, c), 0) / result.groupCells.length;
+      const cy = result.groupCells.reduce((s, [r]) => s + bubbleY(r), 0) / result.groupCells.length;
+      const id = ++floaterIdRef.current;
+      setFloaters(prev => [...prev, { id, x: cx, y: cy, text: `+${result.groupCells.length * 10}` }]);
+      setTimeout(() => setFloaters(prev => prev.filter(f => f.id !== id)), 1000);
+    }
+
+    // Show combo floater for dropped floating bubbles
+    if (result.floatCells.length > 0) {
+      const fx = result.floatCells.reduce((s, [r, c]) => s + bubbleX(r, c), 0) / result.floatCells.length;
+      const fy = result.floatCells.reduce((s, [r]) => s + bubbleY(r), 0) / result.floatCells.length;
+      const id = ++floaterIdRef.current;
+      setFloaters(prev => [...prev, { id, x: fx, y: fy, text: `+${result.floatCells.length * 20}` }]);
+      setTimeout(() => setFloaters(prev => prev.filter(f => f.id !== id)), 1000);
+    }
+
+    // Shot counter; advance ceiling when limit hit
+    shotsRef.current += 1;
+    setShots(shotsRef.current);
+    const lv = levelRef.current;
+    const limit = 20 + (10 - Math.min(lv, 10)) * 2;
+    if (shotsRef.current % limit === 0) {
+      advanceCeiling(grid);
+    }
 
     if (isCleared(grid)) {
       ballRef.current.active = false;
-      setCleared(true);
-      setOver(true);
+      setLevelComplete(true);
       draw();
+      const nl = lv + 1;
+      setTimeout(() => {
+        const idx = nl - 1;
+        gridRef.current = idx < LEVELS.length ? gridFromLevel(LEVELS[idx]) : newGridForLevel(nl);
+        levelRef.current = nl;
+        shotsRef.current = 0;
+        curColorRef.current = randomColorForLevel(nl);
+        nextColorRef.current = randomColorForLevel(nl);
+        ballRef.current = { x: SX, y: SY, vx: 0, vy: 0, active: false };
+        setLevel(nl);
+        setShots(0);
+        setLevelComplete(false);
+        draw();
+      }, 2000);
       return;
     }
 
@@ -214,7 +315,7 @@ export function PuzzleBobble() {
 
     // Ready next ball
     curColorRef.current = nextColorRef.current;
-    nextColorRef.current = randomColor();
+    nextColorRef.current = randomColorForLevel(lv);
     ballRef.current = { x: SX, y: SY, vx: 0, vy: 0, active: false };
     draw();
   }, [draw]);
@@ -257,30 +358,35 @@ export function PuzzleBobble() {
   // ── fire ─────────────────────────────────────────────────────────────────
 
   const fire = useCallback((targetX: number, targetY: number) => {
-    if (ballRef.current.active || over) return;
+    if (ballRef.current.active || over || levelComplete) return;
     const [nx, ny] = clampDir(targetX - SX, targetY - SY);
     ballRef.current.active = true;
     ballRef.current.vx = nx * SPEED;
     ballRef.current.vy = ny * SPEED;
     runningRef.current = true;
     rafRef.current = requestAnimationFrame(loop);
-  }, [over, loop]);
+  }, [over, levelComplete, loop]);
 
   // ── new game ─────────────────────────────────────────────────────────────
 
   const newGame = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
     runningRef.current = false;
-    gridRef.current = newGrid();
-    curColorRef.current = randomColor();
-    nextColorRef.current = randomColor();
+    gridRef.current = gridFromLevel(LEVELS[0]);
+    curColorRef.current = randomColorForLevel(1);
+    nextColorRef.current = randomColorForLevel(1);
     ballRef.current = { x: SX, y: SY, vx: 0, vy: 0, active: false };
     aimRef.current = [0, -1];
     scoreRef.current = 0;
+    levelRef.current = 1;
+    shotsRef.current = 0;
+    floaterIdRef.current = 0;
     setScore(0);
     setOver(false);
-    setCleared(false);
-    // draw happens via the useEffect below
+    setLevel(1);
+    setShots(0);
+    setLevelComplete(false);
+    setFloaters([]);
   }, []);
 
   // ── canvas setup + redraw on state change ────────────────────────────────
@@ -296,7 +402,7 @@ export function PuzzleBobble() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { draw(); }, [score, over, draw]);
+  useEffect(() => { draw(); }, [score, over, level, shots, levelComplete, draw]);
 
   // ── input helpers ─────────────────────────────────────────────────────────
 
@@ -315,10 +421,9 @@ export function PuzzleBobble() {
   };
 
   const onMouseMove = (e: React.MouseEvent) => {
-    if (ballRef.current.active || over) return;
+    if (ballRef.current.active || over || levelComplete) return;
     const { x, y } = cvCoords(e);
     aimRef.current = clampDir(x - SX, y - SY);
-    // Coalesce rapid mousemove events to one draw per frame.
     cancelAnimationFrame(aimRafRef.current);
     aimRafRef.current = requestAnimationFrame(() => draw());
   };
@@ -338,6 +443,8 @@ export function PuzzleBobble() {
 
   // ── render ────────────────────────────────────────────────────────────────
 
+  const shotLimit = 20 + (10 - Math.min(level, 10)) * 2;
+
   return (
     <div className="game-layout game-layout--col">
       <GameInfo
@@ -345,28 +452,46 @@ export function PuzzleBobble() {
           { key: "Mouse", desc: "Aim direction" },
           { key: "Click", desc: "Fire bubble" },
         ]}
-        tips={["Bank shots off walls to reach tricky spots", "Popping 3+ same-color bubbles scores chain points"]}
+        tips={["Bank shots off walls to reach tricky spots", "Popping 3+ same-color bubbles scores chain points", "💥 Bomb clears all 6 neighbours · ⭐ Wild matches any colour"]}
       />
       <div className="pb-wrap">
         <div className="sudoku-bar">
           <span className="wg-progress">Score {score}</span>
+          <span className="wg-progress">Lv {level}</span>
+          <span className="wg-progress">Shots {shots}/{shotLimit}</span>
           <button className="btn ghost" onClick={newGame}>New</button>
         </div>
 
-        <canvas
-          ref={cvRef}
-          className="pb-canvas"
-          style={{ width: W, height: H, maxWidth: "100%" }}
-          onMouseMove={onMouseMove}
-          onClick={onClick}
-          onTouchStart={onTouch}
-          onTouchMove={onTouch}
-          onTouchEnd={onTouch}
-        />
+        <div style={{ position: "relative", display: "block" }}>
+          <canvas
+            ref={cvRef}
+            className="pb-canvas"
+            style={{ width: W, height: H, maxWidth: "100%" }}
+            onMouseMove={onMouseMove}
+            onClick={onClick}
+            onTouchStart={onTouch}
+            onTouchMove={onTouch}
+            onTouchEnd={onTouch}
+          />
+          {floaters.map(f => (
+            <span
+              key={f.id}
+              className="pb-floater"
+              style={{ left: f.x, top: f.y }}
+            >
+              {f.text}
+            </span>
+          ))}
+        </div>
 
         {over && (
-          <div className={`sudoku-win${cleared ? "" : " lost"}`}>
-            {cleared ? "🎉 Cleared! Amazing!" : "💥 Game over — bubbles reached the line"}
+          <div className="sudoku-win lost">
+            💥 Game over — bubbles reached the line
+          </div>
+        )}
+        {levelComplete && (
+          <div className="sudoku-win">
+            🎉 Level {level} complete! Loading level {level + 1}…
           </div>
         )}
 

@@ -1895,6 +1895,22 @@ a.game-card:hover {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Floating "+N" combo text that rises and fades after a pop. */
+.pb-floater {
+  position: absolute;
+  pointer-events: none;
+  color: #fff;
+  font: bold 14px/1 sans-serif;
+  text-shadow: 0 1px 4px rgba(0,0,0,.8);
+  transform: translateX(-50%);
+  animation: pb-pop-rise 1s ease-out forwards;
+  z-index: 5;
+}
+@keyframes pb-pop-rise {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to   { opacity: 0; transform: translateX(-50%) translateY(-48px); }
+}
+
 /* ---------- Game Info Panel (desktop sidebar) ---------- */
 .game-info {
   display: none;
