@@ -851,6 +851,19 @@ a.game-card:hover {
 .ms-cell.n6 { color: #4dd0e1; }
 .ms-cell.n7 { color: #eef1f8; }
 .ms-cell.n8 { color: #9aa0b8; }
+.ms-cell--unknown { color: #f97316; font-style: italic; }
+
+.ms-best {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted, #9aa0b8);
+  margin: -8px auto 10px;
+}
+.ms-new-best {
+  color: #4ade80;
+  font-weight: 700;
+  font-size: 0.9em;
+}
 
 .sudoku-win.lost {
   color: #ff6b6b;
