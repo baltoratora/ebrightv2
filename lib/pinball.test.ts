@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { closestOnSeg, collideSeg, collideCircle, type Ball } from "./pinball";
+import { closestOnSeg, collideSeg, collideCircle, bumperMultiplier, type Ball } from "./pinball";
 
 const ball = (over: Partial<Ball>): Ball => ({ x: 0, y: 0, vx: 0, vy: 0, r: 5, ...over });
 
@@ -37,5 +37,24 @@ describe("collideCircle", () => {
     const hit = collideCircle(b, 8, 0, 5, 2); // bumper to the right
     expect(hit).toBe(true);
     expect(b.vx).toBeLessThan(0); // pushed back left
+  });
+});
+
+describe("bumperMultiplier", () => {
+  it("returns 1x below 10 hits", () => {
+    expect(bumperMultiplier(0)).toBe(1);
+    expect(bumperMultiplier(9)).toBe(1);
+  });
+  it("returns 2x at 10 hits", () => {
+    expect(bumperMultiplier(10)).toBe(2);
+    expect(bumperMultiplier(24)).toBe(2);
+  });
+  it("returns 3x at 25 hits", () => {
+    expect(bumperMultiplier(25)).toBe(3);
+    expect(bumperMultiplier(49)).toBe(3);
+  });
+  it("returns 5x at 50 hits", () => {
+    expect(bumperMultiplier(50)).toBe(5);
+    expect(bumperMultiplier(999)).toBe(5);
   });
 });
