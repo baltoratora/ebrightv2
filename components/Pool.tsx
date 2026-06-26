@@ -407,7 +407,7 @@ export function Pool() {
           </span>
         </div>
       </div>
-      <GameLeaderboard game="pool" value={shots} over={won} />
+      <GameLeaderboard game="pool" value={shots} over={won} title="Pool" />
     </div>
   );
 }
