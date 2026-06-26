@@ -124,19 +124,55 @@ export function Carrom() {
     }
   }, []);
 
-  // Re-activate one own coin from pocketed pool near center
-  const returnCoin = useCallback(() => {
-    const pool = pocketedCoinsRef.current;
-    if (!pool.length) return;
-    const coin = pool.pop()!;
-    const a = Math.random() * Math.PI * 2;
-    const r = 12 + Math.random() * 18;
-    coin.alive = true;
-    coin.x = CX + Math.cos(a) * r;
-    coin.y = CY + Math.sin(a) * r;
-    coin.vx = 0;
-    coin.vy = 0;
+  // Place a disc safely near board center without overlapping any alive disc
+  const placeAtCenterSafely = useCallback((disc: Disc) => {
+    const discs = discsRef.current;
+    const minDist = 2 * COIN_R + 4;
+    const isClear = (px: number, py: number) =>
+      discs.every(d => d === disc || !d.alive || Math.hypot(d.x - px, d.y - py) >= minDist);
+    if (isClear(CX, CY)) {
+      disc.x = CX;
+      disc.y = CY;
+    } else {
+      let placed = false;
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2;
+        const x = CX + Math.cos(a) * minDist;
+        const y = CY + Math.sin(a) * minDist;
+        if (isClear(x, y)) {
+          disc.x = x;
+          disc.y = y;
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        const a = Math.random() * Math.PI * 2;
+        disc.x = CX + Math.cos(a) * minDist;
+        disc.y = CY + Math.sin(a) * minDist;
+      }
+    }
+    disc.alive = true;
+    disc.vx = 0;
+    disc.vy = 0;
   }, []);
+
+  // Re-activate one own coin from pocketed pool near center.
+  // In 2P mode pass playerColor to return only that player's own coin.
+  const returnCoin = useCallback((playerColor?: string) => {
+    const pool = pocketedCoinsRef.current;
+    let idx = -1;
+    if (playerColor !== undefined) {
+      for (let i = pool.length - 1; i >= 0; i--) {
+        if (pool[i].kind === playerColor) { idx = i; break; }
+      }
+    } else {
+      idx = pool.length - 1;
+    }
+    if (idx < 0) return;
+    const coin = pool.splice(idx, 1)[0];
+    placeAtCenterSafely(coin);
+  }, [placeAtCenterSafely]);
 
   const loop = useCallback(() => {
     const discs = discsRef.current;
@@ -147,13 +183,14 @@ export function Carrom() {
       for (const id of got) {
         anyEvent = true;
         if (id === "striker") {
-          // foul: return striker to baseline + return one coin from pool
+          // foul: return striker to baseline + return one own coin from pool
           const s = striker();
           s.alive = true;
           s.x = Math.min(BASE_MAX, Math.max(BASE_MIN, s.x));
           s.y = BASE_Y;
           s.vx = s.vy = 0;
-          returnCoin();
+          const ownColor = twoPlayerRef.current ? (currentPlayerRef.current === 1 ? "black" : "white") : undefined;
+          returnCoin(ownColor);
         } else if (id === "queen") {
           queenThisShotRef.current = true;
         } else {
@@ -163,8 +200,9 @@ export function Carrom() {
           const cp = currentPlayerRef.current;
           const own = !tp || (cp === 1 && disc.kind === "black") || (cp === 2 && disc.kind === "white");
           if (!own) {
-            // 2-player foul: opponent coin pocketed — return one from pool
-            returnCoin();
+            // 2-player foul: opponent coin pocketed — re-activate it and return one own coin
+            placeAtCenterSafely(disc);
+            returnCoin(cp === 1 ? "black" : "white");
           } else {
             coverCoinThisShotRef.current = true;
             ownCoinThisShotRef.current = true;
@@ -214,7 +252,7 @@ export function Carrom() {
         } else {
           // 2-player: no grace — respot immediately
           const queen = discs.find(d => d.id === "queen");
-          if (queen) { queen.alive = true; queen.x = CX; queen.y = CY; queen.vx = 0; queen.vy = 0; }
+          if (queen) { placeAtCenterSafely(queen); }
         }
       } else if (!queenThisShotRef.current && coverNeededRef.current) {
         // 1-player grace shot result
@@ -227,7 +265,7 @@ export function Carrom() {
         } else {
           // no cover — respot queen
           const queen = discs.find(d => d.id === "queen");
-          if (queen) { queen.alive = true; queen.x = CX; queen.y = CY; queen.vx = 0; queen.vy = 0; }
+          if (queen) { placeAtCenterSafely(queen); }
           coverNeededRef.current = false;
           setCoverNeeded(false);
         }
@@ -247,7 +285,7 @@ export function Carrom() {
     }
 
     rafRef.current = requestAnimationFrame(loop);
-  }, [draw, returnCoin]);
+  }, [draw, returnCoin, placeAtCenterSafely]);
 
   const toBoard = (e: React.PointerEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
