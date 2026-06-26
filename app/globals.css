@@ -1464,7 +1464,12 @@ a.game-card:hover {
 }
 .bs-cell.ship {
   background: #3a4055;
+  border: 1px solid transparent;
 }
+.bs-cell.ship.bs-edge-t { border-top: 2px solid #7080c0; }
+.bs-cell.ship.bs-edge-b { border-bottom: 2px solid #7080c0; }
+.bs-cell.ship.bs-edge-l { border-left: 2px solid #7080c0; }
+.bs-cell.ship.bs-edge-r { border-right: 2px solid #7080c0; }
 .bs-cell.hit {
   background: #c0233a;
 }
@@ -1492,6 +1497,54 @@ a.game-card:hover {
   outline: 1px dashed rgba(255, 255, 255, 0.3);
   outline-offset: -1px;
 }
+@keyframes bs-hit {
+  0%   { transform: scale(1);    background: #ff3355; }
+  50%  { transform: scale(1.25); background: #ff6677; }
+  100% { transform: scale(1);    background: #c0233a; }
+}
+@keyframes bs-miss {
+  0%   { box-shadow: 0 0 0 0   rgba(91, 130, 255, 0.6); }
+  60%  { box-shadow: 0 0 0 8px rgba(91, 130, 255, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(91, 130, 255, 0);   }
+}
+.bs-cell.bs-anim-hit  { animation: bs-hit  0.4s ease-out; }
+.bs-cell.bs-anim-miss { animation: bs-miss 0.4s ease-out; }
+.bs-cell.bs-preview-v { background: rgba(60, 210, 100, 0.35); border-color: #3cd264; }
+.bs-cell.bs-preview-x { background: rgba(255,  60,  60, 0.35); border-color: #ff3c3c; }
+.bs-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin: 10px 0 4px;
+}
+.bs-palette-ship {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--muted);
+  transition: background 0.15s;
+}
+.bs-palette-ship:hover:not(.selected) { background: rgba(255,255,255,0.06); }
+.bs-palette-ship.placed  { opacity: 0.45; }
+.bs-palette-ship.selected { border-color: var(--accent); color: var(--accent); background: rgba(255,93,143,0.12); }
+.bs-rotate { font-size: 11px; padding: 4px 10px; }
+.bs-diff { display: flex; gap: 4px; align-items: center; }
+.bs-diff-btn {
+  padding: 3px 9px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 11px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  transition: background 0.15s;
+}
+.bs-diff-btn.active { border-color: var(--accent); color: var(--accent); }
+.bs-diff-btn:disabled { opacity: 0.4; cursor: default; }
 
 /* ---------- Carrom (canvas) ---------- */
 .carrom {
