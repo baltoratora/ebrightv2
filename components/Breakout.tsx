@@ -240,7 +240,7 @@ export function Breakout() {
           else if (pu.type === "multi" && ballsRef.current.length > 0) {
             // Spawn extra ball mirrored from first ball
             const src = ballsRef.current[0];
-            ballsRef.current.push({ x: src.x, y: src.y, vx: -src.vx, vy: src.vy, r: BALL_R });
+            ballsRef.current.push({ x: src.x, y: src.y, vx: -src.vx, vy: -Math.abs(src.vy), r: BALL_R });
           }
         } else if (pu.y < H + PU_SIZE) {
           remaining.push(pu);
@@ -314,8 +314,8 @@ export function Breakout() {
   // Keyboard controls
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") padX.current = Math.max(PADDLE_W / 2, padX.current - 26);
-      else if (e.key === "ArrowRight") padX.current = Math.min(W - PADDLE_W / 2, padX.current + 26);
+      if (e.key === "ArrowLeft") padX.current = Math.max(effectivePW() / 2, padX.current - 26);
+      else if (e.key === "ArrowRight") padX.current = Math.min(W - effectivePW() / 2, padX.current + 26);
       else if (e.key === " ") { e.preventDefault(); launch(); }
     };
     window.addEventListener("keydown", onKey);
@@ -325,7 +325,7 @@ export function Breakout() {
   const movePaddle = (e: React.PointerEvent) => {
     const rect = canvasRef.current!.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * W;
-    padX.current = Math.max(PADDLE_W / 2, Math.min(W - PADDLE_W / 2, x));
+    padX.current = Math.max(effectivePW() / 2, Math.min(W - effectivePW() / 2, x));
   };
 
   return (
