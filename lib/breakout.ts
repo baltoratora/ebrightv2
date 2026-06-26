@@ -16,6 +16,9 @@ export interface Rect {
 export interface Brick extends Rect {
   alive: boolean;
   color: string;
+  hits: number;
+  maxHits: number;
+  powerup: "wide" | "slow" | "multi" | null;
 }
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -28,7 +31,7 @@ export function circleRectHit(ball: Ball, rect: Rect): boolean {
   return dx * dx + dy * dy <= ball.r * ball.r;
 }
 
-/** Reflect the ball off a rectangle if touching. Returns true on contact. */
+// Reflect the ball off a rectangle if touching. Returns true on contact.
 export function bounceOffRect(ball: Ball, rect: Rect): boolean {
   const cx = clamp(ball.x, rect.x, rect.x + rect.w);
   const cy = clamp(ball.y, rect.y, rect.y + rect.h);
@@ -63,6 +66,17 @@ export function bounceOffRect(ball: Ball, rect: Rect): boolean {
 }
 
 const COLORS = ["#ff5d8f", "#fb923c", "#fde047", "#4ade80", "#22d3ee", "#b388ff"];
+const POWERUP_TYPES = ["wide", "slow", "multi"] as const;
+
+// Row count for a given level; grows each level, capped at 8.
+export function getLevelRows(level: number): number {
+  return Math.min(4 + level, 8);
+}
+
+// Speed multiplier for a given level (1.0 at level 1, capped at 1.6).
+export function getLevelSpeedMult(level: number): number {
+  return Math.min(1 + (level - 1) * 0.08, 1.6);
+}
 
 export function makeBricks(
   rows: number,
@@ -71,11 +85,16 @@ export function makeBricks(
   top: number,
   gap: number,
   brickH: number,
+  level = 1,
 ): Brick[] {
+  void level; // reserved for future per-level layout variations
   const bw = (areaW - gap * (cols + 1)) / cols;
   const out: Brick[] = [];
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
+      // Hard bricks (2 hits): top 2 rows, every 3rd column
+      const isHard = r < 2 && c % 3 === 0;
+      const hasPowerup = Math.random() < 0.15;
       out.push({
         x: gap + c * (bw + gap),
         y: top + r * (brickH + gap),
@@ -83,6 +102,9 @@ export function makeBricks(
         h: brickH,
         alive: true,
         color: COLORS[r % COLORS.length],
+        hits: isHard ? 2 : 1,
+        maxHits: isHard ? 2 : 1,
+        powerup: hasPowerup ? POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)] : null,
       });
     }
   }
