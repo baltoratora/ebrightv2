@@ -1630,6 +1630,30 @@ a.game-card:hover {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
+.carrom-bar-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.carrom-scores {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.carrom-score {
+  color: var(--muted);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.carrom-score.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(255, 93, 143, 0.08);
+}
+
 /* ---------- Pool (canvas) ---------- */
 .pool {
   max-width: 480px;
