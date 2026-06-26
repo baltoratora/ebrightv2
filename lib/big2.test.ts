@@ -6,6 +6,7 @@ import {
   beats,
   findBotPlay,
   chooseBotMove,
+  fiveCardCombos,
   type Card,
   type Suit,
 } from "./big2";
@@ -104,5 +105,39 @@ describe("chooseBotMove — hard", () => {
     const hand = [c(5, "C"), c(5, "H"), c(9, "S"), c(10, "D"), c(11, "C")];
     const ctx = { opponentCardCounts: [5, 2, 5, 5], myPlayerIndex: 2 };
     expect(chooseBotMove(hand, null, false, "hard", ctx)).toEqual([c(5, "C"), c(5, "H")]);
+  });
+  it("leads a straight when holding one and no pairs are available (prefers 5-card over single)", () => {
+    // 6 cards with a straight 3-4-5-6-7, no pairs — non-aggressive order [2,3,5,1] should pick the straight
+    const hand = [c(3, "S"), c(4, "H"), c(5, "D"), c(6, "C"), c(7, "S"), c(9, "H")];
+    const result = chooseBotMove(hand, null, false, "hard");
+    expect(result).toHaveLength(5);
+    expect(classify(result!)?.type).toBe("straight");
+  });
+  it("following: saves 2 without context (differs from Easy) but plays 2 when opponent near winning", () => {
+    // Only a 2♠ can beat A♠
+    const hand = [c(5, "C"), c(15, "S")];
+    const current = [c(14, "S")];
+    const aggressiveCtx = { opponentCardCounts: [2, 5, 5, 5], myPlayerIndex: 1 };
+    // Easy always plays minimum winner — spends the 2
+    expect(chooseBotMove(hand, current, false, "easy")).toEqual([c(15, "S")]);
+    // Hard (no context): saves the 2, passes — THIS would fail if Hard were identical to Easy
+    expect(chooseBotMove(hand, current, false, "hard")).toBeNull();
+    // Hard (opponent near winning): plays the 2 aggressively to deny the lead
+    expect(chooseBotMove(hand, current, false, "hard", aggressiveCtx)).toEqual([c(15, "S")]);
+  });
+});
+
+describe("fiveCardCombos", () => {
+  it("returns valid 5-card combos and excludes non-combo subsets", () => {
+    // Hand contains exactly one straight (3-4-5-6-7) and one flush (all hearts sub-hand is absent here)
+    const hand = [c(3, "S"), c(4, "H"), c(5, "D"), c(6, "C"), c(7, "S"), c(9, "H")];
+    const combos = fiveCardCombos(hand);
+    // Must include the straight
+    expect(combos.some((cs) => classify(cs)?.type === "straight")).toBe(true);
+    // Every returned combo must be a valid Big 2 five-card combo
+    combos.forEach((cs) => expect(classify(cs)).not.toBeNull());
+    // The random 5-card subset [3,4,5,6,9] is NOT a straight — should not appear as a combo
+    const badSubset = [c(3, "S"), c(4, "H"), c(5, "D"), c(6, "C"), c(9, "H")];
+    expect(fiveCardCombos(badSubset)).toHaveLength(0);
   });
 });
