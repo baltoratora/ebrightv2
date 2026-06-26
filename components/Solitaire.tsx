@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   newGame,
   draw,
@@ -15,6 +15,7 @@ import {
   type GameState,
 } from "@/lib/solitaire";
 import { GameInfo } from "@/components/GameInfo";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 const RANKS = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 const SYM: Record<string, string> = { S: "♠", H: "♥", D: "♦", C: "♣" };
@@ -58,12 +59,24 @@ export function Solitaire() {
   const [drawMode, setDrawMode] = useState<1 | 3>(1);
   const [selected, setSelected] = useState<Selected>(null);
   const [history, setHistory] = useState<GameState[]>([]);
+  const startedRef = useRef<number | null>(null);
+  const [elapsed, setElapsed] = useState(0);
 
   const won = useMemo(() => isWin(game), [game]);
+
+  useEffect(() => {
+    if (won) return;
+    const id = setInterval(() => {
+      if (startedRef.current !== null)
+        setElapsed(Math.round((Date.now() - startedRef.current) / 1000));
+    }, 500);
+    return () => clearInterval(id);
+  }, [won]);
 
   const apply = useCallback(
     (next: GameState | null): boolean => {
       if (!next) return false;
+      if (startedRef.current === null) startedRef.current = Date.now();
       setHistory((h) => [...h, game]);
       setGame(next);
       return true;
@@ -72,6 +85,8 @@ export function Solitaire() {
   );
 
   const start = useCallback(() => {
+    startedRef.current = null;
+    setElapsed(0);
     setGame(newGame());
     setHistory([]);
     setSelected(null);
@@ -254,6 +269,7 @@ export function Solitaire() {
         </span>
       </div>
     </div>
+      <GameLeaderboard game="solitaire" value={elapsed} over={won} title="Solitaire" />
     </div>
   );
 }

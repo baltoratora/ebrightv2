@@ -17,6 +17,10 @@ export const GAME_META: Record<string, GameMeta> = {
   chess: { dir: "asc", unit: "moves" },
   checkers: { dir: "asc", unit: "moves" },
   bubblebobble: { dir: "desc", unit: "score" },
+  solitaire:    { dir: "asc",  unit: "time"  },
+  battleship:   { dir: "asc",  unit: "moves" },
+  carrom:       { dir: "asc",  unit: "moves" },
+  pool:         { dir: "asc",  unit: "moves" },
 };
 
 export interface Entry {

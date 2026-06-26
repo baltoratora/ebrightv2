@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { stepOnce, allStopped, type Disc, type Pocket } from "@/lib/physics";
 import { GameInfo } from "@/components/GameInfo";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 const DIM = 400;
 const STRIKER_R = 18;
@@ -258,6 +259,7 @@ export function Carrom() {
         </span>
       </div>
     </div>
+      <GameLeaderboard game="carrom" value={strikes} over={won} title="Carrom" />
     </div>
   );
 }

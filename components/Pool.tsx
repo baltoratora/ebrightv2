@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { stepOnce, allStopped, type Disc, type Pocket } from "@/lib/physics";
 import { GameInfo } from "@/components/GameInfo";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 const W = 440;
 const H = 240;
@@ -221,6 +222,7 @@ export function Pool() {
         </span>
       </div>
     </div>
+      <GameLeaderboard game="pool" value={shots} over={won} title="Pool" />
     </div>
   );
 }

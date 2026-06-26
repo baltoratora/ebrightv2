@@ -12,6 +12,7 @@ import {
   type Board,
 } from "@/lib/battleship";
 import { GameInfo } from "@/components/GameInfo";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 type Phase = "setup" | "playing" | "over";
 
@@ -22,6 +23,7 @@ export function Battleship() {
   const [phase, setPhase] = useState<Phase>("setup");
   const [winner, setWinner] = useState<"you" | "bot" | null>(null);
   const [thinking, setThinking] = useState(false);
+  const [shots, setShots] = useState(0);
   const [, setV] = useState(0);
   const bump = () => setV((v) => v + 1);
 
@@ -32,6 +34,7 @@ export function Battleship() {
     setWinner(null);
     setThinking(false);
     setPhase("setup");
+    setShots(0);
     bump();
   }, []);
 
@@ -44,6 +47,7 @@ export function Battleship() {
     if (phase !== "playing" || thinking) return;
     const res = fire(enemy.current, r, c);
     if (!res) return;
+    setShots((s) => s + 1);
     bump();
     if (allSunk(enemy.current)) {
       setWinner("you");
@@ -168,6 +172,12 @@ export function Battleship() {
         </span>
       </div>
     </div>
+      <GameLeaderboard
+        game="battleship"
+        value={shots}
+        over={phase === "over" && winner === "you"}
+        title="Battleship"
+      />
     </div>
   );
 }

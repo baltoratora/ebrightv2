@@ -14,6 +14,7 @@ import {
   type Difficulty,
 } from "@/lib/minesweeper";
 import { GameInfo } from "@/components/GameInfo";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 type Status = "ready" | "playing" | "won" | "lost";
 const ORDER: Difficulty[] = ["easy", "medium", "hard"];
@@ -186,6 +187,12 @@ export function Minesweeper() {
         </span>
       </div>
     </div>
+      <GameLeaderboard
+        game={`minesweeper:${difficulty}`}
+        value={time}
+        over={status === "won"}
+        title="Minesweeper"
+      />
     </div>
   );
 }
