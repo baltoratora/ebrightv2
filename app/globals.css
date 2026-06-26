@@ -1279,7 +1279,78 @@ a.game-card:hover {
   justify-content: center;
 }
 .b2 .btn {
-  min-width: 92px;
+  min-width: 72px;
+}
+.b2-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.b2-meta-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.b2-round {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+.b2-scores {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.b2-score-item {
+  font-size: 12px;
+  color: var(--muted);
+}
+.b2-score-you {
+  color: var(--accent);
+  font-weight: 700;
+}
+.b2-diff {
+  display: flex;
+  gap: 4px;
+}
+.b2-diff-btn {
+  font-size: 11px;
+  padding: 3px 8px;
+  min-width: unset;
+  border-radius: 8px;
+}
+.b2-diff-active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.b2-opp-revealed {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  max-width: 160px;
+  margin-top: 4px;
+}
+.b2-opp-out {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.b2-last-card {
+  display: block;
+  font-size: 10px;
+  color: #e05050;
+  font-weight: 700;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.b2-round-end {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
 }
 
 /* ---------- Chess ---------- */

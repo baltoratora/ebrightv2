@@ -5,6 +5,7 @@ import {
   classify,
   beats,
   findBotPlay,
+  chooseBotMove,
   type Card,
   type Suit,
 } from "./big2";
@@ -72,5 +73,36 @@ describe("findBotPlay", () => {
   it("plays the lowest beating single", () => {
     const hand = [c(6, "C"), c(9, "S"), c(13, "H")];
     expect(findBotPlay(hand, [c(5, "S")], false)).toEqual([c(6, "C")]);
+  });
+});
+
+describe("chooseBotMove — medium", () => {
+  it("passes rather than spend a 2 when only a 2 can beat the current play", () => {
+    const hand = [c(5, "C"), c(15, "S")]; // 5♣ cannot beat A♠; only the 2♠ can
+    expect(chooseBotMove(hand, [c(14, "S")], false, "medium")).toBeNull();
+  });
+  it("prefers leading a pair over a single when hand is ≤5 cards", () => {
+    const hand = [c(5, "C"), c(5, "H"), c(9, "S")];
+    expect(chooseBotMove(hand, null, false, "medium")).toEqual([c(5, "C"), c(5, "H")]);
+  });
+  it("plays a non-2 to beat current when available", () => {
+    const hand = [c(7, "C"), c(15, "S")];
+    expect(chooseBotMove(hand, [c(6, "S")], false, "medium")).toEqual([c(7, "C")]);
+  });
+});
+
+describe("chooseBotMove — hard", () => {
+  it("leads a combo over a single when hand is ≤3 cards (aggressive)", () => {
+    const hand = [c(5, "C"), c(5, "H"), c(9, "S")];
+    expect(chooseBotMove(hand, null, false, "hard")).toEqual([c(5, "C"), c(5, "H")]);
+  });
+  it("plays the minimal winning single when following (no overpay)", () => {
+    const hand = [c(7, "C"), c(9, "S"), c(13, "H")];
+    expect(chooseBotMove(hand, [c(6, "S")], false, "hard")).toEqual([c(7, "C")]);
+  });
+  it("leads a combo when an opponent is near winning (≤2 cards)", () => {
+    const hand = [c(5, "C"), c(5, "H"), c(9, "S"), c(10, "D"), c(11, "C")];
+    const ctx = { opponentCardCounts: [5, 2, 5, 5], myPlayerIndex: 2 };
+    expect(chooseBotMove(hand, null, false, "hard", ctx)).toEqual([c(5, "C"), c(5, "H")]);
   });
 });
