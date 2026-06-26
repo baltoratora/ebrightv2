@@ -152,6 +152,28 @@ export function generatePuzzle(difficulty: Difficulty): {
   return { puzzle, solution };
 }
 
+/** Notes type: per-cell array of candidate numbers (mirrors component usage). */
+export type Notes = number[][][];
+
+/**
+ * Compute candidate numbers for every empty cell (value === 0) in the board.
+ * Returns a Notes grid where each cell contains the numbers 1–9 that do not
+ * already appear in the same row, column, or 3×3 box.
+ * Non-empty cells get an empty candidates array.
+ */
+export function computeCandidates(board: Board): Notes {
+  return board.map((row, r) =>
+    row.map((val, c) => {
+      if (val !== 0) return [];
+      const candidates: number[] = [];
+      for (let n = 1; n <= 9; n++) {
+        if (isValidPlacement(board, r, c, n)) candidates.push(n);
+      }
+      return candidates;
+    }),
+  );
+}
+
 /** True when the board is completely and correctly filled. */
 export function isComplete(board: Board): boolean {
   for (let r = 0; r < 9; r++) {

@@ -692,6 +692,15 @@ body {
   font-size: 12px;
 }
 
+.sudoku-timer {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  min-width: 3.5ch;
+  text-align: right;
+}
+
 kbd {
   background: var(--surface-2);
   border: 1px solid var(--border);
