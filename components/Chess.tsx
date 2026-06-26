@@ -29,12 +29,30 @@ const DEPTH: Record<Difficulty, number> = { easy: 1, medium: 2, hard: 3 };
 
 type Mode = "ai" | "online";
 
+// Promotion piece choices for the human player
+const PROMO_PIECES = ["q", "r", "b", "n"] as const;
+type PromoPiece = (typeof PROMO_PIECES)[number];
+
 export function Chessboard() {
   const gameRef = useRef(new Chess());
-  const [, setVersion] = useState(0);
+  const [version, setVersion] = useState(0);
   const [selected, setSelected] = useState<Square | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [thinking, setThinking] = useState(false);
+
+  // Hint highlight squares (cleared after 400ms)
+  const [hintFrom, setHintFrom] = useState<Square | null>(null);
+  const [hintTo, setHintTo] = useState<Square | null>(null);
+
+  // Pending promotion: blocked until the player picks a piece
+  const [pendingPromo, setPendingPromo] = useState<{
+    from: Square;
+    to: Square;
+    color: "w" | "b";
+  } | null>(null);
+
+  // Ref for history panel auto-scroll
+  const historyRef = useRef<HTMLDivElement>(null);
 
   // ── multiplayer ──────────────────────────────────────────────────────────
   const [mode, setMode] = useState<Mode>("ai");
@@ -45,6 +63,12 @@ export function Chessboard() {
 
   const game = gameRef.current;
   const rerender = () => setVersion((v) => v + 1);
+
+  // Auto-scroll move history to the latest entry
+  useEffect(() => {
+    if (historyRef.current) historyRef.current.scrollTop = historyRef.current.scrollHeight;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [version]);
 
   // Apply events coming from the opponent. The server never echoes our own
   // moves, so "move"/"reset" here are always the other player's.
@@ -87,6 +111,9 @@ export function Chessboard() {
     gameRef.current = new Chess();
     setSelected(null);
     setThinking(false);
+    setHintFrom(null);
+    setHintTo(null);
+    setPendingPromo(null);
     if (mode === "online") room.send({ t: "reset", state: gameRef.current.fen() });
     rerender();
   }, [mode, room]);
@@ -99,17 +126,58 @@ export function Chessboard() {
     rerender();
   }, [game, thinking, online]);
 
+  // Show hint: run AI on a clone and flash the suggested from/to squares for 400ms
+  const showHint = useCallback(() => {
+    if (game.isGameOver() || thinking) return;
+    const fen = game.fen();
+    // Defer to avoid blocking the click response
+    setTimeout(() => {
+      const clone = new Chess(fen);
+      const m = bestMove(clone, DEPTH[difficulty]);
+      if (!m) return;
+      setHintFrom(m.from as Square);
+      setHintTo(m.to as Square);
+      setTimeout(() => {
+        setHintFrom(null);
+        setHintTo(null);
+      }, 400);
+    }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [difficulty, thinking]);
+
+  // Apply a chosen promotion piece to the pending promotion move
+  const applyPromo = (promo: PromoPiece) => {
+    if (!pendingPromo) return;
+    const { from, to } = pendingPromo;
+    try {
+      game.move({ from, to, promotion: promo });
+    } catch {
+      setPendingPromo(null);
+      return;
+    }
+    setPendingPromo(null);
+    setSelected(null);
+    if (online) room.send({ t: "move", move: { from, to, promotion: promo }, state: game.fen() });
+    rerender();
+  };
+
   const makeMove = (from: Square, to: Square) => {
     const piece = game.get(from);
     const lastRank = to[1] === "8" || to[1] === "1";
-    const promotion = piece?.type === "p" && lastRank ? "q" : undefined;
+    const isPromo = piece?.type === "p" && lastRank;
+    if (isPromo) {
+      // Show promotion choice modal; move is applied after player picks
+      setPendingPromo({ from, to, color: piece.color });
+      setSelected(null);
+      return;
+    }
     try {
-      game.move({ from, to, promotion });
+      game.move({ from, to });
     } catch {
       return;
     }
     setSelected(null);
-    if (online) room.send({ t: "move", move: { from, to, promotion }, state: game.fen() });
+    if (online) room.send({ t: "move", move: { from, to }, state: game.fen() });
     rerender();
   };
 
@@ -118,6 +186,7 @@ export function Chessboard() {
   const onSquare = (sq: Square) => {
     if (game.isGameOver()) return;
     if (!canInteract) return;
+    if (pendingPromo) return; // wait for promotion choice
     const piece = game.get(sq);
     if (selected) {
       if (sq === selected) return setSelected(null);
@@ -168,6 +237,7 @@ export function Chessboard() {
     setSetupOpen(false);
     gameRef.current = new Chess();
     setSelected(null);
+    setPendingPromo(null);
     rerender();
   };
   const startJoin = () => {
@@ -177,6 +247,7 @@ export function Chessboard() {
     setSetupOpen(false);
     gameRef.current = new Chess();
     setSelected(null);
+    setPendingPromo(null);
     rerender();
   };
   const leaveOnline = () => {
@@ -185,6 +256,7 @@ export function Chessboard() {
     setSetupOpen(false);
     gameRef.current = new Chess();
     setSelected(null);
+    setPendingPromo(null);
     rerender();
   };
   const copyCode = async () => {
@@ -197,6 +269,14 @@ export function Chessboard() {
       /* clipboard blocked */
     }
   };
+
+  // Build move history pairs for the history panel
+  const historyMoves = game.history();
+  const historyPairs: string[] = [];
+  for (let i = 0; i < historyMoves.length; i += 2) {
+    const n = i / 2 + 1;
+    historyPairs.push(`${n}. ${historyMoves[i]}${historyMoves[i + 1] ? " " + historyMoves[i + 1] : ""}`);
+  }
 
   // Board rendering order — flip so the local player's pieces are at the bottom.
   const board = game.board();
@@ -253,9 +333,18 @@ export function Chessboard() {
           )}
           <div style={{ display: "flex", gap: 8 }}>
             {!online && (
-              <button className="btn ghost" onClick={undo} disabled={thinking}>
-                ↶ Undo
-              </button>
+              <>
+                <button className="btn ghost" onClick={undo} disabled={thinking}>
+                  ↶ Undo
+                </button>
+                <button
+                  className="btn ghost"
+                  onClick={showHint}
+                  disabled={thinking || game.isGameOver()}
+                >
+                  Hint
+                </button>
+              </>
             )}
             <button className="btn ghost" onClick={newGame}>
               New
@@ -296,11 +385,13 @@ export function Chessboard() {
 
         <div className="chess-board">
           {cells.map(({ sq, cell, light }) => {
+            const isHint = sq === hintFrom || sq === hintTo;
             const cls = [
               "chess-sq",
               light ? "light" : "dark",
               selected === sq ? "sel" : "",
               dests.has(sq) ? (cell ? "capture" : "dest") : "",
+              isHint ? "hint" : "",
             ]
               .filter(Boolean)
               .join(" ");
@@ -316,13 +407,48 @@ export function Chessboard() {
           })}
         </div>
 
+        {/* Move history panel — single-player only */}
+        {!online && historyPairs.length > 0 && (
+          <div className="chess-history" ref={historyRef}>
+            {historyPairs.map((pair, i) => (
+              <span key={i} className="chess-history-pair">
+                {pair}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div className="sudoku-foot">
           <span className="muted sudoku-hint">
             {online
-              ? "Same code on both devices · tap a piece, then where to move · pawns auto-promote to a queen."
-              : "You're White. Tap a piece, then tap where to move · pawns auto-promote to a queen."}
+              ? "Same code on both devices · tap a piece, then where to move · choose your promotion piece."
+              : "You're White. Tap a piece, then tap where to move · choose your promotion piece."}
           </span>
         </div>
+
+        {/* Promotion choice modal */}
+        {pendingPromo && (
+          <div className="chess-promo-overlay">
+            <div className="chess-promo-card">
+              <div className="lb-modal-title">Choose promotion</div>
+              <div className="chess-promo-pieces">
+                {PROMO_PIECES.map((p) => (
+                  <button
+                    key={p}
+                    className="chess-promo-piece"
+                    onClick={() => applyPromo(p)}
+                  >
+                    <span
+                      className={`chess-piece ${pendingPromo.color === "w" ? "white" : "black"}`}
+                    >
+                      {GLYPH[p]}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <GameLeaderboard
         game="chess"
