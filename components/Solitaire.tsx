@@ -135,31 +135,55 @@ export function Solitaire() {
     setSelected(null);
   }, []);
 
-  // Synchronous loop: move every available card to foundations at once
+  // Synchronous loop: move every available card to foundations at once,
+  // drawing from stock as needed when no direct foundation move is available.
   const autoComplete = useCallback(() => {
     let cur = game;
     const hist = [...history];
     let gain = 0;
-    for (let i = 0; i < 200; i++) {
+    // Track consecutive iterations with no foundation move to detect a stuck state.
+    let noFoundationStreak = 0;
+    let stockWasteCount = cur.stock.length + cur.waste.length;
+
+    for (let i = 0; i < 1000; i++) {
       if (isWin(cur)) break;
+
+      // Try to move waste top or any tableau top to a foundation.
       let next: GameState | null = wasteToFoundation(cur);
       if (!next) {
         for (let p = 0; p < 7 && !next; p++) {
           next = tableauToFoundation(cur, p);
         }
       }
-      if (!next) break;
-      hist.push(cur);
-      cur = next;
-      gain += 5;
+
+      if (next) {
+        // Foundation move succeeded — record it and reset stuck detector.
+        hist.push(cur);
+        cur = next;
+        gain += 5;
+        noFoundationStreak = 0;
+        stockWasteCount = cur.stock.length + cur.waste.length;
+      } else {
+        // No foundation move available — draw from stock/waste to expose new cards.
+        noFoundationStreak++;
+        if (noFoundationStreak > stockWasteCount + 1) break; // full cycle with no progress
+
+        const drawn = draw(cur, drawMode);
+        if (!drawn) break; // stock and waste both empty — truly stuck
+
+        hist.push(cur);
+        cur = drawn;
+        // Auto-complete draws score nothing (+5 is for foundation moves only; no −2 penalty).
+      }
     }
+
     if (cur !== game) {
       if (startedRef.current === null) startedRef.current = Date.now();
       setHistory(hist);
       setGame(cur);
       setScore((s) => s + gain);
     }
-  }, [game, history]);
+  }, [game, history, drawMode]);
 
   const onStock = () => {
     setSelected(null);
@@ -305,7 +329,7 @@ export function Solitaire() {
               </button>
             ))}
           </div>
-          <span className="sudoku-timer">Score: {score}</span>
+          <span className="sol-score">Score: {score}</span>
           <div style={{ display: "flex", gap: 8 }}>
             {allFaceUp && !won && (
               <button className="btn ghost" onClick={autoComplete}>
