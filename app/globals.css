@@ -1135,6 +1135,31 @@ a.game-card:hover {
   font-size: calc(var(--cw) * 0.5);
 }
 
+/* Win animation overlay — fixed, pointer-events none so it never blocks clicks */
+.sol-win-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  overflow: hidden;
+}
+
+@keyframes sol-win-fly {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  80% { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(var(--sol-tx), var(--sol-ty)) rotate(var(--sol-rot)); }
+}
+
+.sol-win-card {
+  position: absolute;
+  width: 46px;
+  height: 65px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  animation: sol-win-fly 2s ease-in forwards;
+}
+
 /* ---------- Big 2 ---------- */
 .b2 {
   --cw: min(11vw, 54px);
