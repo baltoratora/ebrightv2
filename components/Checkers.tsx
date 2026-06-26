@@ -26,14 +26,6 @@ interface Snap {
   turn: Color;
 }
 
-/**
- * State held while a multi-jump is in progress for the current player.
- * `piece` is the [row, col] of the piece mid-chain.
- * `alreadyCaptured` are pieces already taken so far in this chain.
- * `boardSoFar` is the board after the captures taken so far.
- * `originBoard` is the board BEFORE the jump chain started (for undo).
- * `originTurn` is the turn BEFORE the jump chain started (for undo).
- */
 interface MidJump {
   piece: [number, number];
   alreadyCaptured: [number, number][];
@@ -42,7 +34,6 @@ interface MidJump {
   originTurn: Color;
 }
 
-/** Apply a single jump step (one capture). */
 function applySingleJump(
   b: Board,
   from: [number, number],
@@ -57,14 +48,11 @@ function applySingleJump(
   const p = n[fr][fc]!;
   n[fr][fc] = null;
   n[cr][cc] = null;
-  n[lr][lc] = { ...p };
+  const promoted = !p.king && (p.color === "r" ? lr === 0 : lr === 7);
+  n[lr][lc] = { ...p, king: p.king || promoted };
   return { board: n, landedAt: [lr, lc] };
 }
 
-/**
- * Given a piece at (r, c) and already-captured squares,
- * return immediate next jump targets (the landing squares after one more capture).
- */
 function nextJumpTargets(
   b: Board,
   r: number,
@@ -146,7 +134,7 @@ export function Checkers() {
     return new Set(targets.map(([r, c]) => `${r},${c}`));
   }, [midJump]);
 
-  /** Flash the landing cell for 300ms. */
+  // Flash the landing cell for 300ms.
   const flashLand = useCallback((r: number, c: number) => {
     if (landTimerRef.current) clearTimeout(landTimerRef.current);
     setLandCell(`${r},${c}`);
@@ -174,10 +162,6 @@ export function Checkers() {
     setLandCell(null);
   }, []);
 
-  /**
-   * Finish a player's turn: set new board, switch turns, count moves.
-   * `historyBoard` is the board to store in history (pre-move state for undo).
-   */
   const finishTurn = useCallback(
     (nextBoard: Board, historyBoard: Board, currentTurn: Color, destR: number, destC: number) => {
       setHistory((hh) => [...hh, { board: historyBoard, turn: currentTurn }]);
