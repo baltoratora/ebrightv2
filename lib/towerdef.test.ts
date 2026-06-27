@@ -6,6 +6,7 @@ import {
   waveConfig,
   canPlaceTower,
   isPathCell,
+  sellRefund,
   TOWER_DEFS,
   CELL,
   PATH_PX,
@@ -289,5 +290,27 @@ describe("isPathCell", () => {
     expect(isPathCell(8, 4)).toBe(false);
     expect(isPathCell(0, 0)).toBe(false);
     expect(isPathCell(17, 0)).toBe(false);
+  });
+});
+
+// ─── sellRefund ──────────────────────────────────────────────────────────────
+
+describe("sellRefund", () => {
+  it("returns 30 for a basic tower (floor(50 * 0.6))", () => {
+    expect(sellRefund(makeTower({ kind: "basic" }))).toBe(30);
+  });
+
+  it("returns 60 for a sniper tower (floor(100 * 0.6))", () => {
+    expect(sellRefund(makeTower({ kind: "sniper" }))).toBe(60);
+  });
+
+  it("returns 45 for a splash tower (floor(75 * 0.6))", () => {
+    expect(sellRefund(makeTower({ kind: "splash" }))).toBe(45);
+  });
+
+  it("refund is less than the original tower cost for every kind", () => {
+    for (const kind of ["basic", "sniper", "splash"] as const) {
+      expect(sellRefund(makeTower({ kind }))).toBeLessThan(TOWER_DEFS[kind].cost);
+    }
   });
 });

@@ -8,6 +8,7 @@ import {
   waveConfig,
   canPlaceTower,
   isPathCell,
+  sellRefund,
   TOWER_DEFS,
   STARTING_GOLD,
   STARTING_LIVES,
@@ -45,6 +46,7 @@ export function TowerDefense() {
   const nextSpawnRef  = useRef(0); // rAF ts when to spawn next
   const statusRef     = useRef<Status>("idle");
   const selectedRef   = useRef<TowerKind>("basic");
+  const sellModeRef   = useRef(false);
   const prevTimeRef   = useRef(0);
   const rafRef        = useRef(0);
   const nextEIdRef    = useRef(1);
@@ -59,6 +61,7 @@ export function TowerDefense() {
   const [status,     setStatus    ] = useState<Status>("idle");
   const [waveActive, setWaveActive] = useState(false);
   const [selKind,    setSelKind   ] = useState<TowerKind>("basic");
+  const [sellMode,   setSellMode  ] = useState(false);
 
   // ── draw ─────────────────────────────────────────────────────────────────
   const draw = useCallback(() => {
@@ -108,23 +111,32 @@ export function TowerDefense() {
     // Hover highlight + range preview
     const hov = hoverRef.current;
     if (statusRef.current === "playing" && hov.col >= 0 && hov.col < COLS && hov.row >= 0 && hov.row < ROWS) {
-      const state = { towers: towersRef.current, gold: goldRef.current, selectedTowerKind: selectedRef.current };
-      const canPlace = canPlaceTower(state, hov.col, hov.row);
-      if (!isPathCell(hov.col, hov.row)) {
-        ctx.fillStyle = canPlace ? "rgba(74,222,128,0.15)" : "rgba(248,113,113,0.15)";
-        ctx.fillRect(hov.col * CELL, hov.row * CELL, CELL, CELL);
-      }
-      if (canPlace) {
-        const def = TOWER_DEFS[selectedRef.current];
-        const cx = hov.col * CELL + CELL / 2;
-        const cy = hov.row * CELL + CELL / 2;
-        ctx.strokeStyle = `${def.color}44`;
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.arc(cx, cy, def.range, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
+      if (sellModeRef.current) {
+        // Sell mode: red tint on towers that can be sold
+        const hasTower = towersRef.current.some((t) => t.col === hov.col && t.row === hov.row);
+        if (hasTower) {
+          ctx.fillStyle = "rgba(248,113,113,0.35)";
+          ctx.fillRect(hov.col * CELL, hov.row * CELL, CELL, CELL);
+        }
+      } else {
+        const state = { towers: towersRef.current, gold: goldRef.current, selectedTowerKind: selectedRef.current };
+        const canPlace = canPlaceTower(state, hov.col, hov.row);
+        if (!isPathCell(hov.col, hov.row)) {
+          ctx.fillStyle = canPlace ? "rgba(74,222,128,0.15)" : "rgba(248,113,113,0.15)";
+          ctx.fillRect(hov.col * CELL, hov.row * CELL, CELL, CELL);
+        }
+        if (canPlace) {
+          const def = TOWER_DEFS[selectedRef.current];
+          const cx = hov.col * CELL + CELL / 2;
+          const cy = hov.row * CELL + CELL / 2;
+          ctx.strokeStyle = `${def.color}44`;
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.arc(cx, cy, def.range, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
       }
     }
 
@@ -390,7 +402,7 @@ export function TowerDefense() {
     rafRef.current = requestAnimationFrame(loop);
   }, [loop]);
 
-  // ── canvas click (place tower or start game) ──────────────────────────────
+  // ── canvas click (place/sell tower or start game) ─────────────────────────
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
       if (statusRef.current !== "playing") {
@@ -401,6 +413,19 @@ export function TowerDefense() {
       const rect = cv.getBoundingClientRect();
       const col = Math.floor((e.clientX - rect.left) / CELL);
       const row = Math.floor((e.clientY - rect.top) / CELL);
+
+      if (sellModeRef.current) {
+        // Sell mode: remove a tower and refund gold
+        const towerIdx = towersRef.current.findIndex((t) => t.col === col && t.row === row);
+        if (towerIdx >= 0) {
+          const tower = towersRef.current[towerIdx];
+          towersRef.current = towersRef.current.filter((_, i) => i !== towerIdx);
+          goldRef.current += sellRefund(tower);
+          setGold(goldRef.current);
+        }
+        return;
+      }
+
       const state = { towers: towersRef.current, gold: goldRef.current, selectedTowerKind: selectedRef.current };
       if (canPlaceTower(state, col, row)) {
         const def = TOWER_DEFS[selectedRef.current];
@@ -436,6 +461,15 @@ export function TowerDefense() {
   const selectKind = useCallback((kind: TowerKind) => {
     selectedRef.current = kind;
     setSelKind(kind);
+    sellModeRef.current = false;
+    setSellMode(false);
+  }, []);
+
+  // ── sell mode toggle ──────────────────────────────────────────────────────
+  const toggleSellMode = useCallback(() => {
+    const next = !sellModeRef.current;
+    sellModeRef.current = next;
+    setSellMode(next);
   }, []);
 
   // ── mount ─────────────────────────────────────────────────────────────────
@@ -465,11 +499,13 @@ export function TowerDefense() {
         case "1": selectKind("basic");  break;
         case "2": selectKind("sniper"); break;
         case "3": selectKind("splash"); break;
+        case "4":
+        case "s": toggleSellMode();    break;
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [newGame, startWave, selectKind]);
+  }, [newGame, startWave, selectKind, toggleSellMode]);
 
   // ── helpers ───────────────────────────────────────────────────────────────
   const kindDefs = Object.values(TOWER_DEFS);
@@ -480,6 +516,7 @@ export function TowerDefense() {
         controls={[
           { key: "Click cell",  desc: "Place selected tower" },
           { key: "1 / 2 / 3",  desc: "Select tower type" },
+          { key: "S / 4",       desc: "Toggle sell mode" },
           { key: "Space",       desc: "Start next wave" },
           { key: "Enter",       desc: "Start / restart" },
         ]}
@@ -532,7 +569,7 @@ export function TowerDefense() {
           {kindDefs.map((def) => (
             <button
               key={def.kind}
-              className={`td-tower-btn${selKind === def.kind ? " active" : ""}`}
+              className={`td-tower-btn${!sellMode && selKind === def.kind ? " active" : ""}`}
               style={{ "--td-tower-color": def.color } as React.CSSProperties}
               onClick={() => selectKind(def.kind)}
               title={`${def.label} — ${def.cost}g, range ${def.range}px, ${def.damage} dmg @ ${def.fireRate}/s`}
@@ -542,10 +579,20 @@ export function TowerDefense() {
               <span className="td-tower-cost">{def.cost}g</span>
             </button>
           ))}
+          <button
+            className={`td-tower-btn${sellMode ? " active" : ""}`}
+            style={{ "--td-tower-color": "#e53e3e" } as React.CSSProperties}
+            onClick={toggleSellMode}
+            title="Sell mode — click a placed tower to sell it for 60% of its cost (S / 4)"
+          >
+            <span className="td-tower-icon" />
+            <span className="td-tower-name">Sell</span>
+            <span className="td-tower-cost">60%</span>
+          </button>
         </div>
 
         <div className="td-hint">
-          Click a green cell to place · Space to start wave · 1/2/3 to select tower
+          Click a green cell to place · Space to start wave · 1/2/3 to select tower · S to sell
         </div>
       </div>
 

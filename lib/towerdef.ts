@@ -226,3 +226,8 @@ export function canPlaceTower(
 export function canAfford(gold: number, kind: TowerKind): boolean {
   return gold >= TOWER_DEFS[kind].cost;
 }
+
+/** Gold refunded when selling a tower (60% of build cost, floored). */
+export function sellRefund(tower: Tower): number {
+  return Math.floor(TOWER_DEFS[tower.kind].cost * 0.6);
+}
