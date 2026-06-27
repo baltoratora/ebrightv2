@@ -21,6 +21,7 @@ export const GAME_META: Record<string, GameMeta> = {
   battleship:   { dir: "asc",  unit: "moves" },
   carrom:       { dir: "asc",  unit: "moves" },
   pool:         { dir: "asc",  unit: "moves" },
+  "2048":       { dir: "desc", unit: "score" },
 };
 
 export interface Entry {
