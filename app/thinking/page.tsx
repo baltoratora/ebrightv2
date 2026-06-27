@@ -30,6 +30,7 @@ const GAMES: Game[] = [
   { name: "2048", desc: "slide & merge to 2048", icon: "🧮", href: "/2048", ready: true },
   { name: "Simon Says", desc: "repeat the pattern", icon: "🎵", href: "/simon", ready: true },
   { name: "Sokoban", desc: "push boxes to goals", icon: "📦", href: "/sokoban", ready: true },
+  { name: "Frogger", desc: "cross the road & river", icon: "🐸", href: "/frogger", ready: true },
 ];
 
 function Card({ g }: { g: Game }) {

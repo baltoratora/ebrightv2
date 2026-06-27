@@ -24,6 +24,7 @@ export const GAME_META: Record<string, GameMeta> = {
   "2048":       { dir: "desc", unit: "score" },
   simon:        { dir: "desc", unit: "rounds" },
   sokoban:      { dir: "asc",  unit: "moves"  },
+  frogger:      { dir: "desc", unit: "score"  },
 };
 
 export interface Entry {
