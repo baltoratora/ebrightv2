@@ -29,6 +29,7 @@ const GAMES: Game[] = [
   { name: "Puzzle Bobble", desc: "Shoot & match bubbles", icon: "🫧", href: "/puzzle-bobble", ready: true },
   { name: "2048", desc: "slide & merge to 2048", icon: "🧮", href: "/2048", ready: true },
   { name: "Simon Says", desc: "repeat the pattern", icon: "🎵", href: "/simon", ready: true },
+  { name: "Sokoban", desc: "push boxes to goals", icon: "📦", href: "/sokoban", ready: true },
 ];
 
 function Card({ g }: { g: Game }) {

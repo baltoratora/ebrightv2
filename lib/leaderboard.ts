@@ -23,6 +23,7 @@ export const GAME_META: Record<string, GameMeta> = {
   pool:         { dir: "asc",  unit: "moves" },
   "2048":       { dir: "desc", unit: "score" },
   simon:        { dir: "desc", unit: "rounds" },
+  sokoban:      { dir: "asc",  unit: "moves"  },
 };
 
 export interface Entry {
