@@ -375,24 +375,33 @@ export function Pacman() {
     // Distance to tile centre
     const distToCentre = Math.abs(px - cPx) + Math.abs(py - cPy);
 
-    if (blocked && distToCentre < speed + 1) {
-      // Snap to centre and stop
-      px = cPx;
-      py = cPy;
+    if (blocked) {
+      // Wall ahead: coast the rest of the way to this tile's centre, then stop.
+      // Never freeze mid-tile — Pac-Man must reach the centre so a queued turn
+      // at this junction can register (otherwise he gets stuck in corners).
+      if (distToCentre <= speed) {
+        px = cPx;
+        py = cPy;
+      } else {
+        if (dir === "left")  px -= speed;
+        if (dir === "right") px += speed;
+        if (dir === "up")    py -= speed;
+        if (dir === "down")  py += speed;
+      }
       pacPxRef.current = { px, py };
+      pacTileRef.current = pxTile(px, py);
       return;
     }
 
-    if (!blocked) {
-      if (dir === "left")  px -= speed;
-      if (dir === "right") px += speed;
-      if (dir === "up")    py -= speed;
-      if (dir === "down")  py += speed;
+    // Open ahead: advance.
+    if (dir === "left")  px -= speed;
+    if (dir === "right") px += speed;
+    if (dir === "up")    py -= speed;
+    if (dir === "down")  py += speed;
 
-      // Tunnel wrap
-      if (px < -CELL / 2)   px = W + CELL / 2;
-      if (px > W + CELL / 2) px = -CELL / 2;
-    }
+    // Tunnel wrap
+    if (px < -CELL / 2)   px = W + CELL / 2;
+    if (px > W + CELL / 2) px = -CELL / 2;
 
     pacPxRef.current = { px, py };
     pacTileRef.current = pxTile(px, py);
@@ -617,6 +626,9 @@ export function Pacman() {
   // ── keyboard ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Don't hijack typing in inputs (e.g. the leaderboard name field).
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (statusRef.current !== "playing") {
         if (e.key === " " || e.key === "Enter") {
           e.preventDefault();
