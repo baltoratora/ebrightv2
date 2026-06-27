@@ -2913,3 +2913,116 @@ a.game-card:hover {
   color: var(--muted);
   text-align: center;
 }
+
+/* ── Tower Defense ──────────────────────────────────────────────────────── */
+.td-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.td-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  width: 100%;
+  max-width: 576px;
+}
+.td-stat {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+.td-stat--dim {
+  color: var(--muted);
+  font-weight: 400;
+}
+.td-stage {
+  position: relative;
+  display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+.td-canvas {
+  display: block;
+  cursor: crosshair;
+}
+.td-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(5, 6, 13, 0.82);
+}
+.td-overlay-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text);
+}
+.td-overlay-sub {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: -4px;
+}
+.td-toolbar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 576px;
+}
+.td-tower-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 14px;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text);
+  transition: border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.td-tower-btn:hover {
+  background: var(--surface);
+  border-color: var(--td-tower-color, var(--accent));
+}
+.td-tower-btn.active {
+  background: var(--surface);
+  border-color: var(--td-tower-color, var(--accent));
+  box-shadow: 0 0 8px var(--td-tower-color, var(--accent));
+}
+.td-tower-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--td-tower-color, var(--accent));
+  display: block;
+}
+.td-tower-name {
+  font-size: 12px;
+  font-weight: 600;
+}
+.td-tower-cost {
+  font-size: 11px;
+  color: var(--muted);
+}
+.td-hint {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
