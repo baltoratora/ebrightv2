@@ -106,11 +106,10 @@ export function Pacman() {
   const [level,  setLevel ] = useState(1);
 
   // ── init / reset helpers ──────────────────────────────────────────────────
-  const initLevel = useCallback((lvl: number) => {
-    const parsed = parseMaze(MAZE_SRC);
-    mazeRef.current = parsed;
-    pelletsRef.current = new Set(parsed.pellets);
-    powerPelletsRef.current = new Set(parsed.powerPellets);
+  // Reset Pac-Man and the ghosts to their spawn positions WITHOUT touching the
+  // pellet state. Used on respawn-after-death so eaten pellets stay eaten.
+  const resetActors = useCallback((lvl: number) => {
+    const parsed = mazeRef.current;
 
     const spawnTile = parsed.pacSpawn;
     pacTileRef.current = { ...spawnTile };
@@ -144,6 +143,16 @@ export function Pacman() {
 
     ghostEatComboRef.current = 0;
   }, []);
+
+  // Full level (re)build: regenerate the maze + pellet sets, then place actors.
+  // Use only for new games and level-clear transitions — NOT on death-respawn.
+  const initLevel = useCallback((lvl: number) => {
+    const parsed = parseMaze(MAZE_SRC);
+    mazeRef.current = parsed;
+    pelletsRef.current = new Set(parsed.pellets);
+    powerPelletsRef.current = new Set(parsed.powerPellets);
+    resetActors(lvl);
+  }, [resetActors]);
 
   const newGame = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -470,15 +479,8 @@ export function Pacman() {
           draw();
           return;
         }
-        // Respawn Pac-Man
-        const sp = mazeRef.current.pacSpawn;
-        pacTileRef.current = { ...sp };
-        const { px, py } = tilePx(sp);
-        pacPxRef.current = { px, py };
-        pacDirRef.current = "none";
-        pacQueueRef.current = "none";
-        // Reset ghosts
-        initLevel(levelRef.current);
+        // Respawn Pac-Man and reset ghosts — keep eaten pellets eaten
+        resetActors(levelRef.current);
         statusRef.current = "playing";
         setStatus("playing");
       }
@@ -593,7 +595,7 @@ export function Pacman() {
       rafRef.current = requestAnimationFrame(loop);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draw, movePac, moveGhost, initLevel]);
+  }, [draw, movePac, moveGhost, initLevel, resetActors]);
 
   // ── mount ─────────────────────────────────────────────────────────────────
   useEffect(() => {
