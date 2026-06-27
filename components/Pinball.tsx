@@ -16,8 +16,8 @@ const FLIP_REST = 0.3;
 const FLIP_KICK = 3.4;
 const SLING_KICK = 4.2; // extra speed kick for slingshot walls
 const BALL_SAVE_MS = 3000;
-const LAUNCH_X = W - BALL_R - 3; // ball sits against right wall in lane
-const LAUNCH_Y = H - 35;
+const LAUNCH_X = W / 2; // ball waits at the top drop point while charging
+const LAUNCH_Y = 30;
 const PLUNGER_RATE = 0.013; // charge per frame
 
 const LX = 96;
@@ -135,24 +135,23 @@ export function Pinball() {
     ctx.fillStyle = "#fafafa";
     ctx.fill();
 
-    // plunger power bar while in launch mode
+    // launch power meter while in launch mode (under the top drop point)
     if (launchingRef.current) {
       const pw = plungerPowerRef.current;
-      const bx = W - 28;
-      const barH = 80;
-      const barY = H - 55 - barH;
+      const barW = 96;
+      const barX = W / 2 - barW / 2;
+      const barY = 52;
       ctx.fillStyle = "rgba(255,255,255,0.18)";
-      ctx.fillRect(bx, barY, 12, barH);
+      ctx.fillRect(barX, barY, barW, 10);
       ctx.fillStyle = pw > 0.7 ? "#ff4444" : pw > 0.4 ? "#ffaa00" : "#44ff88";
-      ctx.fillRect(bx, barY + barH * (1 - pw), 12, barH * pw);
+      ctx.fillRect(barX, barY, barW * pw, 10);
       ctx.strokeStyle = "rgba(255,255,255,0.45)";
       ctx.lineWidth = 1;
-      ctx.strokeRect(bx, barY, 12, barH);
-      ctx.fillStyle = "rgba(255,255,255,0.65)";
+      ctx.strokeRect(barX, barY, barW, 10);
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
       ctx.font = "9px sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("HOLD", bx + 6, barY - 6);
-      ctx.fillText("SPC", bx + 6, barY - 16);
+      ctx.fillText("HOLD SPACE · RELEASE TO DROP", W / 2, barY + 24);
       ctx.textAlign = "left";
     }
 
@@ -170,8 +169,12 @@ export function Pinball() {
   const launch = useCallback(() => {
     if (!launchingRef.current) return;
     const power = Math.max(0.25, plungerPowerRef.current);
-    ballRef.current.vy = -MAX_SPEED * power;
-    ballRef.current.vx = 0;
+    const b = ballRef.current;
+    // drop the ball into play from the top; charge sets speed + entry angle
+    b.x = LAUNCH_X;
+    b.y = LAUNCH_Y;
+    b.vx = (power - 0.5) * 3.5;
+    b.vy = MAX_SPEED * (0.4 + power * 0.5);
     launchingRef.current = false;
     plungerPowerRef.current = 0;
     plungerChargingRef.current = false;
@@ -356,7 +359,7 @@ export function Pinball() {
           { key: "→ / L", desc: "Right flipper" },
           { key: "Space", desc: "Charge & launch" },
         ]}
-        tips={["Hold Space to charge plunger, release to launch", "Hit bumpers for combo points"]}
+        tips={["Hold Space to charge, release to drop the ball into play", "Hit bumpers for combo points"]}
       />
     <div className="pinball">
       <div className="sudoku-bar">
@@ -403,7 +406,7 @@ export function Pinball() {
 
       <div className="sudoku-foot">
         <span className="muted sudoku-hint">
-          Hold Space (or Launch) to charge · release to shoot · ← / → for flippers · 3 balls.
+          Hold Space (or Launch) to charge · release to drop the ball in · ← / → for flippers · 3 balls.
         </span>
       </div>
     </div>

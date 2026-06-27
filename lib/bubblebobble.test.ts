@@ -176,16 +176,29 @@ describe("snapToGrid", () => {
 });
 
 describe("advanceCeiling", () => {
-  it("shifts row 0 content to row 1 and clears row 0", () => {
+  it("shifts row 0 content to row 1 and fills row 0 with the new top row", () => {
     const grid: Grid = Array.from({ length: 13 }, (_, r) =>
       Array(r % 2 === 0 ? 11 : 10).fill(null),
     );
     grid[0][0] = R;
     grid[0][1] = B;
-    advanceCeiling(grid);
-    expect(grid[0][0]).toBeNull(); // row 0 is now empty
+    const top = Array(11).fill(G);
+    advanceCeiling(grid, top);
     expect(grid[1][0]).toBe(R);   // R shifted down
     expect(grid[1][1]).toBe(B);   // B shifted down
+    expect(grid[0][0]).toBe(G);   // new top row keeps row 0 anchored
+    expect(grid[0][5]).toBe(G);
+  });
+
+  it("keeps the mass anchored to row 0 (no false floating after descent)", () => {
+    const grid: Grid = Array.from({ length: 13 }, (_, r) =>
+      Array(r % 2 === 0 ? 11 : 10).fill(null),
+    );
+    grid[0][2] = R;
+    grid[1][2] = R;
+    advanceCeiling(grid, Array(11).fill(B));
+    // every occupied cell must still reach row 0 — nothing falsely floats
+    expect(findFloating(grid)).toHaveLength(0);
   });
 
   it("preserves grid length", () => {
@@ -193,7 +206,7 @@ describe("advanceCeiling", () => {
       Array(r % 2 === 0 ? 11 : 10).fill(null),
     );
     grid[0][3] = G;
-    advanceCeiling(grid);
+    advanceCeiling(grid, Array(11).fill(R));
     expect(grid).toHaveLength(13);
   });
 });
