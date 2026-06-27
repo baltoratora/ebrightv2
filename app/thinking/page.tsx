@@ -31,6 +31,7 @@ const GAMES: Game[] = [
   { name: "Simon Says", desc: "repeat the pattern", icon: "🎵", href: "/simon", ready: true },
   { name: "Sokoban", desc: "push boxes to goals", icon: "📦", href: "/sokoban", ready: true },
   { name: "Frogger", desc: "cross the road & river", icon: "🐸", href: "/frogger", ready: true },
+  { name: "Pac-Man", desc: "eat the dots, dodge the ghosts", icon: "👻", href: "/pacman", ready: true },
 ];
 
 function Card({ g }: { g: Game }) {
