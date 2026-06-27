@@ -7,6 +7,7 @@ import {
   generateSolved,
   isComplete,
   cloneBoard,
+  computeCandidates,
   type Board,
 } from "./sudoku";
 
@@ -86,5 +87,56 @@ describe("generatePuzzle", () => {
     expect(count(generatePuzzle("easy").puzzle)).toBeGreaterThan(
       count(generatePuzzle("hard").puzzle),
     );
+  });
+});
+
+describe("computeCandidates", () => {
+  it("returns an empty array for filled cells", () => {
+    const board = cloneBoard(PUZZLE);
+    solve(board);
+    const cands = computeCandidates(board);
+    for (let r = 0; r < 9; r++)
+      for (let c = 0; c < 9; c++)
+        expect(cands[r][c]).toEqual([]);
+  });
+
+  it("returns only valid candidates for empty cells", () => {
+    const cands = computeCandidates(PUZZLE);
+    // Every candidate in an empty cell must be a valid placement.
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (PUZZLE[r][c] !== 0) continue;
+        for (const n of cands[r][c]) {
+          expect(isValidPlacement(PUZZLE, r, c, n)).toBe(true);
+        }
+      }
+    }
+  });
+
+  it("does not miss valid candidates for empty cells", () => {
+    const cands = computeCandidates(PUZZLE);
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        if (PUZZLE[r][c] !== 0) continue;
+        // Every number 1-9 that is a valid placement must appear in candidates.
+        for (let n = 1; n <= 9; n++) {
+          if (isValidPlacement(PUZZLE, r, c, n)) {
+            expect(cands[r][c]).toContain(n);
+          }
+        }
+      }
+    }
+  });
+
+  it("candidates are sorted in ascending order", () => {
+    const cands = computeCandidates(PUZZLE);
+    for (let r = 0; r < 9; r++) {
+      for (let c = 0; c < 9; c++) {
+        const cell = cands[r][c];
+        for (let i = 1; i < cell.length; i++) {
+          expect(cell[i]).toBeGreaterThan(cell[i - 1]);
+        }
+      }
+    }
   });
 });

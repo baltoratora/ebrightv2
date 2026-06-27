@@ -82,3 +82,11 @@ export function collideCircle(ball: Ball, cx: number, cy: number, cr: number, ki
 export function flipperSeg(px: number, py: number, len: number, angleRad: number): Seg {
   return { x1: px, y1: py, x2: px + Math.cos(angleRad) * len, y2: py + Math.sin(angleRad) * len };
 }
+
+// Returns the current bumper score multiplier based on total bumper hits.
+export function bumperMultiplier(hits: number): number {
+  if (hits >= 50) return 5;
+  if (hits >= 25) return 3;
+  if (hits >= 10) return 2;
+  return 1;
+}

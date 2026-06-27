@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Chess } from "chess.js";
-import { bestMove, evaluate } from "./chessAI";
+import { bestMove, evaluate, getBookMove } from "./chessAI";
 
 describe("evaluate", () => {
   it("is 0 at the symmetric start", () => {
@@ -24,5 +24,25 @@ describe("bestMove", () => {
     const g = new Chess("4k3/8/8/4q3/8/8/4R3/4K3 w - - 0 1");
     const m = bestMove(g, 2)!;
     expect(m.to).toBe("e5");
+  });
+});
+
+describe("getBookMove", () => {
+  it("returns a legal move for the start position", () => {
+    const g = new Chess();
+    const m = getBookMove(g);
+    expect(m).not.toBeNull();
+    if (m) {
+      const from = m.slice(0, 2);
+      const to = m.slice(2, 4);
+      const legal = g.moves({ verbose: true }).some((x) => x.from === from && x.to === to);
+      expect(legal).toBe(true);
+    }
+  });
+
+  it("returns null for a non-book position", () => {
+    // Unusual position not in the book
+    const g = new Chess("4k3/8/8/4q3/8/8/4R3/4K3 w - - 0 1");
+    expect(getBookMove(g)).toBeNull();
   });
 });

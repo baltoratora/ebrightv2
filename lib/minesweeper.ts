@@ -15,7 +15,7 @@ export const DIFFICULTIES: Record<Difficulty, Config> = {
   hard: { rows: 16, cols: 16, mines: 65 },
 };
 
-export type CellState = "hidden" | "revealed" | "flagged";
+export type CellState = "hidden" | "revealed" | "flagged" | "unknown";
 
 export interface Cell {
   mine: boolean;
@@ -128,7 +128,8 @@ export function reveal(
   const rows = b.length;
   const cols = b[0].length;
 
-  if (b[r][c].state !== "hidden") return { board: b, hitMine: false };
+  const isRevealable = (s: CellState) => s === "hidden" || s === "unknown";
+  if (!isRevealable(b[r][c].state)) return { board: b, hitMine: false };
   if (b[r][c].mine) {
     b[r][c].state = "revealed";
     return { board: b, hitMine: true };
@@ -138,23 +139,24 @@ export function reveal(
   while (stack.length) {
     const [cr, cc] = stack.pop()!;
     const cell = b[cr][cc];
-    if (cell.state !== "hidden") continue; // skip revealed/flagged
+    if (!isRevealable(cell.state)) continue; // skip revealed/flagged
     cell.state = "revealed";
     if (cell.adjacent === 0) {
       for (const [nr, nc] of neighbors(cr, cc, rows, cols)) {
-        if (b[nr][nc].state === "hidden") stack.push([nr, nc]);
+        if (isRevealable(b[nr][nc].state)) stack.push([nr, nc]);
       }
     }
   }
   return { board: b, hitMine: false };
 }
 
-/** Toggle a flag on a hidden/flagged cell (revealed cells are untouched). */
+// Cycle: hidden → flagged → unknown → hidden (revealed cells are untouched).
 export function toggleFlag(board: Board, r: number, c: number): Board {
   const b = cloneBoard(board);
   const cell = b[r][c];
   if (cell.state === "hidden") cell.state = "flagged";
-  else if (cell.state === "flagged") cell.state = "hidden";
+  else if (cell.state === "flagged") cell.state = "unknown";
+  else if (cell.state === "unknown") cell.state = "hidden";
   return b;
 }
 
@@ -172,6 +174,32 @@ export function countFlags(board: Board): number {
   let n = 0;
   for (const row of board) for (const cell of row) if (cell.state === "flagged") n++;
   return n;
+}
+
+// Chord-click: reveal non-flagged hidden neighbors of a satisfied numbered cell.
+export function chord(
+  board: Board,
+  r: number,
+  c: number,
+): { board: Board; hitMine: boolean } | null {
+  const cell = board[r][c];
+  if (cell.state !== "revealed" || cell.adjacent === 0) return null;
+  const rows = board.length;
+  const cols = board[0].length;
+  const nbrs = neighbors(r, c, rows, cols);
+  const flagCount = nbrs.filter(([nr, nc]) => board[nr][nc].state === "flagged").length;
+  if (flagCount !== cell.adjacent) return null;
+  // Reveal all non-flagged, non-revealed neighbors
+  let b = cloneBoard(board);
+  let hitMine = false;
+  for (const [nr, nc] of nbrs) {
+    if (b[nr][nc].state === "hidden" || b[nr][nc].state === "unknown") {
+      const result = reveal(b, nr, nc);
+      b = result.board;
+      if (result.hitMine) hitMine = true;
+    }
+  }
+  return { board: b, hitMine };
 }
 
 /** Reveal all mines (used when the game is lost). */

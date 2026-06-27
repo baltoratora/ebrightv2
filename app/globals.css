@@ -692,6 +692,24 @@ body {
   font-size: 12px;
 }
 
+.sudoku-timer {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  min-width: 3.5ch;
+  text-align: right;
+}
+
+.sol-score {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.04em;
+  min-width: 3.5ch;
+  text-align: right;
+}
+
 kbd {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -842,6 +860,19 @@ a.game-card:hover {
 .ms-cell.n6 { color: #4dd0e1; }
 .ms-cell.n7 { color: #eef1f8; }
 .ms-cell.n8 { color: #9aa0b8; }
+.ms-cell--unknown { color: #f97316; font-style: italic; }
+
+.ms-best {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted, #9aa0b8);
+  margin: -8px auto 10px;
+}
+.ms-new-best {
+  color: #4ade80;
+  font-weight: 700;
+  font-size: 0.9em;
+}
 
 .sudoku-win.lost {
   color: #ff6b6b;
@@ -1113,6 +1144,31 @@ a.game-card:hover {
   font-size: calc(var(--cw) * 0.5);
 }
 
+/* Win animation overlay — fixed, pointer-events none so it never blocks clicks */
+.sol-win-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  overflow: hidden;
+}
+
+@keyframes sol-win-fly {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  80% { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(var(--sol-tx), var(--sol-ty)) rotate(var(--sol-rot)); }
+}
+
+.sol-win-card {
+  position: absolute;
+  width: 46px;
+  height: 65px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  animation: sol-win-fly 2s ease-in forwards;
+}
+
 /* ---------- Big 2 ---------- */
 .b2 {
   --cw: min(11vw, 54px);
@@ -1223,7 +1279,78 @@ a.game-card:hover {
   justify-content: center;
 }
 .b2 .btn {
-  min-width: 92px;
+  min-width: 72px;
+}
+.b2-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.b2-meta-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.b2-round {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+.b2-scores {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.b2-score-item {
+  font-size: 12px;
+  color: var(--muted);
+}
+.b2-score-you {
+  color: var(--accent);
+  font-weight: 700;
+}
+.b2-diff {
+  display: flex;
+  gap: 4px;
+}
+.b2-diff-btn {
+  font-size: 11px;
+  padding: 3px 8px;
+  min-width: unset;
+  border-radius: 8px;
+}
+.b2-diff-active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.b2-opp-revealed {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+  max-width: 160px;
+  margin-top: 4px;
+}
+.b2-opp-out {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.b2-last-card {
+  display: block;
+  font-size: 10px;
+  color: #e05050;
+  font-weight: 700;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+.b2-round-end {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
 }
 
 /* ---------- Chess ---------- */
@@ -1293,6 +1420,74 @@ a.game-card:hover {
   color: #15151c;
   text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
 }
+/* Hint highlight: gold flash on suggested from/to squares */
+.chess-sq.hint {
+  box-shadow: inset 0 0 0 4px rgba(251, 191, 36, 0.95);
+  background: rgba(251, 191, 36, 0.28) !important;
+}
+/* Move history panel */
+.chess-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  max-height: 80px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-top: 12px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: var(--muted);
+  line-height: 1.6;
+  width: min(94vw, 440px);
+  margin-left: auto;
+  margin-right: auto;
+}
+.chess-history-pair {
+  white-space: nowrap;
+}
+/* Promotion choice modal */
+.chess-promo-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(5, 6, 13, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.chess-promo-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 28px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+.chess-promo-pieces {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 16px;
+}
+.chess-promo-piece {
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 36px;
+  line-height: 1;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.chess-promo-piece:hover {
+  border-color: var(--accent);
+  background: rgba(255, 93, 143, 0.12);
+}
 
 /* ---------- Checkers (reuses chess board sizing) ---------- */
 .ck-board {
@@ -1348,6 +1543,29 @@ a.game-card:hover {
   background: radial-gradient(circle at 35% 30%, #4a4a55, #15151c);
   border: 2px solid #000;
 }
+.ck-piece.king {
+  font-size: clamp(12px, 3.5vw, 20px);
+  line-height: 1;
+  color: #ffd54a;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+/* Jump hint: next available jump squares during a multi-jump */
+.ck-sq--jump-hint::after {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  border: 3px solid rgba(251, 191, 36, 0.85);
+  pointer-events: none;
+}
+/* Land animation: brief flash when a piece arrives at a square */
+@keyframes ck-land {
+  0%   { box-shadow: inset 0 0 0 3px rgba(74, 222, 128, 0.9); }
+  100% { box-shadow: inset 0 0 0 3px rgba(74, 222, 128, 0); }
+}
+.ck-sq--land {
+  animation: ck-land 300ms ease-out forwards;
+}
 
 /* ---------- Battleship ---------- */
 .bs {
@@ -1385,7 +1603,12 @@ a.game-card:hover {
 }
 .bs-cell.ship {
   background: #3a4055;
+  border: 1px solid transparent;
 }
+.bs-cell.ship.bs-edge-t { border-top: 2px solid #7080c0; }
+.bs-cell.ship.bs-edge-b { border-bottom: 2px solid #7080c0; }
+.bs-cell.ship.bs-edge-l { border-left: 2px solid #7080c0; }
+.bs-cell.ship.bs-edge-r { border-right: 2px solid #7080c0; }
 .bs-cell.hit {
   background: #c0233a;
 }
@@ -1413,6 +1636,54 @@ a.game-card:hover {
   outline: 1px dashed rgba(255, 255, 255, 0.3);
   outline-offset: -1px;
 }
+@keyframes bs-hit {
+  0%   { transform: scale(1);    background: #ff3355; }
+  50%  { transform: scale(1.25); background: #ff6677; }
+  100% { transform: scale(1);    background: #c0233a; }
+}
+@keyframes bs-miss {
+  0%   { box-shadow: 0 0 0 0   rgba(91, 130, 255, 0.6); }
+  60%  { box-shadow: 0 0 0 8px rgba(91, 130, 255, 0);   }
+  100% { box-shadow: 0 0 0 0   rgba(91, 130, 255, 0);   }
+}
+.bs-cell.bs-anim-hit  { animation: bs-hit  0.4s ease-out; }
+.bs-cell.bs-anim-miss { animation: bs-miss 0.4s ease-out; }
+.bs-cell.bs-preview-v { background: rgba(60, 210, 100, 0.35); border-color: #3cd264; }
+.bs-cell.bs-preview-x { background: rgba(255,  60,  60, 0.35); border-color: #ff3c3c; }
+.bs-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin: 10px 0 4px;
+}
+.bs-palette-ship {
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--muted);
+  transition: background 0.15s;
+}
+.bs-palette-ship:hover:not(.selected) { background: rgba(255,255,255,0.06); }
+.bs-palette-ship.placed  { opacity: 0.45; }
+.bs-palette-ship.selected { border-color: var(--accent); color: var(--accent); background: rgba(255,93,143,0.12); }
+.bs-rotate { font-size: 11px; padding: 4px 10px; }
+.bs-diff { display: flex; gap: 4px; align-items: center; }
+.bs-diff-btn {
+  padding: 3px 9px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  font-size: 11px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--muted);
+  transition: background 0.15s;
+}
+.bs-diff-btn.active { border-color: var(--accent); color: var(--accent); }
+.bs-diff-btn:disabled { opacity: 0.4; cursor: default; }
 
 /* ---------- Carrom (canvas) ---------- */
 .carrom {
@@ -1430,6 +1701,30 @@ a.game-card:hover {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
+.carrom-bar-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.carrom-scores {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+.carrom-score {
+  color: var(--muted);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.carrom-score.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(255, 93, 143, 0.08);
+}
+
 /* ---------- Pool (canvas) ---------- */
 .pool {
   max-width: 480px;
@@ -1444,6 +1739,22 @@ a.game-card:hover {
   border-radius: 12px;
   touch-action: none;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+/* Pool power bar */
+.pool-power-bar {
+  width: min(96vw, 460px);
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin: 6px auto 0;
+  overflow: hidden;
+}
+.pool-power-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #27ae60, #f1c40f, #e74c3c);
+  border-radius: 3px;
+  transition: width 0.04s linear;
 }
 
 /* ---------- Tetris ---------- */
@@ -1531,6 +1842,38 @@ a.game-card:hover {
 }
 .t-btn:hover {
   border-color: var(--accent);
+}
+.t-cell--ghost {
+  background: rgba(255, 255, 255, 0.06);
+}
+.t-hold-empty {
+  width: 72px;
+  height: 36px;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+}
+.t-hold-btn {
+  width: auto;
+  height: 32px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 10px;
+  margin-top: 4px;
+}
+.t-tspin-flash {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(192, 132, 252, 0.92);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 10;
 }
 
 /* ---------- Pinball ---------- */
@@ -1729,6 +2072,22 @@ a.game-card:hover {
   border: 1px solid var(--border);
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Floating "+N" combo text that rises and fades after a pop. */
+.pb-floater {
+  position: absolute;
+  pointer-events: none;
+  color: #fff;
+  font: bold 14px/1 sans-serif;
+  text-shadow: 0 1px 4px rgba(0,0,0,.8);
+  transform: translateX(-50%);
+  animation: pb-pop-rise 1s ease-out forwards;
+  z-index: 5;
+}
+@keyframes pb-pop-rise {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to   { opacity: 0; transform: translateX(-50%) translateY(-48px); }
 }
 
 /* ---------- Game Info Panel (desktop sidebar) ---------- */

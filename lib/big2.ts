@@ -138,7 +138,7 @@ export function beats(play: Card[], current: Card[] | null): boolean {
 
 function combosOfLength(hand: Card[], len: number): Card[][] {
   if (len === 1) return hand.map((c) => [c]);
-  if (len === 5) return combinations(hand, 5).filter((p) => classify(p) !== null);
+  if (len === 5) return fiveCardCombos(hand);
   const byVal = new Map<number, Card[]>();
   for (const c of hand) {
     if (!byVal.has(c.value)) byVal.set(c.value, []);
@@ -151,10 +151,12 @@ function combosOfLength(hand: Card[], len: number): Card[][] {
   return out;
 }
 
-/**
- * Choose a bot's move: lowest valid combo that beats `current`, or null to
- * pass. When leading, plays its lowest single (including the 3♦ if required).
- */
+/** Return all valid 5-card Big 2 combos (straight/flush/fullhouse/four/straightflush) from `hand`. */
+export function fiveCardCombos(hand: Card[]): Card[][] {
+  return combinations(hand, 5).filter((p) => classify(p) !== null);
+}
+
+// Easy bot: always plays lowest valid combo, leads with lowest single.
 export function findBotPlay(
   hand: Card[],
   current: Card[] | null,
@@ -171,4 +173,105 @@ export function findBotPlay(
   if (!beating.length) return null;
   beating.sort((a, b) => classify(a)!.key - classify(b)!.key);
   return beating[0];
+}
+
+export type Difficulty = "easy" | "medium" | "hard";
+
+export interface BotContext {
+  opponentCardCounts: number[]; // card count per player index
+  myPlayerIndex: number;
+}
+
+function is2(c: Card): boolean { return c.value === 15; }
+function uses2(cards: Card[]): boolean { return cards.some(is2); }
+
+// Medium: saves 2s for defense; prefers combos when hand is small.
+function chooseMediumMove(hand: Card[], current: Card[] | null, mustInclude3D: boolean): Card[] | null {
+  const allTwos = hand.every(is2);
+  if (!current) {
+    if (mustInclude3D) {
+      const x = hand.find((c) => c.value === 3 && c.suit === "D");
+      return x ? [x] : [hand[0]];
+    }
+    if (hand.length <= 5) {
+      for (const len of [2, 3, 5, 1]) {
+        const combos = combosOfLength(hand, len).filter((p) => !uses2(p) || allTwos);
+        if (combos.length) { combos.sort((a, b) => classify(a)!.key - classify(b)!.key); return combos[0]; }
+      }
+    }
+    const non2 = hand.filter((c) => !is2(c));
+    return non2.length ? [non2[0]] : [hand[0]];
+  }
+  const len = current.length;
+  const beating = combosOfLength(hand, len).filter((p) => beats(p, current));
+  if (!beating.length) return null;
+  if (!allTwos) {
+    const non2b = beating.filter((p) => !uses2(p));
+    if (non2b.length) { non2b.sort((a, b) => classify(a)!.key - classify(b)!.key); return non2b[0]; }
+    return null; // pass rather than spend a 2
+  }
+  beating.sort((a, b) => classify(a)!.key - classify(b)!.key);
+  return beating[0];
+}
+
+// Hard: prefers combos that shed more cards; aggressive when hand is small or opponent is near winning.
+// When following, saves 2s by default but overrides when an opponent is about to win.
+function chooseHardMove(hand: Card[], current: Card[] | null, mustInclude3D: boolean, context?: BotContext): Card[] | null {
+  const opponentNearWin = context
+    ? context.opponentCardCounts.some((n, i) => i !== context.myPlayerIndex && n <= 2)
+    : false;
+
+  if (!current) {
+    if (mustInclude3D) {
+      const x = hand.find((c) => c.value === 3 && c.suit === "D");
+      return x ? [x] : [hand[0]];
+    }
+    const aggressive = hand.length <= 3 || opponentNearWin;
+    const order = aggressive ? [5, 3, 2, 1] : [2, 3, 5, 1];
+    for (const len of order) {
+      const combos = len === 5 ? fiveCardCombos(hand) : combosOfLength(hand, len);
+      if (combos.length) { combos.sort((a, b) => classify(a)!.key - classify(b)!.key); return combos[0]; }
+    }
+    return [hand[0]];
+  }
+
+  // Following — differentiated from Easy:
+  // Default Hard saves 2s (passes when only a 2 can beat, same as Medium).
+  // When an opponent is near winning, Hard plays aggressively — uses any winner including 2s.
+  const len = current.length;
+  const allCombos = len === 5 ? fiveCardCombos(hand) : combosOfLength(hand, len);
+  const beating = allCombos.filter((p) => beats(p, current));
+  if (!beating.length) return null;
+
+  beating.sort((a, b) => classify(a)!.key - classify(b)!.key);
+
+  if (opponentNearWin) {
+    // Aggressive: play the minimal winner regardless of card value to deny opponent the lead.
+    return beating[0];
+  }
+
+  // Default: save 2s — pass rather than spend one when not under immediate threat.
+  const allTwos = hand.every(is2);
+  if (!allTwos) {
+    const non2Beating = beating.filter((p) => !uses2(p));
+    if (non2Beating.length) {
+      non2Beating.sort((a, b) => classify(a)!.key - classify(b)!.key);
+      return non2Beating[0];
+    }
+    return null; // preserve 2s
+  }
+  return beating[0];
+}
+
+// chooseBotMove dispatches to the correct difficulty implementation.
+export function chooseBotMove(
+  hand: Card[],
+  current: Card[] | null,
+  mustInclude3D: boolean,
+  difficulty: Difficulty,
+  context?: BotContext,
+): Card[] | null {
+  if (difficulty === "medium") return chooseMediumMove(hand, current, mustInclude3D);
+  if (difficulty === "hard") return chooseHardMove(hand, current, mustInclude3D, context);
+  return findBotPlay(hand, current, mustInclude3D);
 }

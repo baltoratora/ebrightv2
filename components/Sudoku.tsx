@@ -5,6 +5,7 @@ import {
   generatePuzzle,
   isComplete,
   cloneBoard,
+  computeCandidates,
   type Board,
   type Difficulty,
 } from "@/lib/sudoku";
@@ -12,7 +13,7 @@ import { GameLeaderboard } from "@/components/GameLeaderboard";
 import { GameInfo } from "@/components/GameInfo";
 
 type Notes = number[][][]; // notes[r][c] = candidate numbers
-type Snapshot = { board: Board; notes: Notes };
+type GameState = { board: Board; notes: Notes };
 
 function emptyNotes(): Notes {
   return Array.from({ length: 9 }, () =>
@@ -61,7 +62,8 @@ export function Sudoku() {
   const [solution, setSolution] = useState<Board | null>(null);
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Notes>(emptyNotes());
-  const [history, setHistory] = useState<Snapshot[]>([]);
+  const [history, setHistory] = useState<GameState[]>([]);
+  const [redoStack, setRedoStack] = useState<GameState[]>([]);
   const [selected, setSelected] = useState<[number, number] | null>(null);
   const [highlightDigit, setHighlightDigit] = useState<number | null>(null);
   const [notesMode, setNotesMode] = useState(false);
@@ -71,6 +73,7 @@ export function Sudoku() {
   const newGame = useCallback((diff: Difficulty) => {
     setGenerating(true);
     setBoard(null);
+    try { localStorage.removeItem("sudoku_progress"); } catch {}
     setTimeout(() => {
       const { puzzle, solution } = generatePuzzle(diff);
       setPuzzle(puzzle);
@@ -78,6 +81,7 @@ export function Sudoku() {
       setBoard(cloneBoard(puzzle));
       setNotes(emptyNotes());
       setHistory([]);
+      setRedoStack([]);
       setSelected(null);
       setHighlightDigit(null);
       setSeconds(0);
@@ -86,6 +90,33 @@ export function Sudoku() {
   }, []);
 
   useEffect(() => {
+    // Attempt to restore saved progress before generating a new puzzle.
+    try {
+      const raw = localStorage.getItem("sudoku_progress");
+      if (raw) {
+        const saved = JSON.parse(raw) as {
+          puzzle: Board;
+          solution: Board;
+          board: Board;
+          notes: Notes;
+          history: GameState[];
+          seconds: number;
+          difficulty: Difficulty;
+          status: string;
+        };
+        if (saved.difficulty === difficulty && saved.status === "active") {
+          setPuzzle(saved.puzzle);
+          setSolution(saved.solution);
+          setBoard(saved.board);
+          setNotes(saved.notes);
+          setHistory(saved.history ?? []);
+          setRedoStack([]);
+          setSeconds(saved.seconds);
+          setGenerating(false);
+          return;
+        }
+      }
+    } catch {}
     newGame(difficulty);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -97,6 +128,18 @@ export function Sudoku() {
     const id = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(id);
   }, [generating, won]);
+
+  // Persist progress to localStorage on every relevant state change.
+  useEffect(() => {
+    if (generating || !board || !puzzle || !solution) return;
+    try {
+      const status = won ? "won" : "active";
+      localStorage.setItem(
+        "sudoku_progress",
+        JSON.stringify({ puzzle, solution, board, notes, history, seconds, difficulty, status }),
+      );
+    } catch {}
+  }, [board, notes, history, seconds, difficulty, generating, won, puzzle, solution]);
 
   // Rows/columns that contain the highlighted digit (for the click-to-highlight).
   const { hiRows, hiCols } = useMemo(() => {
@@ -138,11 +181,13 @@ export function Sudoku() {
   }, [board, selected, notesMode, puzzle]);
 
   const pushHistory = useCallback(() => {
-    if (board)
+    if (board) {
       setHistory((h) => [
         ...h,
         { board: cloneBoard(board), notes: cloneNotes(notes) },
       ]);
+      setRedoStack([]); // any new move clears the redo stack
+    }
   }, [board, notes]);
 
   // Apply a value (1-9) or erase (0) to a cell. Returns true if it changed
@@ -227,10 +272,54 @@ export function Sudoku() {
   const undo = useCallback(() => {
     if (history.length === 0) return;
     const last = history[history.length - 1];
+    // Push current state to redo stack before restoring.
+    if (board) {
+      setRedoStack((r) => [
+        ...r,
+        { board: cloneBoard(board), notes: cloneNotes(notes) },
+      ]);
+    }
     setBoard(last.board);
     setNotes(last.notes);
     setHistory((h) => h.slice(0, -1));
-  }, [history]);
+  }, [history, board, notes]);
+
+  const redo = useCallback(() => {
+    if (redoStack.length === 0) return;
+    const next = redoStack[redoStack.length - 1];
+    // Push current state to history.
+    if (board) {
+      setHistory((h) => [
+        ...h,
+        { board: cloneBoard(board), notes: cloneNotes(notes) },
+      ]);
+    }
+    setBoard(next.board);
+    setNotes(next.notes);
+    setRedoStack((r) => r.slice(0, -1));
+  }, [redoStack, board, notes]);
+
+  const smartNotes = useCallback(() => {
+    if (!board || won) return;
+    pushHistory();
+    const candidates = computeCandidates(board);
+    setNotes((prev) => {
+      const next = prev.map((row, r) =>
+        row.map((cell, c) => {
+          // Only fill empty cells (no given and no player-entered digit).
+          if (board[r][c] !== 0) return cell;
+          const cands = candidates[r][c];
+          if (cands.length === 0) return cell;
+          // Merge: union of existing notes and computed candidates.
+          const merged = [...new Set([...cell, ...cands])].sort(
+            (a, b) => a - b,
+          );
+          return merged;
+        }),
+      );
+      return next;
+    });
+  }, [board, won, pushHistory]);
 
   const hint = useCallback(() => {
     if (!board || !solution || won) return;
@@ -273,7 +362,10 @@ export function Sudoku() {
         if (selected) applyValue(selected[0], selected[1], 0);
       } else if (e.key.toLowerCase() === "n") setNotesMode((m) => !m);
       else if (e.key.toLowerCase() === "u") undo();
-      else if (selected) {
+      else if (e.key.toLowerCase() === "y" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        redo();
+      } else if (selected) {
         const [r, c] = selected;
         if (e.key === "ArrowUp") setSelected([Math.max(0, r - 1), c]);
         else if (e.key === "ArrowDown") setSelected([Math.min(8, r + 1), c]);
@@ -283,7 +375,7 @@ export function Sudoku() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [applyValue, undo, selected]);
+  }, [applyValue, undo, redo, selected]);
 
   return (
     <div className="game-layout">
@@ -293,6 +385,7 @@ export function Sudoku() {
           { key: "← → ↑ ↓", desc: "Navigate cells" },
           { key: "N", desc: "Toggle notes mode" },
           { key: "U", desc: "Undo last move" },
+          { key: "Ctrl+Y", desc: "Redo" },
           { key: "Del", desc: "Erase cell" },
         ]}
         tips={["Start with rows or columns that already have 7+ numbers"]}
@@ -313,6 +406,11 @@ export function Sudoku() {
             </button>
           ))}
         </div>
+        {!generating && !won && board ? (
+          <span className="sudoku-timer">
+            {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
+          </span>
+        ) : null}
         <button className="btn ghost" onClick={() => newGame(difficulty)}>
           New
         </button>
@@ -419,6 +517,13 @@ export function Sudoku() {
             >
               ↶ Undo
             </button>
+            <button
+              className="btn ghost"
+              onClick={redo}
+              disabled={redoStack.length === 0}
+            >
+              ↷ Redo
+            </button>
             <button className="btn ghost" onClick={hint} disabled={won}>
               💡 Hint
             </button>
@@ -431,6 +536,9 @@ export function Sudoku() {
             </button>
             <button className="btn ghost" onClick={onErase}>
               ⌫ Erase
+            </button>
+            <button className="btn ghost" onClick={smartNotes} disabled={won}>
+              Notes ✦
             </button>
           </div>
         </div>

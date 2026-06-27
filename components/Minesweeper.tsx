@@ -7,6 +7,7 @@ import {
   placeMines,
   reveal,
   toggleFlag,
+  chord,
   isWin,
   countFlags,
   revealAllMines,
@@ -14,9 +15,15 @@ import {
   type Difficulty,
 } from "@/lib/minesweeper";
 import { GameInfo } from "@/components/GameInfo";
+import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 type Status = "ready" | "playing" | "won" | "lost";
 const ORDER: Difficulty[] = ["easy", "medium", "hard"];
+
+function fmtTime(s: number): string {
+  const m = Math.floor(s / 60);
+  return m > 0 ? `${m}:${String(s % 60).padStart(2, "0")}` : `${s}s`;
+}
 
 export function Minesweeper() {
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
@@ -27,6 +34,8 @@ export function Minesweeper() {
   const [status, setStatus] = useState<Status>("ready");
   const [flagMode, setFlagMode] = useState(false);
   const [time, setTime] = useState(0);
+  const [bestTime, setBestTime] = useState<number | null>(null);
+  const [isNewBest, setIsNewBest] = useState(false);
   const minesPlaced = useRef(false);
 
   const newGame = useCallback((d: Difficulty) => {
@@ -34,8 +43,29 @@ export function Minesweeper() {
     setBoard(createBoard(c.rows, c.cols));
     setStatus("ready");
     setTime(0);
+    setIsNewBest(false);
     minesPlaced.current = false;
   }, []);
+
+  // Load stored best when difficulty changes
+  useEffect(() => {
+    const stored = localStorage.getItem(`ms_best_${difficulty}`);
+    setBestTime(stored ? Number(stored) : null);
+    setIsNewBest(false);
+  }, [difficulty]);
+
+  // Check and save personal best on win
+  useEffect(() => {
+    if (status !== "won") return;
+    const key = `ms_best_${difficulty}`;
+    const stored = localStorage.getItem(key);
+    const best = stored ? Number(stored) : null;
+    if (best === null || time < best) {
+      localStorage.setItem(key, String(time));
+      setBestTime(time);
+      setIsNewBest(true);
+    }
+  }, [status, difficulty, time]);
 
   useEffect(() => {
     if (status !== "playing") return;
@@ -59,7 +89,24 @@ export function Minesweeper() {
     (r: number, c: number) => {
       if (over) return;
       const cell = board[r][c];
-      if (cell.state === "flagged" || cell.state === "revealed") return;
+      if (cell.state === "flagged") return;
+
+      // Chord-click on a revealed numbered cell
+      if (cell.state === "revealed") {
+        const result = chord(board, r, c);
+        if (!result) return;
+        const { board: nb, hitMine } = result;
+        if (hitMine) {
+          setBoard(revealAllMines(nb));
+          setStatus("lost");
+        } else if (isWin(nb)) {
+          setBoard(nb);
+          setStatus("won");
+        } else {
+          setBoard(nb);
+        }
+        return;
+      }
 
       let working = board;
       if (!minesPlaced.current) {
@@ -91,7 +138,7 @@ export function Minesweeper() {
       <GameInfo
         controls={[
           { key: "Click", desc: "Reveal cell" },
-          { key: "Right-click", desc: "Flag/unflag" },
+          { key: "Right-click", desc: "Flag/unflag/?" },
         ]}
         tips={["First tap is always safe", "Start near the center for the most information"]}
       />
@@ -123,6 +170,9 @@ export function Minesweeper() {
         </button>
         <span className="ms-counter">⏱ {String(time).padStart(3, "0")}</span>
       </div>
+      {bestTime !== null && (
+        <div className="ms-best">Best: {fmtTime(bestTime)}</div>
+      )}
 
       <div
         className="ms-board"
@@ -135,6 +185,9 @@ export function Minesweeper() {
             if (cell.state === "flagged") {
               cls.push("flagged");
               content = "🚩";
+            } else if (cell.state === "unknown") {
+              cls.push("ms-cell--unknown");
+              content = "?";
             } else if (cell.state === "revealed") {
               cls.push("revealed");
               if (cell.mine) {
@@ -163,7 +216,9 @@ export function Minesweeper() {
       </div>
 
       {status === "won" ? (
-        <div className="sudoku-win">🎉 Cleared! {time}s</div>
+        <div className="sudoku-win">
+          🎉 Cleared! {time}s{isNewBest && <span className="ms-new-best"> New best!</span>}
+        </div>
       ) : null}
       {status === "lost" ? (
         <div className="sudoku-win lost">💥 Boom. Hit New to try again.</div>
@@ -182,10 +237,16 @@ export function Minesweeper() {
       <div className="sudoku-foot">
         <span className="muted sudoku-hint">
           Tap to dig · toggle <strong>Flag mode</strong> to place flags
-          (right-click also flags) · first tap is always safe.
+          (right-click cycles flag → ? → hidden) · first tap is always safe.
         </span>
       </div>
     </div>
+      <GameLeaderboard
+        game={`minesweeper:${difficulty}`}
+        value={time}
+        over={status === "won"}
+        title="Minesweeper"
+      />
     </div>
   );
 }

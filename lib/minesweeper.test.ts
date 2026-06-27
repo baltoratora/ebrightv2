@@ -6,6 +6,7 @@ import {
   placeMines,
   reveal,
   toggleFlag,
+  chord,
   isWin,
   countFlags,
   revealAllMines,
@@ -75,11 +76,14 @@ describe("reveal", () => {
 });
 
 describe("toggleFlag", () => {
-  it("flags and unflags a hidden cell", () => {
+  it("cycles hidden → flagged → unknown → hidden", () => {
     let b = createBoard(3, 3);
     b = toggleFlag(b, 0, 0);
     expect(b[0][0].state).toBe("flagged");
     expect(countFlags(b)).toBe(1);
+    b = toggleFlag(b, 0, 0);
+    expect(b[0][0].state).toBe("unknown");
+    expect(countFlags(b)).toBe(0); // unknown is not a flag
     b = toggleFlag(b, 0, 0);
     expect(b[0][0].state).toBe("hidden");
   });
@@ -100,5 +104,44 @@ describe("revealAllMines", () => {
     const out = revealAllMines(b);
     expect(out[0][0].state).toBe("revealed");
     expect(out[2][2].state).toBe("revealed");
+  });
+});
+
+describe("chord", () => {
+  it("returns null when the cell is not revealed", () => {
+    const b = createBoard(3, 3);
+    // [0][0] is hidden
+    expect(chord(b, 0, 0)).toBeNull();
+  });
+
+  it("returns null when flag count does not match adjacent count", () => {
+    const b = setMines(createBoard(3, 3), [[0, 0]]);
+    const { board: b2 } = reveal(b, 1, 1); // adjacent=1, state=revealed
+    // No flags placed → flagCount=0 ≠ adjacent=1
+    expect(chord(b2, 1, 1)).toBeNull();
+  });
+
+  it("reveals safe hidden neighbors and returns hitMine false when satisfied", () => {
+    // Mine at [0][0]; [1][1].adjacent=1
+    const b = setMines(createBoard(3, 3), [[0, 0]]);
+    const { board: b2 } = reveal(b, 1, 1);
+    const b3 = toggleFlag(b2, 0, 0); // correctly flag the mine
+    const result = chord(b3, 1, 1);
+    expect(result).not.toBeNull();
+    expect(result!.hitMine).toBe(false);
+    // Non-mine neighbors of [1][1] should now be revealed
+    expect(result!.board[0][1].state).toBe("revealed");
+  });
+
+  it("returns hitMine true when an unflagged mine is revealed by chord", () => {
+    // Mine at [0][0]; [1][1].adjacent=1
+    const b = setMines(createBoard(3, 3), [[0, 0]]);
+    const { board: b2 } = reveal(b, 1, 1);
+    // Flag [0][1] (NOT a mine) — wrong flag; flagCount=1 matches adjacent=1
+    const b3 = toggleFlag(b2, 0, 1);
+    const result = chord(b3, 1, 1);
+    expect(result).not.toBeNull();
+    // [0][0] is the real mine and gets revealed → hitMine true
+    expect(result!.hitMine).toBe(true);
   });
 });
