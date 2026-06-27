@@ -27,6 +27,12 @@ const GAMES: Game[] = [
   { name: "Pinball", desc: "Keep it alive", icon: "🕹️", href: "/pinball", ready: true },
   { name: "Brick Breaker", desc: "Clear the wall", icon: "🧱", href: "/breakout", ready: true },
   { name: "Puzzle Bobble", desc: "Shoot & match bubbles", icon: "🫧", href: "/puzzle-bobble", ready: true },
+  { name: "2048", desc: "slide & merge to 2048", icon: "🧮", href: "/2048", ready: true },
+  { name: "Simon Says", desc: "repeat the pattern", icon: "🎵", href: "/simon", ready: true },
+  { name: "Sokoban", desc: "push boxes to goals", icon: "📦", href: "/sokoban", ready: true },
+  { name: "Frogger", desc: "cross the road & river", icon: "🐸", href: "/frogger", ready: true },
+  { name: "Pac-Man", desc: "eat the dots, dodge the ghosts", icon: "👻", href: "/pacman", ready: true },
+  { name: "Tower Defense", desc: "build towers, survive the waves", icon: "🏰", href: "/tower-defense", ready: true },
 ];
 
 function Card({ g }: { g: Game }) {

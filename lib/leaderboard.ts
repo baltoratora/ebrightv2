@@ -1,6 +1,6 @@
 // Client helpers for the global leaderboard.
 
-export type Unit = "score" | "time" | "guesses" | "moves";
+export type Unit = "score" | "time" | "guesses" | "moves" | "rounds" | "waves";
 export interface GameMeta {
   dir: "asc" | "desc"; // asc = lower is better
   unit: Unit;
@@ -21,6 +21,12 @@ export const GAME_META: Record<string, GameMeta> = {
   battleship:   { dir: "asc",  unit: "moves" },
   carrom:       { dir: "asc",  unit: "moves" },
   pool:         { dir: "asc",  unit: "moves" },
+  "2048":       { dir: "desc", unit: "score" },
+  simon:        { dir: "desc", unit: "rounds" },
+  sokoban:      { dir: "asc",  unit: "moves"  },
+  frogger:      { dir: "desc", unit: "score"  },
+  pacman:       { dir: "desc", unit: "score"  },
+  towerdef:     { dir: "desc", unit: "waves"  },
 };
 
 export interface Entry {
