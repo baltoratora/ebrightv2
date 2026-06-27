@@ -1,6 +1,6 @@
 // Client helpers for the global leaderboard.
 
-export type Unit = "score" | "time" | "guesses" | "moves";
+export type Unit = "score" | "time" | "guesses" | "moves" | "rounds";
 export interface GameMeta {
   dir: "asc" | "desc"; // asc = lower is better
   unit: Unit;
@@ -22,6 +22,7 @@ export const GAME_META: Record<string, GameMeta> = {
   carrom:       { dir: "asc",  unit: "moves" },
   pool:         { dir: "asc",  unit: "moves" },
   "2048":       { dir: "desc", unit: "score" },
+  simon:        { dir: "desc", unit: "rounds" },
 };
 
 export interface Entry {

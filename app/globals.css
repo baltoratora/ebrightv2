@@ -2493,3 +2493,92 @@ a.game-card:hover {
   text-transform: uppercase;
   letter-spacing: 0.12em;
 }
+
+/* ---------- Simon Says ---------- */
+.simon {
+  max-width: 380px;
+  margin: 0 auto;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.simon-header {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.simon-stat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 7px 14px;
+  text-align: center;
+  min-width: 72px;
+}
+.simon-stat-label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.simon-stat-val {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+.simon-board {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width: min(92vw, 320px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto 12px;
+}
+.simon-pad {
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: filter 0.06s, box-shadow 0.06s;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.simon-pad:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+.simon-pad--lit {
+  filter: brightness(1.25);
+}
+.simon-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(5, 6, 13, 0.82);
+  border-radius: 16px;
+  z-index: 2;
+}
+.simon-over-msg {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text);
+}
+.simon-over-sub {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: -4px;
+}
+.simon-status {
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+  min-height: 22px;
+  margin-bottom: 6px;
+}
