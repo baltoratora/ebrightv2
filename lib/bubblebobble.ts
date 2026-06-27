@@ -216,14 +216,16 @@ export function snapToGrid(
   return bestR >= 0 ? [bestR, bestC] : null;
 }
 
-// Shift all rows down one; row 0 becomes empty (ceiling descends).
-export function advanceCeiling(grid: Grid): void {
+// Ceiling descends: push every row down one and add a fresh full row on top.
+// Row 0 stays occupied so the mass remains anchored — never a false clear.
+export function advanceCeiling(grid: Grid, topRow: Bubble[]): void {
   for (let r = grid.length - 1; r > 0; r--) {
     const src = grid[r - 1];
     const cols = colsForRow(r);
     grid[r] = Array.from({ length: cols }, (_, c) => src[c] ?? null);
   }
-  grid[0] = Array<Bubble>(colsForRow(0)).fill(null);
+  const cols0 = colsForRow(0);
+  grid[0] = Array.from({ length: cols0 }, (_, c) => topRow[c] ?? null);
 }
 
 // Single-char colour codes for level string data.

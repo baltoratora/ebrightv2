@@ -282,7 +282,8 @@ export function PuzzleBobble() {
     const lv = levelRef.current;
     const limit = 20 + (10 - Math.min(lv, 10)) * 2;
     if (shotsRef.current % limit === 0) {
-      advanceCeiling(grid);
+      const topRow = Array.from({ length: colsForRow(0) }, () => randomColorForLevel(lv));
+      advanceCeiling(grid, topRow);
     }
 
     if (isCleared(grid)) {
