@@ -174,7 +174,7 @@ export function Simon() {
         ]}
       />
 
-      <div className="simon">
+      <div className="simon-root">
         <div className="simon-header">
           <div className="simon-stat">
             <span className="simon-stat-label">ROUND</span>

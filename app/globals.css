@@ -2495,7 +2495,7 @@ a.game-card:hover {
 }
 
 /* ---------- Simon Says ---------- */
-.simon {
+.simon-root {
   max-width: 380px;
   margin: 0 auto;
   -webkit-user-select: none;
