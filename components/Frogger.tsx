@@ -381,6 +381,9 @@ export function Frogger() {
   // ── keyboard ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Don't hijack typing in inputs (e.g. the leaderboard name field).
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (statusRef.current !== "playing") {
         if (e.key === " " || e.key === "Enter") {
           e.preventDefault();

@@ -136,6 +136,9 @@ export function Pool() {
   const bihRef = useRef({ active: false, x: HEAD_X * 0.5, y: H / 2 });
   const solidsLeftRef = useRef(7);
   const statusRef = useRef<"playing" | "won" | "lost">("playing");
+  // Cue pocketed during the current shot — persists across frames until the
+  // table settles (a local would reset before allStopped() fires).
+  const scratchRef = useRef(false);
 
   const [shots, setShots] = useState(0);
   const [solidsLeft, setSolidsLeft] = useState(7);
@@ -209,14 +212,13 @@ export function Pool() {
 
   const loop = useCallback(() => {
     const discs = discsRef.current;
-    let scratch = false;
     const pottedNums: number[] = [];
 
     for (let k = 0; k < SUBSTEPS; k++) {
       const got = stepOnce(discs, W, H, POCKETS, DAMPING);
       for (const id of got) {
         if (id === "cue") {
-          scratch = true;
+          scratchRef.current = true;
         } else {
           const d = discs.find((x) => x.id === id);
           if (d) pottedNums.push(numFromKind(d.kind));
@@ -233,7 +235,7 @@ export function Pool() {
         setSolidsLeft(solidsLeftRef.current);
       }
       if (eightPotted) {
-        if (solidsLeftRef.current === 0 && !scratch) {
+        if (solidsLeftRef.current === 0 && !scratchRef.current) {
           statusRef.current = "won";
           setGameStatus("won");
         } else {
@@ -248,11 +250,12 @@ export function Pool() {
 
     if (allStopped(discs)) {
       animRef.current = false;
-      // Enter ball-in-hand if cue was pocketed and game is still live
-      if (statusRef.current === "playing" && scratch) {
+      // Enter ball-in-hand if cue was pocketed at any point during this shot
+      if (statusRef.current === "playing" && scratchRef.current) {
         bihRef.current = { active: true, x: HEAD_X * 0.5, y: H / 2 };
         setBihActive(true);
       }
+      scratchRef.current = false;
       draw();
       return;
     }
@@ -329,6 +332,7 @@ export function Pool() {
     c.vx = (dx / dist) * MAX_SPEED * p;
     c.vy = (dy / dist) * MAX_SPEED * p;
     setShots((n) => n + 1);
+    scratchRef.current = false;
     animRef.current = true;
     rafRef.current = requestAnimationFrame(loop);
   };
@@ -340,6 +344,7 @@ export function Pool() {
     aimRef.current = null;
     bihRef.current = { active: false, x: HEAD_X * 0.5, y: H / 2 };
     solidsLeftRef.current = 7;
+    scratchRef.current = false;
     statusRef.current = "playing";
     setShots(0);
     setSolidsLeft(7);
