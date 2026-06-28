@@ -16,6 +16,7 @@ import {
   assignSeat,
   otherSeat,
   SEAT_FULL,
+  isValidClientMsg,
   type ClientMsg,
   type ServerMsg,
 } from "../../lib/roomProtocol";
@@ -101,12 +102,16 @@ export class GameRoom extends DurableObject<Env> {
     const att = ws.deserializeAttachment() as SeatAttachment | null;
     if (!att) return;
 
-    let msg: ClientMsg;
+    let parsed: unknown;
     try {
-      msg = JSON.parse(typeof raw === "string" ? raw : new TextDecoder().decode(raw));
+      parsed = JSON.parse(typeof raw === "string" ? raw : new TextDecoder().decode(raw));
     } catch {
       return;
     }
+    // Ignore malformed messages (e.g. a "move" with no state) instead of letting
+    // put("state", undefined) throw against the NOT NULL column and kill the socket.
+    if (!isValidClientMsg(parsed)) return;
+    const msg: ClientMsg = parsed;
 
     if (msg.t === "move") {
       if (att.seat !== this.turn) {

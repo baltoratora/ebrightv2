@@ -65,3 +65,40 @@ export function normalizeCode(raw: string): string {
 export function isValidCode(raw: string): boolean {
   return ROOM_CODE_RE.test(normalizeCode(raw));
 }
+
+// The room state is a chess.js FEN (~90 chars); cap generously to bound abuse
+// while never rejecting a legitimate game state.
+const MAX_STATE_LEN = 4096;
+
+function isStateString(s: unknown): s is string {
+  return typeof s === "string" && s.length > 0 && s.length <= MAX_STATE_LEN;
+}
+
+/**
+ * Validate a parsed client message before the server acts on it. A malformed
+ * "move"/"reset" (e.g. missing `state`) must be ignored like a bad JSON parse,
+ * NOT passed through — otherwise the Durable Object binds `undefined` to its
+ * NOT NULL state column and throws, killing that socket.
+ */
+export function isValidClientMsg(msg: unknown): msg is ClientMsg {
+  if (typeof msg !== "object" || msg === null) return false;
+  const m = msg as Record<string, unknown>;
+  switch (m.t) {
+    case "move": {
+      const mv = m.move as Record<string, unknown> | undefined;
+      return (
+        isStateString(m.state) &&
+        typeof mv === "object" &&
+        mv !== null &&
+        typeof mv.from === "string" &&
+        typeof mv.to === "string"
+      );
+    }
+    case "reset":
+      return isStateString(m.state);
+    case "rematch":
+      return true;
+    default:
+      return false;
+  }
+}
