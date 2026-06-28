@@ -11,6 +11,12 @@ const REALTIME_URL =
   process.env.NEXT_PUBLIC_REALTIME_URL ??
   "wss://baltoratora-rooms.iqyhakim21.workers.dev";
 
+// Bounded auto-reconnect: retry an unexpectedly-dropped socket a few times with
+// exponential backoff, then give up (status stays "closed"). Bounded so a
+// permanently-down server can't cause a reconnect storm.
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_BASE_MS = 1000;
+
 export type RoomStatus = "idle" | "connecting" | "open" | "closed";
 
 export interface Room {
@@ -37,17 +43,27 @@ export function useRoom(
   const [turn, setTurn] = useState(0);
   const [peers, setPeers] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [retryTick, setRetryTick] = useState(0);
 
   const wsRef = useRef<WebSocket | null>(null);
+  const attemptRef = useRef(0);
+  const prevCodeRef = useRef<string | null>(null);
   const onEventRef = useRef(onEvent);
   onEventRef.current = onEvent;
 
   useEffect(() => {
     if (!code) {
       setStatus("idle");
+      attemptRef.current = 0;
       return;
     }
+    // Reset the backoff when connecting to a different room (not a retry).
+    if (prevCodeRef.current !== code) {
+      attemptRef.current = 0;
+      prevCodeRef.current = code;
+    }
     let disposed = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     setStatus("connecting");
     setError(null);
     setSeat(null);
@@ -57,7 +73,10 @@ export function useRoom(
     wsRef.current = ws;
 
     ws.onopen = () => {
-      if (!disposed) setStatus("open");
+      if (!disposed) {
+        setStatus("open");
+        attemptRef.current = 0; // healthy connection — reset backoff
+      }
     };
     ws.onmessage = (e) => {
       let msg: ServerMsg;
@@ -80,7 +99,16 @@ export function useRoom(
       onEventRef.current?.(msg);
     };
     ws.onclose = () => {
-      if (!disposed) setStatus("closed");
+      if (disposed) return;
+      setStatus("closed");
+      // Auto-reconnect with bounded exponential backoff (1s, 2s, 4s, …).
+      if (attemptRef.current < MAX_RECONNECT_ATTEMPTS) {
+        const delay = RECONNECT_BASE_MS * 2 ** attemptRef.current;
+        attemptRef.current += 1;
+        reconnectTimer = setTimeout(() => {
+          if (!disposed) setRetryTick((t) => t + 1);
+        }, delay);
+      }
     };
     ws.onerror = () => {
       /* surfaced via onclose */
@@ -88,6 +116,7 @@ export function useRoom(
 
     return () => {
       disposed = true;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
       try {
         ws.close();
       } catch {
@@ -95,7 +124,7 @@ export function useRoom(
       }
       wsRef.current = null;
     };
-  }, [code]);
+  }, [code, retryTick]);
 
   const send = useCallback((msg: ClientMsg) => {
     const ws = wsRef.current;
