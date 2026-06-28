@@ -118,6 +118,20 @@ export function canMove(walls: boolean[][], pos: Tile, dir: Dir): boolean {
   return !walls[next.row]?.[next.col];
 }
 
+/**
+ * When a ghost's logical tile advances across the horizontal tunnel, the column
+ * jumps by more than one (e.g. 0 -> COLS-1). Its pixel-x must jump to the
+ * matching edge so the ghost wraps around instead of sliding all the way across
+ * the maze (through walls). Returns the pixel-x delta to apply (0 when the step
+ * is a normal adjacent move). Mirrors how Pac-Man's own position wraps by pixels.
+ */
+export function tunnelPxShift(fromCol: number, toCol: number, mazeWidthPx: number): number {
+  const delta = toCol - fromCol;
+  if (delta > 1) return mazeWidthPx; // wrapped off the LEFT edge (moving left)
+  if (delta < -1) return -mazeWidthPx; // wrapped off the RIGHT edge (moving right)
+  return 0;
+}
+
 export function oppositeDir(dir: Dir): Dir {
   if (dir === "up") return "down";
   if (dir === "down") return "up";

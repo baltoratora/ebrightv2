@@ -9,6 +9,7 @@ import {
   tileKey,
   canMove,
   nextTile,
+  tunnelPxShift,
   chooseGhostDir,
   ghostTarget,
   eatPellet,
@@ -446,6 +447,10 @@ export function Pacman() {
       // Advance one step
       const nextT = nextTile(g.tile, g.dir);
       if (!walls[nextT.row]?.[nextT.col]) {
+        // If the step wrapped across the horizontal tunnel, jump px to the
+        // matching edge so the ghost wraps instead of sliding across the maze
+        // (through walls). Mirrors how movePac wraps by pixels.
+        g.px += tunnelPxShift(g.tile.col, nextT.col, W);
         g.tile = nextT;
       }
     }
@@ -464,9 +469,6 @@ export function Pacman() {
       g.py += (dy / dist) * move;
     }
 
-    // Tunnel wrap
-    if (g.px < -CELL / 2)   { g.px = W + CELL / 2; g.tile = pxTile(g.px, g.py); }
-    if (g.px > W + CELL / 2) { g.px = -CELL / 2;   g.tile = pxTile(g.px, g.py); }
   }, []);
 
   // ── game loop ─────────────────────────────────────────────────────────────

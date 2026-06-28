@@ -14,6 +14,7 @@ import {
   chooseGhostDir,
   eatPellet,
   isLevelComplete,
+  tunnelPxShift,
 } from "./pacman";
 
 // ── parseMaze ─────────────────────────────────────────────────────────────────
@@ -245,5 +246,28 @@ describe("isLevelComplete", () => {
     const p = new Set<string>();
     const pp = new Set(["1,1"]);
     expect(isLevelComplete(p, pp)).toBe(false);
+  });
+});
+
+// ── tunnelPxShift ─────────────────────────────────────────────────────────────
+// When a ghost's logical tile wraps across the horizontal tunnel, its pixel-x
+// must jump to the matching edge so the ghost wraps instead of sliding across
+// the whole maze (and through walls).
+
+describe("tunnelPxShift", () => {
+  const W = COLS * 16; // mazeWidthPx, CELL = 16
+
+  it("pushes px forward a full maze width when wrapping off the LEFT edge (col 0 -> COLS-1)", () => {
+    expect(tunnelPxShift(0, COLS - 1, W)).toBe(W);
+  });
+
+  it("pulls px back a full maze width when wrapping off the RIGHT edge (COLS-1 -> 0)", () => {
+    expect(tunnelPxShift(COLS - 1, 0, W)).toBe(-W);
+  });
+
+  it("does not shift on a normal adjacent step", () => {
+    expect(tunnelPxShift(5, 6, W)).toBe(0);
+    expect(tunnelPxShift(6, 5, W)).toBe(0);
+    expect(tunnelPxShift(5, 5, W)).toBe(0);
   });
 });
