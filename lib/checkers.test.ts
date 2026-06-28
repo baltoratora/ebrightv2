@@ -8,6 +8,7 @@ import {
   bestMove,
   cloneBoard,
   promotesAndStops,
+  countedUndoneMoves,
   type Board,
   type Piece,
 } from "./checkers";
@@ -28,6 +29,19 @@ describe("promotesAndStops", () => {
   it("an existing king never promotes/stops (it may keep jumping)", () => {
     expect(promotesAndStops(true, 0, "r")).toBe(false);
     expect(promotesAndStops(true, 7, "b")).toBe(false);
+  });
+});
+
+describe("countedUndoneMoves", () => {
+  it("single-player: a round (bot + player snapshot) is 1 counted move", () => {
+    expect(countedUndoneMoves(["b", "r"], true)).toBe(1);
+  });
+  it("single-player: undoing only the player's move is 1", () => {
+    expect(countedUndoneMoves(["r"], true)).toBe(1);
+  });
+  it("two-player: every popped snapshot counts (both colours increment)", () => {
+    expect(countedUndoneMoves(["b"], false)).toBe(1);
+    expect(countedUndoneMoves(["r"], false)).toBe(1);
   });
 });
 

@@ -105,6 +105,16 @@ export function promotesAndStops(pieceWasKing: boolean, landingRow: number, colo
   return !pieceWasKing && landingRow === KING_ROW[color];
 }
 
+/**
+ * How many moves an undo removes from the move counter. In single-player only
+ * Red (the human) moves increment the counter, so count Red snapshots (a popped
+ * round is bot + player = 1 counted move); in two-player every move counts, so
+ * it is simply the number of popped snapshots.
+ */
+export function countedUndoneMoves(poppedTurns: Color[], singlePlayer: boolean): number {
+  return singlePlayer ? poppedTurns.filter((t) => t === "r").length : poppedTurns.length;
+}
+
 export function countPieces(b: Board): { r: number; b: number } {
   let red = 0, black = 0;
   for (const row of b) for (const p of row) if (p) p.color === "r" ? red++ : black++;

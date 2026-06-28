@@ -9,6 +9,7 @@ import {
   bestMove,
   cloneBoard,
   promotesAndStops,
+  countedUndoneMoves,
   type Board,
   type Color,
   type Move,
@@ -179,12 +180,20 @@ export function Checkers() {
   const undo = useCallback(() => {
     if (thinking || !history.length) return;
     const h = [...history];
-    let snap = h.pop()!;
-    let undone = 1;
-    // In single-player, skip over the AI's turn too.
+    const popped: Snap[] = [h.pop()!];
+    // In single-player, also undo the AI's reply.
     if (gameMode === "single") {
-      while (snap.turn !== "r" && h.length) { snap = h.pop()!; undone++; }
+      while (popped[popped.length - 1].turn !== "r" && h.length) {
+        popped.push(h.pop()!);
+      }
     }
+    const snap = popped[popped.length - 1];
+    // Only counted moves decrement the counter: in single-player a popped round
+    // is bot + player = 1; the old code decremented by every popped snapshot.
+    const undone = countedUndoneMoves(
+      popped.map((s) => s.turn),
+      gameMode === "single",
+    );
     setBoard(snap.board);
     setTurn(snap.turn);
     setHistory(h);
