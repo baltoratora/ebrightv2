@@ -83,14 +83,22 @@ export function GameLeaderboard({
       )}
 
       {promptOpen && value != null ? (
-        <div className="lb-modal" role="dialog" aria-modal="true">
+        <div
+          className="lb-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="lb-modal-title"
+        >
           <div className="lb-modal-card">
-            <div className="lb-modal-title">🏆 New high score!</div>
+            <div className="lb-modal-title" id="lb-modal-title">
+              🏆 New high score!
+            </div>
             <div className="lb-modal-val">{fmtValue(game, value)}</div>
             <input
               className="lb-input"
               maxLength={12}
               placeholder="Your name"
+              aria-label="Your name"
               value={name}
               autoFocus
               onChange={(e) => setName(e.target.value)}

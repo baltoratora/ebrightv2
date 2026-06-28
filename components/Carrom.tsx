@@ -399,7 +399,7 @@ export function Carrom() {
       />
       <div className="carrom">
         <div className="sudoku-bar">
-          <span className="wg-progress">
+          <span className="wg-progress" aria-live="polite">
             {won
               ? `Cleared in ${strikes} strikes!`
               : twoPlayer
@@ -409,7 +409,11 @@ export function Carrom() {
             {coverNeeded ? " · cover!" : ""}
           </span>
           <div className="carrom-bar-right">
-            <button className={`btn ghost${twoPlayer ? " on" : ""}`} onClick={toggleTwoPlayer}>
+            <button
+              className={`btn ghost${twoPlayer ? " on" : ""}`}
+              onClick={toggleTwoPlayer}
+              aria-label={twoPlayer ? "Two-player mode (tap to switch to one player)" : "One-player mode (tap to switch to two players)"}
+            >
               {twoPlayer ? "2P" : "1P"}
             </button>
             <button className="btn ghost" onClick={reset}>New</button>
@@ -430,6 +434,8 @@ export function Carrom() {
         <canvas
           ref={canvasRef}
           className="carrom-canvas"
+          role="img"
+          aria-label="Carrom — tap the striker to slide it along the baseline, then drag from it to aim and release to flick. Pocket all the coins; cover the Queen by potting a coin on the same shot. Pointer or touch drag only."
           onPointerDown={onDown}
           onPointerMove={onMove}
           onPointerUp={onUp}

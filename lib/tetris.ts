@@ -130,7 +130,7 @@ function spawn(grid: Grid, type: string, bag: string[]): Partial<Game> {
 }
 
 export function newGame(): Game {
-  let bag = ensureBag([], 1);
+  const bag = ensureBag([], 1);
   const first = bag.pop()!;
   const grid = emptyGrid();
   const s = spawn(grid, first, bag);

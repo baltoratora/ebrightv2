@@ -363,7 +363,7 @@ export function Pinball() {
       />
     <div className="pinball">
       <div className="sudoku-bar">
-        <span className="wg-progress">
+        <span className="wg-progress" aria-live="polite">
           Score {score}
           {multiplier > 1 ? ` · ${multiplier}×` : ""}
           {" · Balls "}{"●".repeat(Math.max(0, balls))}
@@ -375,11 +375,17 @@ export function Pinball() {
         </button>
       </div>
 
-      <canvas ref={canvasRef} className="pinball-canvas" />
+      <canvas
+        ref={canvasRef}
+        className="pinball-canvas"
+        role="img"
+        aria-label="Pinball — press the left and right arrow keys (or the on-screen Left and Right buttons) to flip; hold Space (or Launch) to charge the plunger and release to drop the ball into play. Hit bumpers for points. You have 3 balls."
+      />
 
       <div className="pinball-controls">
         <button
           className="t-btn wide"
+          aria-label="Left flipper"
           onPointerDown={hold("l", true)}
           onPointerUp={hold("l", false)}
           onPointerLeave={hold("l", false)}
@@ -388,6 +394,7 @@ export function Pinball() {
         </button>
         <button
           className="t-btn wide"
+          aria-label="Charge and launch ball"
           onPointerDown={() => { if (launchingRef.current) plungerChargingRef.current = true; }}
           onPointerUp={() => { if (launchingRef.current) launch(); }}
           onPointerLeave={() => { if (launchingRef.current && plungerChargingRef.current) launch(); }}
@@ -396,6 +403,7 @@ export function Pinball() {
         </button>
         <button
           className="t-btn wide"
+          aria-label="Right flipper"
           onPointerDown={hold("r", true)}
           onPointerUp={hold("r", false)}
           onPointerLeave={hold("r", false)}

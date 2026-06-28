@@ -669,7 +669,7 @@ export function Pacman() {
 
       <div className="pac-root">
         <div className="pac-bar">
-          <span className="pac-stat">
+          <span className="pac-stat" aria-live="polite">
             Score {score} · Lv {level} · {"❤️".repeat(Math.max(0, lives))}
             {status === "over" ? " · Game Over" : ""}
           </span>
@@ -680,6 +680,8 @@ export function Pacman() {
           <canvas
             ref={canvasRef}
             className="pac-canvas"
+            role="img"
+            aria-label="Pac-Man — use the arrow keys, WASD, or the on-screen D-pad to move through the maze, eat every pellet and avoid the ghosts. Eat a power pellet to turn ghosts blue and chase them. Press Space or tap to start."
             style={{ width: W, height: H }}
             onClick={() => {
               if (statusRef.current !== "playing") newGame();

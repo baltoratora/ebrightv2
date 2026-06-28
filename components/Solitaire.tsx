@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
   newGame,
   draw,
@@ -19,6 +19,22 @@ import { GameLeaderboard } from "@/components/GameLeaderboard";
 
 const RANKS = ["", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 const SYM: Record<string, string> = { S: "♠", H: "♥", D: "♦", C: "♣" };
+
+// Human-readable names for accessible card labels.
+const RANK_NAMES = ["", "Ace", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Jack", "Queen", "King"];
+const SUIT_NAMES: Record<string, string> = { S: "Spades", H: "Hearts", D: "Diamonds", C: "Clubs" };
+
+function cardLabel(card: Card): string {
+  return `${RANK_NAMES[card.rank] ?? card.rank} of ${SUIT_NAMES[card.suit] ?? card.suit}`;
+}
+
+// Trigger a click-style handler from the keyboard (Enter / Space).
+function activateOnKey(e: ReactKeyboardEvent<HTMLDivElement>, fn: () => void) {
+  if (e.key === "Enter" || e.key === " ") {
+    if (e.key === " ") e.preventDefault();
+    fn();
+  }
+}
 
 // Deterministic win animation — 26 cards fan outward from foundation area
 const WIN_CARDS = Array.from({ length: 26 }, (_, i) => {
@@ -53,12 +69,26 @@ function CardFace({
   onDragStart?: () => void;
 }) {
   if (!card.faceUp) {
-    return <div className="sol-card back" onClick={onClick} />;
+    return (
+      <div
+        className="sol-card back"
+        role="button"
+        tabIndex={-1}
+        aria-label="Face-down card"
+        onClick={onClick}
+      />
+    );
   }
+  const interactive = !!onClick;
   return (
     <div
       className={`sol-card ${color(card.suit)}${selected ? " sel" : ""}`}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={cardLabel(card)}
+      aria-pressed={interactive ? !!selected : undefined}
       onClick={onClick}
+      onKeyDown={interactive ? (e) => activateOnKey(e, () => onClick?.()) : undefined}
       onDoubleClick={onDoubleClick}
       draggable={draggable}
       onDragStart={onDragStart}
@@ -329,7 +359,7 @@ export function Solitaire() {
               </button>
             ))}
           </div>
-          <span className="sol-score">Score: {score}</span>
+          <span className="sol-score" aria-live="polite">Score: {score}</span>
           <div style={{ display: "flex", gap: 8 }}>
             {allFaceUp && !won && (
               <button className="btn ghost" onClick={autoComplete}>
@@ -346,7 +376,14 @@ export function Solitaire() {
         </div>
 
         <div className="sol-top">
-          <div className="sol-stock" onClick={onStock}>
+          <div
+            className="sol-stock"
+            role="button"
+            tabIndex={0}
+            aria-label={game.stock.length ? "Draw from stock" : "Recycle waste pile into stock"}
+            onClick={onStock}
+            onKeyDown={(e) => activateOnKey(e, onStock)}
+          >
             {game.stock.length ? (
               <div className="sol-card back" />
             ) : (
@@ -372,7 +409,11 @@ export function Solitaire() {
             <div
               className="sol-found"
               key={fi}
+              role="button"
+              tabIndex={0}
+              aria-label={`Foundation pile ${SUIT_NAMES[SUITS[fi]] ?? ""}`.trim()}
               onClick={onFoundation}
+              onKeyDown={(e) => activateOnKey(e, onFoundation)}
               onDragOver={(e) => e.preventDefault()}
               onDrop={onFoundationDrop}
             >
@@ -385,7 +426,7 @@ export function Solitaire() {
           ))}
         </div>
 
-        {won ? <div className="sudoku-win">🎉 You won! Hit New to play again.</div> : null}
+        {won ? <div className="sudoku-win" role="status" aria-live="polite">🎉 You won! Hit New to play again.</div> : null}
 
         <div className="sol-tableau">
           {game.tableau.map((pile, pi) => (
@@ -398,7 +439,11 @@ export function Solitaire() {
               {pile.length === 0 ? (
                 <div
                   className="sol-slot"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Empty tableau column"
                   onClick={() => onTableauEmpty(pi)}
+                  onKeyDown={(e) => activateOnKey(e, () => onTableauEmpty(pi))}
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => onTableauDrop(pi)}
                 />

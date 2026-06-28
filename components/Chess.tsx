@@ -23,6 +23,16 @@ const GLYPH: Record<string, string> = {
   k: "♚",
 };
 
+// Spoken piece names for accessibility labels
+const PIECE_NAME: Record<string, string> = {
+  p: "pawn",
+  n: "knight",
+  b: "bishop",
+  r: "rook",
+  q: "queen",
+  k: "king",
+};
+
 const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"];
 type Difficulty = "easy" | "medium" | "hard";
 const DEPTH: Record<Difficulty, number> = { easy: 1, medium: 2, hard: 3 };
@@ -381,7 +391,7 @@ export function Chessboard() {
           </div>
         )}
 
-        <div className="chess-status">{status}</div>
+        <div className="chess-status" role="status" aria-live="polite">{status}</div>
 
         <div className="chess-board">
           {cells.map(({ sq, cell, light }) => {
@@ -395,8 +405,24 @@ export function Chessboard() {
             ]
               .filter(Boolean)
               .join(" ");
+            const sqLabel = `${sq}, ${
+              cell ? `${cell.color === "w" ? "white" : "black"} ${PIECE_NAME[cell.type]}` : "empty"
+            }`;
             return (
-              <div key={sq} className={cls} onClick={() => onSquare(sq)}>
+              <div
+                key={sq}
+                className={cls}
+                role="button"
+                tabIndex={0}
+                aria-label={sqLabel}
+                onClick={() => onSquare(sq)}
+                onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    if (e.key === " ") e.preventDefault();
+                    onSquare(sq);
+                  }
+                }}
+              >
                 {cell ? (
                   <span className={`chess-piece ${cell.color === "w" ? "white" : "black"}`}>
                     {GLYPH[cell.type]}
@@ -428,7 +454,7 @@ export function Chessboard() {
 
         {/* Promotion choice modal */}
         {pendingPromo && (
-          <div className="chess-promo-overlay">
+          <div className="chess-promo-overlay" role="dialog" aria-modal="true" aria-label="Choose promotion">
             <div className="chess-promo-card">
               <div className="lb-modal-title">Choose promotion</div>
               <div className="chess-promo-pieces">
@@ -436,6 +462,7 @@ export function Chessboard() {
                   <button
                     key={p}
                     className="chess-promo-piece"
+                    aria-label={`Promote to ${PIECE_NAME[p]}`}
                     onClick={() => applyPromo(p)}
                   >
                     <span

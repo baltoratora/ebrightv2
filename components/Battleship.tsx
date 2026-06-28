@@ -187,7 +187,25 @@ export function Battleship() {
           ]
             .filter(Boolean)
             .join(" ");
-          return <div key={key} className={cls} onClick={() => playerFire(r, c)} />;
+          const fireLabel = `Enemy waters ${String.fromCharCode(65 + c)}${r + 1}, ${
+            shot === "hit" ? "hit" : shot === "miss" ? "miss" : "unfired"
+          }`;
+          return (
+            <div
+              key={key}
+              className={cls}
+              role="button"
+              tabIndex={phase === "playing" && shot === null ? 0 : -1}
+              aria-label={fireLabel}
+              onClick={() => playerFire(r, c)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  if (e.key === " ") e.preventDefault();
+                  playerFire(r, c);
+                }
+              }}
+            />
+          );
         }),
       )}
     </div>
@@ -237,12 +255,30 @@ export function Battleship() {
             .filter(Boolean)
             .join(" ");
 
+          const cellLabel = `Your fleet ${String.fromCharCode(65 + c)}${r + 1}, ${
+            shot === "hit"
+              ? "hit"
+              : shot === "miss"
+                ? "miss"
+                : idx !== -1
+                  ? "ship"
+                  : "water"
+          }`;
           return (
             <div
               key={key}
               className={cls}
+              role="button"
+              tabIndex={phase === "setup" ? 0 : -1}
+              aria-label={cellLabel}
               onMouseEnter={() => phase === "setup" && setHoverCell([r, c])}
               onClick={() => handleSetupClick(r, c)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  if (e.key === " ") e.preventDefault();
+                  handleSetupClick(r, c);
+                }
+              }}
             />
           );
         }),
@@ -268,7 +304,7 @@ export function Battleship() {
       />
       <div className="bs">
         <div className="sudoku-bar">
-          <span className="wg-progress">{status}</span>
+          <span className="wg-progress" role="status" aria-live="polite">{status}</span>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <div className="bs-diff">
               {(["easy", "medium", "hard"] as const).map((d) => (
@@ -321,7 +357,17 @@ export function Battleship() {
                 <div
                   key={i}
                   className={`bs-palette-ship${sel ? " selected" : placed ? " placed" : ""}`}
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={sel}
+                  aria-label={`${name}, length ${size}${placed ? ", placed" : ""}${sel ? ", selected" : ""}`}
                   onClick={() => setSelectedShip(sel ? null : i)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      if (e.key === " ") e.preventDefault();
+                      setSelectedShip(sel ? null : i);
+                    }
+                  }}
                 >
                   {name} ({size})
                 </div>

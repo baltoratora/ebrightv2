@@ -361,7 +361,7 @@ export function Checkers() {
         </div>
       </div>
 
-      <div className="chess-status">{status}</div>
+      <div className="chess-status" role="status" aria-live="polite">{status}</div>
 
       <div className="ck-board">
         {board.map((row, r) =>
@@ -382,8 +382,26 @@ export function Checkers() {
             ]
               .filter(Boolean)
               .join(" ");
+            const sqLabel = `${String.fromCharCode(97 + c)}${8 - r}, ${
+              cell
+                ? `${cell.color === "r" ? "red" : "black"}${cell.king ? " king" : ""} piece`
+                : "empty"
+            }`;
             return (
-              <div key={key} className={cls} onClick={() => onSquare(r, c)}>
+              <div
+                key={key}
+                className={cls}
+                role="button"
+                tabIndex={dark ? 0 : -1}
+                aria-label={sqLabel}
+                onClick={() => onSquare(r, c)}
+                onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    if (e.key === " ") e.preventDefault();
+                    onSquare(r, c);
+                  }
+                }}
+              >
                 {cell ? (
                   <div className={`ck-piece ${cell.color}${cell.king ? " king" : ""}`}>
                     {cell.king ? "♛" : ""}

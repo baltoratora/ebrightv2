@@ -419,7 +419,7 @@ export function Frogger() {
 
       <div className="frog-root">
         <div className="frog-bar">
-          <span className="frog-stat">
+          <span className="frog-stat" aria-live="polite">
             Score {score} · Lv {level} · {"❤️".repeat(Math.max(0, lives))}
             {status === "over" ? " · Game Over" : ""}
           </span>
@@ -430,6 +430,8 @@ export function Frogger() {
           <canvas
             ref={canvasRef}
             className="frog-canvas"
+            role="img"
+            aria-label="Frogger — use the arrow keys, WASD, or the on-screen D-pad to hop the frog up across the road and river to the goal bays. Avoid the cars and don't fall in the water. Press Space or tap to start."
             style={{ width: W, height: H }}
             onClick={() => {
               if (statusRef.current !== "playing") newGame();

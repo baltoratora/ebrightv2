@@ -157,7 +157,7 @@ export function WordGame({
         </button>
       </div>
 
-      {msg ? <div className="wg-msg">{msg}</div> : null}
+      {msg ? <div className="wg-msg" role="alert">{msg}</div> : null}
 
       <div className={`wg-boards${boards > 1 ? " quad" : ""}`}>
         {targets.map((t, i) => (
@@ -174,7 +174,7 @@ export function WordGame({
       </div>
 
       {over ? (
-        <div className={`sudoku-win${allSolved ? "" : " lost"}`}>
+        <div className={`sudoku-win${allSolved ? "" : " lost"}`} aria-live="polite">
           {allSolved
             ? "🎉 Solved!"
             : `${boards > 1 ? "Missed" : "The word was"}: ${targets
@@ -185,7 +185,7 @@ export function WordGame({
       ) : null}
 
       <div className="wg-keyboard">
-        <div className="wg-stat">
+        <div className="wg-stat" aria-live="polite">
           {solved.filter(Boolean).length}/{boards} solved · {guesses.length}/
           {guessLimit} guesses
         </div>

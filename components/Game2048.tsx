@@ -159,7 +159,7 @@ export function Game2048() {
 
       <div className="g2048">
         <div className="sudoku-bar">
-          <div className="g2048-scores">
+          <div className="g2048-scores" aria-live="polite">
             <div className="g2048-score-box">
               <span className="g2048-score-label">SCORE</span>
               <span className="g2048-score-val">{score}</span>
@@ -173,7 +173,7 @@ export function Game2048() {
         </div>
 
         {showWin && (
-          <div className="g2048-win-banner">
+          <div className="g2048-win-banner" aria-live="polite">
             <span>🎉 You reached 2048! Keep going!</span>
             <button className="btn ghost" onClick={() => setShowWin(false)}>Continue</button>
           </div>
@@ -194,15 +194,15 @@ export function Game2048() {
               {val !== 0 ? val : ""}
             </div>
           ))}
-          {over && <div className="g2048-overlay">Game over</div>}
+          {over && <div className="g2048-overlay" aria-live="polite">Game over</div>}
         </div>
 
         <div className="g2048-arrows">
-          <button className="t-btn" onClick={() => move("up")}>↑</button>
+          <button className="t-btn" onClick={() => move("up")} aria-label="Slide up">↑</button>
           <div className="g2048-arrows-row">
-            <button className="t-btn" onClick={() => move("left")}>←</button>
-            <button className="t-btn" onClick={() => move("down")}>↓</button>
-            <button className="t-btn" onClick={() => move("right")}>→</button>
+            <button className="t-btn" onClick={() => move("left")} aria-label="Slide left">←</button>
+            <button className="t-btn" onClick={() => move("down")} aria-label="Slide down">↓</button>
+            <button className="t-btn" onClick={() => move("right")} aria-label="Slide right">→</button>
           </div>
         </div>
 

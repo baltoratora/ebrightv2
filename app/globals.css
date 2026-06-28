@@ -18,6 +18,27 @@
   box-sizing: border-box;
 }
 
+/* Visible keyboard-focus ring. Several inputs/cells set `outline:none`, so this
+   uses !important to guarantee a ring on keyboard (not mouse) focus. */
+:where(a, button, input, select, textarea, [tabindex], [role="button"]):focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px;
+}
+
+/* Respect users who prefer reduced motion: collapse decorative + game
+   animations to ~instant. Near-zero (not `none`) so any animationend logic
+   still fires. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 html,
 body {
   margin: 0;
@@ -1043,7 +1064,7 @@ a.game-card:hover {
 .wg-key.absent {
   background: #2a2f3b;
   border-color: #2a2f3b;
-  color: #6b7280;
+  color: #9aa0b8; /* was #6b7280 (2.8:1, failed WCAG AA); #9aa0b8 ≈ 5.2:1 */
 }
 
 /* ---------- Solitaire ---------- */

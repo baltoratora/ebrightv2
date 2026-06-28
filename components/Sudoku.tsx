@@ -460,6 +460,13 @@ export function Sudoku() {
                       key={key}
                       className={cls}
                       onClick={() => onCell(r, c)}
+                      aria-label={`Row ${r + 1}, column ${c + 1}${
+                        val !== 0
+                          ? `, ${val}${given ? " given" : ""}`
+                          : notes[r][c].length > 0
+                            ? `, notes ${notes[r][c].join(" ")}`
+                            : ", empty"
+                      }`}
                     >
                       {val !== 0 ? (
                         val
@@ -501,6 +508,7 @@ export function Sudoku() {
                   // Arm the digit + highlight; fills the selected cell if any.
                   onClick={() => onPad(n)}
                   aria-pressed={highlightDigit === n}
+                  aria-label={`${n}, ${Math.max(0, remaining[n])} remaining`}
                 >
                   <span className="pad-num">{n}</span>
                   <span className="pad-rem">{Math.max(0, remaining[n])}</span>
@@ -544,7 +552,7 @@ export function Sudoku() {
         </div>
       </div>
 
-      {won ? <div className="sudoku-win">🎉 Solved! Nice thinking.</div> : null}
+      {won ? <div className="sudoku-win" aria-live="polite">🎉 Solved! Nice thinking.</div> : null}
 
       <div className="sudoku-foot">
         <span className="muted sudoku-hint">

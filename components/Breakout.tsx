@@ -339,7 +339,7 @@ export function Breakout() {
       />
       <div className="breakout">
         <div className="sudoku-bar">
-          <span className="wg-progress">
+          <span className="wg-progress" aria-live="polite">
             Score {score} · Lv {level} · Lives {"●".repeat(Math.max(0, lives))}
             {status === "over" ? " · Game over" : ""}
           </span>
@@ -350,6 +350,8 @@ export function Breakout() {
           <canvas
             ref={canvasRef}
             className="breakout-canvas"
+            role="img"
+            aria-label="Brick Breaker — move the paddle with the left and right arrow keys or by sliding your finger, then press Space or tap to launch the ball. Clear all the bricks and catch the falling W, S and M power-up tokens."
             onPointerMove={movePaddle}
             onPointerDown={(e) => { movePaddle(e); launch(); }}
           />

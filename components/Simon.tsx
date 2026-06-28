@@ -205,7 +205,7 @@ export function Simon() {
           ))}
 
           {(phase === "idle" || phase === "over") && (
-            <div className="simon-overlay">
+            <div className="simon-overlay" aria-live="polite">
               {phase === "over" && (
                 <>
                   <div className="simon-over-msg">Game Over</div>
@@ -219,7 +219,7 @@ export function Simon() {
           )}
         </div>
 
-        <div className="simon-status">
+        <div className="simon-status" aria-live="polite">
           {phase === "showing" && "Watch the sequence…"}
           {phase === "input" && "Your turn!"}
           {phase === "idle" && "Press Start to play"}

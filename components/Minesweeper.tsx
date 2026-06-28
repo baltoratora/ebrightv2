@@ -164,7 +164,7 @@ export function Minesweeper() {
       </div>
 
       <div className="ms-status">
-        <span className="ms-counter">💣 {minesLeft}</span>
+        <span className="ms-counter" aria-live="polite" aria-label={`${minesLeft} mines remaining`}>💣 {minesLeft}</span>
         <button className="ms-face" onClick={() => newGame(difficulty)} aria-label="New game">
           {face}
         </button>
@@ -182,6 +182,18 @@ export function Minesweeper() {
           row.map((cell, c) => {
             const cls = ["ms-cell"];
             let content = "";
+            const cellLabel =
+              cell.state === "revealed"
+                ? cell.mine
+                  ? "mine"
+                  : cell.adjacent > 0
+                    ? String(cell.adjacent)
+                    : "empty"
+                : cell.state === "flagged"
+                  ? "flagged"
+                  : cell.state === "unknown"
+                    ? "question"
+                    : "hidden";
             if (cell.state === "flagged") {
               cls.push("flagged");
               content = "🚩";
@@ -202,6 +214,7 @@ export function Minesweeper() {
               <button
                 key={`${r},${c}`}
                 className={cls.join(" ")}
+                aria-label={`Row ${r + 1}, column ${c + 1}, ${cellLabel}`}
                 onClick={() => onCell(r, c)}
                 onContextMenu={(e) => {
                   e.preventDefault();
@@ -216,12 +229,12 @@ export function Minesweeper() {
       </div>
 
       {status === "won" ? (
-        <div className="sudoku-win">
+        <div className="sudoku-win" aria-live="polite">
           🎉 Cleared! {time}s{isNewBest && <span className="ms-new-best"> New best!</span>}
         </div>
       ) : null}
       {status === "lost" ? (
-        <div className="sudoku-win lost">💥 Boom. Hit New to try again.</div>
+        <div className="sudoku-win lost" aria-live="polite">💥 Boom. Hit New to try again.</div>
       ) : null}
 
       <div className="sudoku-controls">

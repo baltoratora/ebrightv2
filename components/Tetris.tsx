@@ -150,7 +150,7 @@ export function Tetris() {
       />
     <div className="tetris">
       <div className="sudoku-bar">
-        <span className="wg-progress">
+        <span className="wg-progress" aria-live="polite">
           Score {g.score} · Lines {g.lines} · Lv {g.level}
         </span>
         <div style={{ display: "flex", gap: 8 }}>
@@ -174,7 +174,7 @@ export function Tetris() {
           ) : (
             <div className="t-hold-empty" />
           )}
-          <button className="t-btn t-hold-btn" onClick={act((p) => holdPiece(p))} title="Hold (C)">
+          <button className="t-btn t-hold-btn" onClick={act((p) => holdPiece(p))} title="Hold (C)" aria-label="Hold piece">
             C
           </button>
         </div>
@@ -201,9 +201,9 @@ export function Tetris() {
             }),
           )}
           {(g.over || paused) && (
-            <div className="tetris-overlay">{g.over ? "Game over" : "Paused"}</div>
+            <div className="tetris-overlay" aria-live="polite">{g.over ? "Game over" : "Paused"}</div>
           )}
-          {tspinMsg && <div className="t-tspin-flash">{tspinMsg}</div>}
+          {tspinMsg && <div className="t-tspin-flash" aria-live="polite">{tspinMsg}</div>}
         </div>
 
         {/* Right side: 3-piece next preview */}
@@ -216,11 +216,11 @@ export function Tetris() {
       </div>
 
       <div className="tetris-controls">
-        <button className="t-btn" onClick={act((p) => tryShift(p, -1))}>◀</button>
-        <button className="t-btn" onClick={act((p) => rotate(p))}>⟳</button>
-        <button className="t-btn" onClick={act((p) => tryShift(p, 1))}>▶</button>
-        <button className="t-btn" onClick={act((p) => drop(p, true))}>▼</button>
-        <button className="t-btn wide" onClick={act((p) => hardDrop(p))}>⤓ Drop</button>
+        <button className="t-btn" onClick={act((p) => tryShift(p, -1))} aria-label="Move left">◀</button>
+        <button className="t-btn" onClick={act((p) => rotate(p))} aria-label="Rotate">⟳</button>
+        <button className="t-btn" onClick={act((p) => tryShift(p, 1))} aria-label="Move right">▶</button>
+        <button className="t-btn" onClick={act((p) => drop(p, true))} aria-label="Soft drop">▼</button>
+        <button className="t-btn wide" onClick={act((p) => hardDrop(p))} aria-label="Hard drop">⤓ Drop</button>
       </div>
 
       <div className="sudoku-foot">

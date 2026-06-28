@@ -106,7 +106,8 @@ function drawBubbleOfColor(
 function aimPath(nx: number, ny: number): [number, number][] {
   const pts: [number, number][] = [[SX, SY]];
   let x = SX, y = SY;
-  let vx = nx * 10, vy = ny * 10;
+  let vx = nx * 10;
+  const vy = ny * 10;
   for (let i = 0; i < 50; i++) {
     x += vx; y += vy;
     if (x - R < 0) { x = R; vx = Math.abs(vx); }
@@ -457,7 +458,7 @@ export function PuzzleBobble() {
       />
       <div className="pb-wrap">
         <div className="sudoku-bar">
-          <span className="wg-progress">Score {score}</span>
+          <span className="wg-progress" aria-live="polite">Score {score}</span>
           <span className="wg-progress">Lv {level}</span>
           <span className="wg-progress">Shots {shots}/{shotLimit}</span>
           <button className="btn ghost" onClick={newGame}>New</button>
@@ -467,6 +468,8 @@ export function PuzzleBobble() {
           <canvas
             ref={cvRef}
             className="pb-canvas"
+            role="img"
+            aria-label="Puzzle Bobble — move the mouse or drag to aim, then click or tap to fire the bubble. Match three or more of the same colour to pop them; clear the board before the bubbles cross the danger line. Pointer or touch only."
             style={{ width: W, height: H, maxWidth: "100%" }}
             onMouseMove={onMouseMove}
             onClick={onClick}
@@ -486,12 +489,12 @@ export function PuzzleBobble() {
         </div>
 
         {over && (
-          <div className="sudoku-win lost">
+          <div className="sudoku-win lost" role="alert">
             💥 Game over — bubbles reached the line
           </div>
         )}
         {levelComplete && (
-          <div className="sudoku-win">
+          <div className="sudoku-win" role="status" aria-live="polite">
             🎉 Level {level} complete! Loading level {level + 1}…
           </div>
         )}

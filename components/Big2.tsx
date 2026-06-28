@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
   deal,
   holderOf3D,
@@ -18,6 +18,19 @@ import { GameInfo } from "@/components/GameInfo";
 const ROUNDS = 5;
 const BOT_NAMES = ["You", "Bot 1", "Bot 2", "Bot 3"];
 const SUIT_DISPLAY_ORDER: Record<string, number> = { S: 0, H: 1, D: 2, C: 3 };
+const SUIT_NAMES: Record<string, string> = { S: "Spades", H: "Hearts", D: "Diamonds", C: "Clubs" };
+
+function cardLabel(card: Card): string {
+  return `${label(card.value)} of ${SUIT_NAMES[card.suit] ?? card.suit}`;
+}
+
+// Trigger a click-style handler from the keyboard (Enter / Space).
+function activateOnKey(e: ReactKeyboardEvent<HTMLDivElement>, fn: () => void) {
+  if (e.key === "Enter" || e.key === " ") {
+    if (e.key === " ") e.preventDefault();
+    fn();
+  }
+}
 
 interface G {
   hands: Card[][];
@@ -68,10 +81,16 @@ function B2Card({
   onClick?: () => void;
 }) {
   const red = card.suit === "H" || card.suit === "D";
+  const interactive = !!onClick;
   return (
     <div
       className={`b2-card${red ? " red" : ""}${selected ? " sel" : ""}${small ? " small" : ""}`}
+      role={interactive ? "button" : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-pressed={interactive ? !!selected : undefined}
+      aria-label={interactive ? cardLabel(card) : undefined}
       onClick={onClick}
+      onKeyDown={interactive ? (e) => activateOnKey(e, () => onClick?.()) : undefined}
     >
       <span className="b2-corner">
         {label(card.value)}
@@ -217,7 +236,7 @@ export function Big2() {
       />
       <div className="b2">
         <div className="sudoku-bar">
-          <span className="wg-progress">{status}</span>
+          <span className="wg-progress" role="status" aria-live="polite">{status}</span>
           <button className="btn ghost" onClick={newGame}>
             New
           </button>
@@ -294,7 +313,7 @@ export function Big2() {
           )}
         </div>
 
-        {msg ? <div className="wg-msg">{msg}</div> : null}
+        {msg ? <div className="wg-msg" role="alert">{msg}</div> : null}
 
         <div className="b2-hand">
           {displayHand.map((c) => (

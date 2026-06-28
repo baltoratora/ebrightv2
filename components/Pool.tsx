@@ -378,7 +378,7 @@ export function Pool() {
       />
       <div className="pool">
         <div className="sudoku-bar">
-          <span className="wg-progress">
+          <span className="wg-progress" aria-live="polite">
             {won
               ? `Won in ${shots} shots!`
               : lost
@@ -395,6 +395,8 @@ export function Pool() {
         <canvas
           ref={canvasRef}
           className="pool-canvas"
+          role="img"
+          aria-label="Pool — drag from the cue ball to aim and set power, then release to shoot. Pocket solids 1–7, then the 8-ball to win. Pointer or touch drag only."
           onPointerDown={onDown}
           onPointerMove={onMove}
           onPointerUp={onUp}

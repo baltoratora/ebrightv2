@@ -534,9 +534,9 @@ export function TowerDefense() {
       <div className="td-root">
         {/* HUD bar */}
         <div className="td-bar">
-          <span className="td-stat">💰 {gold}</span>
-          <span className="td-stat">❤️ {lives}</span>
-          <span className="td-stat">🌊 Wave {wave}</span>
+          <span className="td-stat" aria-live="polite">💰 {gold}</span>
+          <span className="td-stat" aria-live="polite">❤️ {lives}</span>
+          <span className="td-stat" aria-live="polite">🌊 Wave {wave}</span>
           {status === "playing" && !waveActive && (
             <button className="btn" onClick={startWave}>
               Start Wave {wave + 1}
@@ -553,13 +553,15 @@ export function TowerDefense() {
           <canvas
             ref={canvasRef}
             className="td-canvas"
+            role="img"
+            aria-label="Tower Defense — click a green cell to place the selected tower, choose tower types with keys 1, 2 and 3 (S to sell), then press Space or the Start Wave button to send enemies. Stop them reaching the exit. Pointer and keyboard."
             style={{ width: W, height: H }}
             onClick={handleCanvasClick}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           />
           {status === "over" && (
-            <div className="td-overlay">
+            <div className="td-overlay" role="alert">
               <div className="td-overlay-title">Game Over</div>
               <div className="td-overlay-sub">Survived {wave} wave{wave !== 1 ? "s" : ""}</div>
               <button className="btn" onClick={newGame}>Play Again</button>

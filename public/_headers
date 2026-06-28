@@ -1,0 +1,19 @@
+# Cloudflare Pages headers for the baltoratora static export (served from out/).
+# Docs: https://developers.cloudflare.com/pages/configuration/headers/
+
+# Content-hashed build assets never change — cache them immutably.
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Security headers for every response.
+# Note: script/style 'unsafe-inline' is required by Next's static-export inline
+# bootstrap (tighten later with nonces if needed). connect-src allows the
+# cross-origin multiplayer WebSocket (baltoratora-rooms.*.workers.dev — see
+# lib/useRoom.ts); everything else is locked to same-origin.
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), browsing-topics=()
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; font-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' wss://*.workers.dev; form-action 'self'

@@ -206,7 +206,7 @@ export function Sokoban() {
           <span className="sok-stat">
             Level <strong>{levelIdx + 1}</strong>/{LEVELS.length}
           </span>
-          <span className="sok-stat">
+          <span className="sok-stat" aria-live="polite">
             Moves: <strong>{moves}</strong>
           </span>
           {best !== undefined && (
@@ -275,7 +275,7 @@ export function Sokoban() {
 
           {/* Solved overlay */}
           {solved && (
-            <div className="sok-overlay">
+            <div className="sok-overlay" aria-live="polite">
               <div className="sok-overlay-title">🎉 Level Complete!</div>
               <div className="sok-overlay-sub">Solved in {moves} moves</div>
               {best !== undefined && moves < best && (
