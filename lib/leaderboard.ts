@@ -75,6 +75,11 @@ export async function submitScore(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ game, name, value }),
   });
+  // A write must NOT silently resolve to [] on failure — that is
+  // indistinguishable from "empty board" and would make the caller wipe the
+  // displayed scores and discard the just-earned score. Throw so the caller can
+  // keep the modal open and let the player retry.
+  if (!r.ok) throw new Error(`submitScore failed: ${r.status}`);
   const body = (await r.json()) as { scores?: Entry[] };
   return body.scores ?? [];
 }

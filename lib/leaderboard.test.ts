@@ -1,5 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { qualifies, fmtValue, metaFor, type Entry } from "./leaderboard";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { qualifies, fmtValue, metaFor, submitScore, type Entry } from "./leaderboard";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 const full = (vals: number[]): Entry[] => vals.map((v, i) => ({ name: `P${i}`, value: v }));
 
@@ -34,5 +38,32 @@ describe("metaFor", () => {
   it("resolves base game from a difficulty key", () => {
     expect(metaFor("sudoku:grandmaster").unit).toBe("time");
     expect(metaFor("tetris").dir).toBe("desc");
+  });
+});
+
+describe("submitScore", () => {
+  it("returns the updated scores on a successful save", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ scores: [{ name: "A", value: 5 }] }),
+      })),
+    );
+    await expect(submitScore("tetris", "A", 5)).resolves.toEqual([
+      { name: "A", value: 5 },
+    ]);
+  });
+
+  it("throws on a non-ok response instead of silently returning [] (else the caller wipes the board)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: "boom" }),
+      })),
+    );
+    await expect(submitScore("tetris", "A", 5)).rejects.toThrow();
   });
 });

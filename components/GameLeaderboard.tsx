@@ -26,6 +26,7 @@ export function GameLeaderboard({
   const [promptOpen, setPromptOpen] = useState(false);
   const [name, setName] = useState("");
   const [highlight, setHighlight] = useState<number | null>(null);
+  const [saveError, setSaveError] = useState(false);
   const handledRef = useRef(false);
   const meta = metaFor(game);
 
@@ -43,6 +44,7 @@ export function GameLeaderboard({
     if (!over || value == null) {
       handledRef.current = false;
       setPromptOpen(false); // close stale modal on game reset
+      setSaveError(false);
       return;
     }
     if (handledRef.current) return;
@@ -57,10 +59,18 @@ export function GameLeaderboard({
 
   const save = async () => {
     if (value == null) return;
-    setScores(await submitScore(game, name.trim() || "—", value));
-    setHighlight(value);
-    setPromptOpen(false);
-    setName("");
+    setSaveError(false);
+    try {
+      const updated = await submitScore(game, name.trim() || "—", value);
+      setScores(updated);
+      setHighlight(value);
+      setPromptOpen(false);
+      setName("");
+    } catch {
+      // Keep the modal open and the current scores intact so the player can
+      // retry — never wipe the board or drop the score on a transient failure.
+      setSaveError(true);
+    }
   };
 
   return (
@@ -106,6 +116,14 @@ export function GameLeaderboard({
                 if (e.key === "Enter") save();
               }}
             />
+            {saveError && (
+              <div
+                role="alert"
+                style={{ color: "var(--accent)", fontSize: "0.85rem", marginTop: 6 }}
+              >
+                Couldn&apos;t save — try again.
+              </div>
+            )}
             <div className="lb-modal-actions">
               <button className="btn" onClick={save}>
                 Save
