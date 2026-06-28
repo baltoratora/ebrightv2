@@ -70,7 +70,11 @@ export function Carrom() {
   const [p2Score, setP2Score] = useState(0);
 
   const striker = () => discsRef.current.find((d) => d.id === "striker")!;
-  const won = coinsLeft === 0;
+  // All coins pocketed AND the queen properly resolved (covered). Without the
+  // queenDone gate, pocketing the queen as the last coin without covering it
+  // (it sits in limbo with coverNeeded=true while coinsLeft hits 0) would
+  // falsely win — and submit that win to the leaderboard.
+  const won = coinsLeft === 0 && queenDone;
 
   const draw = useCallback(() => {
     const cv = canvasRef.current;
