@@ -109,6 +109,9 @@ export function Game2048() {
   // Arrow-key input.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Don't hijack arrows while typing (e.g. the leaderboard name field).
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (e.key === "ArrowUp")    { e.preventDefault(); move("up"); }
       else if (e.key === "ArrowDown")  { e.preventDefault(); move("down"); }
       else if (e.key === "ArrowLeft")  { e.preventDefault(); move("left"); }

@@ -149,6 +149,7 @@ export function PuzzleBobble() {
   const levelRef = useRef(1);
   const shotsRef = useRef(0);
   const floaterIdRef = useRef(0);
+  const levelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [score, setScore] = useState(0);
   const [over, setOver] = useState(false);
@@ -292,7 +293,9 @@ export function PuzzleBobble() {
       setLevelComplete(true);
       draw();
       const nl = lv + 1;
-      setTimeout(() => {
+      // Tracked so "New" (or unmount) during the 2s level-complete pause can
+      // cancel it — otherwise it later overwrites the fresh game with level nl.
+      levelTimerRef.current = setTimeout(() => {
         const idx = nl - 1;
         gridRef.current = idx < LEVELS.length ? gridFromLevel(LEVELS[idx]) : newGridForLevel(nl);
         levelRef.current = nl;
@@ -373,6 +376,7 @@ export function PuzzleBobble() {
 
   const newGame = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
+    if (levelTimerRef.current) clearTimeout(levelTimerRef.current);
     runningRef.current = false;
     gridRef.current = gridFromLevel(LEVELS[0]);
     curColorRef.current = randomColorForLevel(1);
@@ -400,7 +404,11 @@ export function PuzzleBobble() {
     cv.width = W * dpr;
     cv.height = H * dpr;
     draw();
-    return () => { runningRef.current = false; cancelAnimationFrame(rafRef.current); };
+    return () => {
+      runningRef.current = false;
+      cancelAnimationFrame(rafRef.current);
+      if (levelTimerRef.current) clearTimeout(levelTimerRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

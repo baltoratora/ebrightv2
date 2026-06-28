@@ -367,10 +367,11 @@ export function Sudoku() {
         redo();
       } else if (selected) {
         const [r, c] = selected;
-        if (e.key === "ArrowUp") setSelected([Math.max(0, r - 1), c]);
-        else if (e.key === "ArrowDown") setSelected([Math.min(8, r + 1), c]);
-        else if (e.key === "ArrowLeft") setSelected([r, Math.max(0, c - 1)]);
-        else if (e.key === "ArrowRight") setSelected([r, Math.min(8, c + 1)]);
+        // preventDefault so arrows move the selection without scrolling the page.
+        if (e.key === "ArrowUp") { e.preventDefault(); setSelected([Math.max(0, r - 1), c]); }
+        else if (e.key === "ArrowDown") { e.preventDefault(); setSelected([Math.min(8, r + 1), c]); }
+        else if (e.key === "ArrowLeft") { e.preventDefault(); setSelected([r, Math.max(0, c - 1)]); }
+        else if (e.key === "ArrowRight") { e.preventDefault(); setSelected([r, Math.min(8, c + 1)]); }
       }
     };
     window.addEventListener("keydown", onKey);

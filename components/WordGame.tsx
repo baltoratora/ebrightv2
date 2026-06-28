@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   scoreGuess,
   isValidWord,
@@ -70,6 +70,10 @@ export function WordGame({
   const [targets, setTargets] = useState<string[]>(() => randomAnswers(boards));
   const [guesses, setGuesses] = useState<string[]>([]);
   const [current, setCurrent] = useState("");
+  // Mirror of `current` so submit() can read it without doing side-effects inside
+  // a setState updater (which double-fires under React StrictMode in dev).
+  const currentRef = useRef(current);
+  currentRef.current = current;
   const [msg, setMsg] = useState("");
 
   const solved = useMemo(
@@ -93,18 +97,17 @@ export function WordGame({
 
   const submit = useCallback(() => {
     if (over) return;
-    setCurrent((cur) => {
-      if (cur.length < WORD_LENGTH) {
-        flash("Not enough letters");
-        return cur;
-      }
-      if (!isValidWord(cur)) {
-        flash("Not in word list");
-        return cur;
-      }
-      setGuesses((g) => [...g, cur.toLowerCase()]);
-      return "";
-    });
+    const cur = currentRef.current;
+    if (cur.length < WORD_LENGTH) {
+      flash("Not enough letters");
+      return;
+    }
+    if (!isValidWord(cur)) {
+      flash("Not in word list");
+      return;
+    }
+    setGuesses((g) => [...g, cur.toLowerCase()]);
+    setCurrent("");
   }, [over, flash]);
 
   const typeCh = useCallback(

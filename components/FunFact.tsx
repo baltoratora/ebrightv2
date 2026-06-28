@@ -1,28 +1,34 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { Fact } from "@/lib/fact";
 
 export function FunFact() {
   const [fact, setFact] = useState<Fact | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  // Latest request wins: a slow initial load(false) must not overwrite a fresh
+  // random fact the user asked for via refresh.
+  const reqIdRef = useRef(0);
 
   // random=false -> today's fact (initial); random=true -> a fresh one (refresh).
   const load = useCallback(async (random: boolean) => {
+    const id = ++reqIdRef.current;
     if (random) setRefreshing(true);
     try {
       const res = await fetch(`/api/fact${random ? "?random=1" : ""}`, {
         cache: "no-store",
       });
       const body = await res.json();
+      if (id !== reqIdRef.current) return; // superseded by a newer load
       if (!res.ok) throw new Error(body.error ?? "Failed");
       setFact(body as Fact);
       setError(null);
     } catch (e) {
+      if (id !== reqIdRef.current) return;
       setError(e instanceof Error ? e.message : "Failed");
     } finally {
-      setRefreshing(false);
+      if (id === reqIdRef.current) setRefreshing(false);
     }
   }, []);
 

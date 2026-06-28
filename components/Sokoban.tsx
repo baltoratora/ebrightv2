@@ -54,6 +54,7 @@ export function Sokoban() {
   const [moves, setMoves] = useState(0);
   const [solved, setSolved] = useState(false);
   const [bestMoves, setBestMoves] = useState<Record<number, number>>({});
+  const [newBest, setNewBest] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -84,16 +85,17 @@ export function Sokoban() {
     } catch {}
   }, [levelIdx, bestMoves, loaded]);
 
-  // Record best move count on solve
+  // Record best move count on solve, and whether this solve set a NEW record.
+  // We compare against the best BEFORE overwriting it — the badge needs this
+  // because bestMoves[levelIdx] becomes === moves right after, and a first-ever
+  // solve (prevBest undefined) is also a record.
   useEffect(() => {
     if (!solved || moves === 0) return;
-    setBestMoves((prev) => {
-      const existing = prev[levelIdx];
-      if (existing === undefined || moves < existing) {
-        return { ...prev, [levelIdx]: moves };
-      }
-      return prev;
-    });
+    const prevBest = bestMoves[levelIdx];
+    const isRecord = prevBest === undefined || moves < prevBest;
+    setNewBest(isRecord);
+    if (isRecord) setBestMoves((prev) => ({ ...prev, [levelIdx]: moves }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [solved, moves, levelIdx]);
 
   const loadLevel = useCallback((idx: number) => {
@@ -101,6 +103,7 @@ export function Sokoban() {
     setLevel(parseLevel(LEVELS[idx]));
     setMoves(0);
     setSolved(false);
+    setNewBest(false);
     historyRef.current = [];
     setCanUndo(false);
   }, []);
@@ -278,7 +281,7 @@ export function Sokoban() {
             <div className="sok-overlay" aria-live="polite">
               <div className="sok-overlay-title">🎉 Level Complete!</div>
               <div className="sok-overlay-sub">Solved in {moves} moves</div>
-              {best !== undefined && moves < best && (
+              {newBest && (
                 <div className="sok-overlay-sub" style={{ color: "var(--green)" }}>
                   New best!
                 </div>
