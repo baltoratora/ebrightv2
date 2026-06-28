@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { stepOnce, allStopped, type Disc, type Pocket } from "@/lib/physics";
+import { pool8Result } from "@/lib/pool";
 import { GameInfo } from "@/components/GameInfo";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
 
@@ -139,6 +140,8 @@ export function Pool() {
   // Cue pocketed during the current shot — persists across frames until the
   // table settles (a local would reset before allStopped() fires).
   const scratchRef = useRef(false);
+  // 8-ball pocketed during the current shot — resolved at settle (see scratchRef).
+  const eightPottedRef = useRef(false);
 
   const [shots, setShots] = useState(0);
   const [solidsLeft, setSolidsLeft] = useState(7);
@@ -235,14 +238,9 @@ export function Pool() {
         setSolidsLeft(solidsLeftRef.current);
       }
       if (eightPotted) {
-        if (solidsLeftRef.current === 0 && !scratchRef.current) {
-          statusRef.current = "won";
-          setGameStatus("won");
-        } else {
-          // 8-ball pocketed early, or scratch+8-ball = loss
-          statusRef.current = "lost";
-          setGameStatus("lost");
-        }
+        // Defer the win/lose decision to settle (allStopped) so a cue scratch
+        // later in the same stroke is still counted.
+        eightPottedRef.current = true;
       }
     }
 
@@ -250,6 +248,14 @@ export function Pool() {
 
     if (allStopped(discs)) {
       animRef.current = false;
+      // Resolve an 8-ball pot now that the table has settled, so a cue scratch in
+      // a later frame of the same stroke still counts (scratch on the 8 = loss).
+      if (eightPottedRef.current && statusRef.current === "playing") {
+        const result = pool8Result(solidsLeftRef.current, scratchRef.current);
+        statusRef.current = result;
+        setGameStatus(result);
+      }
+      eightPottedRef.current = false;
       // Enter ball-in-hand if cue was pocketed at any point during this shot
       if (statusRef.current === "playing" && scratchRef.current) {
         bihRef.current = { active: true, x: HEAD_X * 0.5, y: H / 2 };
@@ -345,6 +351,7 @@ export function Pool() {
     bihRef.current = { active: false, x: HEAD_X * 0.5, y: H / 2 };
     solidsLeftRef.current = 7;
     scratchRef.current = false;
+    eightPottedRef.current = false;
     statusRef.current = "playing";
     setShots(0);
     setSolidsLeft(7);
