@@ -95,6 +95,16 @@ export function applyMove(b: Board, m: Move): Board {
   return n;
 }
 
+/**
+ * A man (non-king) that reaches its king row by a jump promotes, and its capture
+ * chain ends immediately — even though it could now jump backward as a king.
+ * `jumpSeqs` honours this (the king-row stop above); the interactive multi-jump
+ * UI must use this too so it doesn't force an illegal extra capture.
+ */
+export function promotesAndStops(pieceWasKing: boolean, landingRow: number, color: Color): boolean {
+  return !pieceWasKing && landingRow === KING_ROW[color];
+}
+
 export function countPieces(b: Board): { r: number; b: number } {
   let red = 0, black = 0;
   for (const row of b) for (const p of row) if (p) p.color === "r" ? red++ : black++;

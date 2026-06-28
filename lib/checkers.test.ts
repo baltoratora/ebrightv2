@@ -7,11 +7,29 @@ import {
   winner,
   bestMove,
   cloneBoard,
+  promotesAndStops,
   type Board,
   type Piece,
 } from "./checkers";
 
 const empty = (): Board => Array.from({ length: 8 }, () => Array<Piece | null>(8).fill(null));
+
+describe("promotesAndStops", () => {
+  it("a red man landing on row 0 promotes — its jump chain ends", () => {
+    expect(promotesAndStops(false, 0, "r")).toBe(true);
+  });
+  it("a black man landing on row 7 promotes — its jump chain ends", () => {
+    expect(promotesAndStops(false, 7, "b")).toBe(true);
+  });
+  it("a man landing on a non-king row keeps jumping", () => {
+    expect(promotesAndStops(false, 4, "r")).toBe(false);
+    expect(promotesAndStops(false, 2, "b")).toBe(false);
+  });
+  it("an existing king never promotes/stops (it may keep jumping)", () => {
+    expect(promotesAndStops(true, 0, "r")).toBe(false);
+    expect(promotesAndStops(true, 7, "b")).toBe(false);
+  });
+});
 
 describe("newBoard", () => {
   it("places 12 pieces per side on dark squares", () => {

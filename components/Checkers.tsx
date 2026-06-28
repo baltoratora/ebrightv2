@@ -8,6 +8,7 @@ import {
   countPieces,
   bestMove,
   cloneBoard,
+  promotesAndStops,
   type Board,
   type Color,
   type Move,
@@ -219,8 +220,12 @@ export function Checkers() {
         const newCaptured: [number, number][] = [...mj.alreadyCaptured, captureSquare];
         const landedPiece = nextB[r][c]!;
 
-        // Check if this piece can jump further.
-        const further = nextJumpTargets(nextB, r, c, landedPiece, newCaptured);
+        // A man that promotes by reaching the king row ends its chain here, even
+        // though it could now jump backward as a king — matches the engine's
+        // jumpSeqs king-row stop. Otherwise, continue if more jumps exist.
+        const further = promotesAndStops(p.king, r, p.color)
+          ? []
+          : nextJumpTargets(nextB, r, c, landedPiece, newCaptured);
         if (further.length > 0) {
           // Still mid-jump — update board but don't end the turn.
           flashLand(r, c);
