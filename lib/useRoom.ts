@@ -73,10 +73,7 @@ export function useRoom(
     wsRef.current = ws;
 
     ws.onopen = () => {
-      if (!disposed) {
-        setStatus("open");
-        attemptRef.current = 0; // healthy connection — reset backoff
-      }
+      if (!disposed) setStatus("open");
     };
     ws.onmessage = (e) => {
       let msg: ServerMsg;
@@ -86,6 +83,10 @@ export function useRoom(
         return;
       }
       if (msg.t === "welcome") {
+        // A real, healthy connection (server accepted us) — reset the backoff
+        // here rather than on `onopen`, so a server that opens then immediately
+        // drops still escalates and eventually gives up.
+        attemptRef.current = 0;
         setSeat(msg.seat);
         setTurn(msg.turn);
         setPeers(msg.peers);

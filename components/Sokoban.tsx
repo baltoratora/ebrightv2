@@ -136,6 +136,7 @@ export function Sokoban() {
     setLevel(parseLevel(LEVELS[levelIdx]));
     setMoves(0);
     setSolved(false);
+    setNewBest(false);
     historyRef.current = [];
     setCanUndo(false);
   }, [levelIdx]);

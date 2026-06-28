@@ -353,6 +353,9 @@ export function Sudoku() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      // Don't hijack keys while typing (e.g. the high-score name field).
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (e.key >= "1" && e.key <= "9") {
         const n = Number(e.key);
         setHighlightDigit(n);
