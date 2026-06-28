@@ -149,6 +149,11 @@ export function Simon() {
         const newSeq = nextSequence(seq); // event handler — Math.random OK
         setSeq(newSeq);
         setInputBuf([]);
+        // Disable the pads during the inter-round gap: seq has already advanced,
+        // so a premature tap would be checked against the new (longer) sequence
+        // before it is shown and could falsely end the game. flashSequence
+        // re-enters "showing" and restores "input" when the flash completes.
+        setPhase("showing");
         // Flash speed: starts 600ms, drops 15ms/round, floor 200ms
         const speed = Math.max(200, 600 - newRound * 15);
         const t = setTimeout(() => flashSequence(newSeq, speed), 400);
