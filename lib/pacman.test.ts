@@ -15,6 +15,7 @@ import {
   eatPellet,
   isLevelComplete,
   tunnelPxShift,
+  globalGhostPhase,
 } from "./pacman";
 
 // ── parseMaze ─────────────────────────────────────────────────────────────────
@@ -269,5 +270,28 @@ describe("tunnelPxShift", () => {
     expect(tunnelPxShift(5, 6, W)).toBe(0);
     expect(tunnelPxShift(6, 5, W)).toBe(0);
     expect(tunnelPxShift(5, 5, W)).toBe(0);
+  });
+});
+
+// ── globalGhostPhase ──────────────────────────────────────────────────────────
+// The scatter/chase wave schedule. Without it, ghosts only ever leave "scatter"
+// after a frightened period, so they never pursue Pac-Man in normal play.
+
+describe("globalGhostPhase", () => {
+  it("starts in scatter", () => {
+    expect(globalGhostPhase(0)).toBe("scatter");
+    expect(globalGhostPhase(6.9)).toBe("scatter");
+  });
+  it("switches to chase after the first scatter window (~7s)", () => {
+    expect(globalGhostPhase(7)).toBe("chase");
+    expect(globalGhostPhase(20)).toBe("chase");
+  });
+  it("returns to scatter in the second scatter window", () => {
+    expect(globalGhostPhase(27)).toBe("scatter");
+    expect(globalGhostPhase(33)).toBe("scatter");
+  });
+  it("chases forever once the schedule ends", () => {
+    expect(globalGhostPhase(84)).toBe("chase");
+    expect(globalGhostPhase(10_000)).toBe("chase");
   });
 });

@@ -242,6 +242,30 @@ export function chooseGhostDir(
   return best;
 }
 
+// ── Global scatter/chase scheduler ───────────────────────────────────────────
+// Classic Pac-Man alternates scatter and chase waves on a fixed timer. Without
+// this, ghosts only ever leave "scatter" after a frightened period, so they
+// never pursue Pac-Man in normal play. Cumulative seconds (level-1 schedule):
+// scatter 7, chase 20, scatter 7, chase 20, scatter 5, chase 20, scatter 5,
+// then chase forever.
+const GHOST_PHASE_SCHEDULE: { phase: "scatter" | "chase"; until: number }[] = [
+  { phase: "scatter", until: 7 },
+  { phase: "chase", until: 27 },
+  { phase: "scatter", until: 34 },
+  { phase: "chase", until: 54 },
+  { phase: "scatter", until: 59 },
+  { phase: "chase", until: 79 },
+  { phase: "scatter", until: 84 },
+];
+
+/** Current non-frightened ghost phase for a level, given seconds elapsed. */
+export function globalGhostPhase(elapsedSec: number): "scatter" | "chase" {
+  for (const w of GHOST_PHASE_SCHEDULE) {
+    if (elapsedSec < w.until) return w.phase;
+  }
+  return "chase";
+}
+
 // ── Pellet eating ─────────────────────────────────────────────────────────────
 
 export const PELLET_SCORE = 10;

@@ -12,6 +12,7 @@ import {
   tunnelPxShift,
   chooseGhostDir,
   ghostTarget,
+  globalGhostPhase,
   eatPellet,
   isLevelComplete,
   oppositeDir,
@@ -99,6 +100,7 @@ export function Pacman() {
   const rafRef          = useRef(0);
   const pacSpeedRef     = useRef(PAC_SPEED_BASE);
   const ghostSpeedRef   = useRef(GHOST_SPEED_BASE);
+  const levelElapsedRef = useRef(0); // seconds into the level (scatter/chase schedule)
 
   // ── React state (HUD only) ────────────────────────────────────────────────
   const [score,  setScore ] = useState(0);
@@ -143,6 +145,7 @@ export function Pacman() {
     });
 
     ghostEatComboRef.current = 0;
+    levelElapsedRef.current = 0; // restart the scatter/chase schedule
   }, []);
 
   // Full level (re)build: regenerate the maze + pellet sets, then place actors.
@@ -540,6 +543,11 @@ export function Pacman() {
         }
       }
 
+      // Advance this level's scatter/chase schedule so ghosts actually pursue
+      // Pac-Man during chase windows (not only after a power pellet).
+      levelElapsedRef.current += dt;
+      const ghostPhase = globalGhostPhase(levelElapsedRef.current);
+
       // Move ghosts, update frightened timers
       for (const g of ghostsRef.current) {
         if (g.eaten) {
@@ -551,7 +559,7 @@ export function Pacman() {
             const { px, py } = tilePx(sp);
             g.px = px;
             g.py = py;
-            g.mode = "scatter";
+            g.mode = ghostPhase; // respawn into the current global phase
             g.frightTimer = 0;
           }
           continue;
@@ -560,9 +568,12 @@ export function Pacman() {
         if (g.mode === "frightened") {
           g.frightTimer -= dt * 1000;
           if (g.frightTimer <= 0) {
-            g.mode = "chase";
+            g.mode = ghostPhase;
             g.frightTimer = 0;
           }
+        } else {
+          // Non-frightened ghosts follow the scatter/chase schedule.
+          g.mode = ghostPhase;
         }
 
         moveGhost(g, dt);
