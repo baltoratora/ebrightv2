@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Journal · BALTORATORA</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #05060d;
+        --bg-2: #0a0c18;
+        --text: #eef1f8;
+        --muted: #9aa0b8;
+        --accent: #ff5d8f;
+        --accent-2: #c2185b;
+        --border: rgba(255, 255, 255, 0.1);
+      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; }
+      body {
+        background:
+          radial-gradient(1100px 700px at 80% -10%, rgba(194, 24, 91, 0.22), transparent),
+          radial-gradient(900px 600px at -10% 20%, rgba(91, 60, 255, 0.18), transparent),
+          var(--bg);
+        color: var(--text);
+        font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system,
+          "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+      #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+      .star {
+        position: absolute;
+        border-radius: 50%;
+        background: #fff;
+        opacity: 0.7;
+        animation: twinkle var(--dur) ease-in-out infinite alternate;
+      }
+      @keyframes twinkle { from { opacity: 0.15; } to { opacity: 0.9; } }
+
+      .wrap {
+        position: relative;
+        z-index: 1;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: clamp(40px, 8vh, 80px) max(20px, env(safe-area-inset-left))
+          max(56px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-right));
+      }
+
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        margin-bottom: 32px;
+        transition: color 0.15s;
+      }
+      .back-link:hover { color: var(--text); }
+
+      h1 {
+        font-size: clamp(28px, 6vw, 48px);
+        font-weight: 800;
+        margin: 0 0 8px;
+        background: linear-gradient(180deg, #ffffff 0%, #ffd7e6 60%, var(--accent) 130%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 14px;
+        margin: 0 0 40px;
+      }
+
+      /* write form */
+      .write-form {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 48px;
+      }
+      .write-form h2 {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 20px;
+      }
+      .form-group { margin-bottom: 16px; }
+      .form-group label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .form-input, .form-textarea {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 14px;
+        padding: 10px 14px;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+      .form-textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
+      .form-row {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+      }
+      .form-row .form-group { flex: 1; margin-bottom: 0; }
+      .btn-post {
+        flex-shrink: 0;
+        padding: 10px 22px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #fff;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        transition: filter 0.15s;
+      }
+      .btn-post:hover { filter: brightness(1.08); }
+      .btn-post:disabled { opacity: 0.5; cursor: default; }
+      .form-msg {
+        margin-top: 10px;
+        font-size: 13px;
+        min-height: 20px;
+      }
+      .form-msg.error { color: #ff6b6b; }
+      .form-msg.success { color: #7dd3fc; }
+
+      /* entries */
+      .entries-heading {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 20px;
+      }
+      .entry {
+        border-bottom: 1px solid var(--border);
+        padding: 24px 0;
+      }
+      .entry:last-child { border-bottom: none; }
+      .entry-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0 0 6px;
+      }
+      .entry-date {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+      .entry-body {
+        font-size: 15px;
+        line-height: 1.7;
+        color: var(--text);
+        white-space: pre-wrap;
+        margin: 0;
+      }
+      .empty-state {
+        color: var(--muted);
+        font-size: 14px;
+        padding: 16px 0;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .star { animation: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stars" aria-hidden="true"></div>
+    <main class="wrap">
+      <a class="back-link" href="/">← BALTORATORA</a>
+      <h1>Journal</h1>
+      <p class="subtitle">Thoughts, notes, and observations.</p>
+
+      <section class="write-form" aria-label="New entry">
+        <h2>New Entry</h2>
+        <div class="form-group">
+          <label for="entry-title">Title</label>
+          <input
+            id="entry-title"
+            class="form-input"
+            type="text"
+            placeholder="Entry title"
+            maxlength="200"
+            autocomplete="off"
+          />
+        </div>
+        <div class="form-group">
+          <label for="entry-body">Body</label>
+          <textarea
+            id="entry-body"
+            class="form-textarea"
+            placeholder="Write here…"
+            maxlength="10000"
+          ></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="entry-key">Secret Key</label>
+            <input
+              id="entry-key"
+              class="form-input"
+              type="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+            />
+          </div>
+          <button class="btn-post" id="btn-post" type="button">Post</button>
+        </div>
+        <div id="form-msg" class="form-msg" role="alert" aria-live="polite"></div>
+      </section>
+
+      <div class="entries-heading">Entries</div>
+      <div id="entries-list"><p class="empty-state">Loading…</p></div>
+    </main>
+
+    <script>
+      // --- starfield ---
+      (function () {
+        var host = document.getElementById("stars");
+        var n = Math.min(160, Math.floor((window.innerWidth * window.innerHeight) / 9000));
+        var frag = document.createDocumentFragment();
+        for (var i = 0; i < n; i++) {
+          var s = document.createElement("div");
+          s.className = "star";
+          var size = Math.random() < 0.15 ? 3 : Math.random() < 0.5 ? 2 : 1;
+          s.style.width = s.style.height = size + "px";
+          s.style.left = Math.random() * 100 + "%";
+          s.style.top = Math.random() * 100 + "%";
+          s.style.setProperty("--dur", (2 + Math.random() * 4).toFixed(1) + "s");
+          frag.appendChild(s);
+        }
+        host.appendChild(frag);
+      })();
+
+      function esc(s) {
+        return s
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function fmtDate(iso) {
+        return new Date(iso).toLocaleDateString("en-MY", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      }
+
+      function entryHtml(e) {
+        return (
+          '<article class="entry">' +
+          '<div class="entry-title">' + esc(e.title) + "</div>" +
+          '<div class="entry-date">' + fmtDate(e.created_at) + "</div>" +
+          '<p class="entry-body">' + esc(e.body) + "</p>" +
+          "</article>"
+        );
+      }
+
+      function renderEntries(entries) {
+        var list = document.getElementById("entries-list");
+        if (!entries.length) {
+          list.innerHTML = '<p class="empty-state">No entries yet.</p>';
+          return;
+        }
+        list.innerHTML = entries.map(entryHtml).join("");
+      }
+
+      // load entries on page load
+      fetch("/api/journal")
+        .then(function (r) { return r.json(); })
+        .then(function (d) { renderEntries(d.entries || []); })
+        .catch(function () {
+          document.getElementById("entries-list").innerHTML =
+            '<p class="empty-state">Couldn\'t load entries.</p>';
+        });
+
+      // post new entry
+      document.getElementById("btn-post").addEventListener("click", function () {
+        var title = document.getElementById("entry-title").value.trim();
+        var body = document.getElementById("entry-body").value.trim();
+        var key = document.getElementById("entry-key").value;
+        var msgEl = document.getElementById("form-msg");
+        var btn = document.getElementById("btn-post");
+
+        msgEl.textContent = "";
+        msgEl.className = "form-msg";
+
+        if (!title || !body || !key) {
+          msgEl.textContent = "Please fill in all fields.";
+          msgEl.className = "form-msg error";
+          return;
+        }
+
+        btn.disabled = true;
+        fetch("/api/journal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: title, body: body, key: key }),
+        })
+          .then(function (r) {
+            if (r.status === 401) {
+              msgEl.textContent = "Wrong key.";
+              msgEl.className = "form-msg error";
+              btn.disabled = false;
+              return null;
+            }
+            if (!r.ok) {
+              msgEl.textContent = "Couldn't save — try again.";
+              msgEl.className = "form-msg error";
+              btn.disabled = false;
+              return null;
+            }
+            return r.json();
+          })
+          .then(function (d) {
+            if (!d) return;
+            var list = document.getElementById("entries-list");
+            var empty = list.querySelector(".empty-state");
+            if (empty) empty.remove();
+            var tmp = document.createElement("div");
+            tmp.innerHTML = entryHtml(d.entry);
+            list.insertBefore(tmp.firstChild, list.firstChild);
+            document.getElementById("entry-title").value = "";
+            document.getElementById("entry-body").value = "";
+            document.getElementById("entry-key").value = "";
+            msgEl.textContent = "Posted!";
+            msgEl.className = "form-msg success";
+            setTimeout(function () { msgEl.textContent = ""; }, 3000);
+            btn.disabled = false;
+          })
+          .catch(function () {
+            msgEl.textContent = "Couldn't save — try again.";
+            msgEl.className = "form-msg error";
+            btn.disabled = false;
+          });
+      });
+    </script>
+  </body>
+</html>

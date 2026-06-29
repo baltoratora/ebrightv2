@@ -260,6 +260,27 @@
           animation: none;
         }
       }
+
+      .cta-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: clamp(12px, 2.5vh, 20px);
+        padding: 12px 24px;
+        border-radius: 999px;
+        background: transparent;
+        border: 1px solid rgba(255, 93, 143, 0.35);
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: clamp(13px, 3vw, 14px);
+        letter-spacing: 0.02em;
+        transition: background 0.2s ease, border-color 0.2s ease;
+      }
+      .cta-ghost:hover {
+        background: rgba(255, 93, 143, 0.08);
+        border-color: var(--accent);
+      }
     </style>
   </head>
   <body>
@@ -292,6 +313,8 @@
         <div class="cal-head" id="cal-head"></div>
         <div class="cal-grid" id="cal-grid"></div>
       </section>
+
+      <a class="cta-ghost" href="/journal">Journal →</a>
 
     </main>
 
