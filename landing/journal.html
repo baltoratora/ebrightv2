@@ -124,12 +124,6 @@
       }
       .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
       .form-textarea { resize: vertical; min-height: 120px; line-height: 1.6; }
-      .form-row {
-        display: flex;
-        gap: 12px;
-        align-items: flex-end;
-      }
-      .form-row .form-group { flex: 1; margin-bottom: 0; }
       .btn-post {
         flex-shrink: 0;
         padding: 10px 22px;
@@ -225,17 +219,7 @@
             maxlength="10000"
           ></textarea>
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="entry-key">Secret Key</label>
-            <input
-              id="entry-key"
-              class="form-input"
-              type="password"
-              placeholder="••••••••"
-              autocomplete="current-password"
-            />
-          </div>
+        <div style="text-align:right">
           <button class="btn-post" id="btn-post" type="button">Post</button>
         </div>
         <div id="form-msg" class="form-msg" role="alert" aria-live="polite"></div>
@@ -312,14 +296,13 @@
       document.getElementById("btn-post").addEventListener("click", function () {
         var title = document.getElementById("entry-title").value.trim();
         var body = document.getElementById("entry-body").value.trim();
-        var key = document.getElementById("entry-key").value;
         var msgEl = document.getElementById("form-msg");
         var btn = document.getElementById("btn-post");
 
         msgEl.textContent = "";
         msgEl.className = "form-msg";
 
-        if (!title || !body || !key) {
+        if (!title || !body) {
           msgEl.textContent = "Please fill in all fields.";
           msgEl.className = "form-msg error";
           return;
@@ -329,15 +312,9 @@
         fetch("/api/journal", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ title: title, body: body, key: key }),
+          body: JSON.stringify({ title: title, body: body }),
         })
           .then(function (r) {
-            if (r.status === 401) {
-              msgEl.textContent = "Wrong key.";
-              msgEl.className = "form-msg error";
-              btn.disabled = false;
-              return null;
-            }
             if (!r.ok) {
               msgEl.textContent = "Couldn't save — try again.";
               msgEl.className = "form-msg error";
@@ -356,7 +333,6 @@
             list.insertBefore(tmp.firstChild, list.firstChild);
             document.getElementById("entry-title").value = "";
             document.getElementById("entry-body").value = "";
-            document.getElementById("entry-key").value = "";
             msgEl.textContent = "Posted!";
             msgEl.className = "form-msg success";
             setTimeout(function () { msgEl.textContent = ""; }, 3000);
