@@ -7,7 +7,6 @@ import { BackBar } from "@/components/BackBar";
 import { FunFact } from "@/components/FunFact";
 import { TopicSelector } from "@/components/TopicSelector";
 import { PaperOfDay } from "@/components/PaperOfDay";
-import { RngWidget } from "@/components/RngWidget";
 
 export default function Home() {
   const [topicId, setTopicId] = useState(DEFAULT_TOPIC.id);
@@ -27,7 +26,6 @@ export default function Home() {
       </header>
 
       <FunFact />
-      <RngWidget />
       <TopicSelector active={topicId} onChange={setTopicId} />
       <PaperOfDay topic={topicId} />
     </main>
