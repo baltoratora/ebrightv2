@@ -180,12 +180,21 @@
         max-width: 420px;
       }
       .cal-head {
+        display: inline-block;
         font-size: 14px;
         letter-spacing: 0.18em;
         text-transform: uppercase;
         color: var(--muted);
         margin-bottom: 16px;
         font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        transition: color 0.15s;
+      }
+      .cal-head:hover {
+        color: var(--accent);
+        text-decoration: underline;
+        text-underline-offset: 4px;
       }
       .cal-grid {
         display: grid;
@@ -306,7 +315,7 @@
       </section>
 
       <section class="cal" aria-label="Calendar">
-        <div class="cal-head" id="cal-head"></div>
+        <a class="cal-head" id="cal-head" href="/holidays" title="View public holidays"></a>
         <div class="cal-grid" id="cal-grid"></div>
       </section>
 
