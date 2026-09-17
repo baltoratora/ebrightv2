@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Public Holidays · BALTORATORA</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #05060d;
+        --bg-2: #0a0c18;
+        --text: #eef1f8;
+        --muted: #9aa0b8;
+        --accent: #ff5d8f;
+        --accent-2: #c2185b;
+        --border: rgba(255, 255, 255, 0.1);
+      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; }
+      body {
+        background:
+          radial-gradient(1100px 700px at 80% -10%, rgba(194, 24, 91, 0.22), transparent),
+          radial-gradient(900px 600px at -10% 20%, rgba(91, 60, 255, 0.18), transparent),
+          var(--bg);
+        color: var(--text);
+        font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system,
+          "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+      #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+      .star {
+        position: absolute;
+        border-radius: 50%;
+        background: #fff;
+        opacity: 0.7;
+        animation: twinkle var(--dur) ease-in-out infinite alternate;
+      }
+      @keyframes twinkle { from { opacity: 0.15; } to { opacity: 0.9; } }
+
+      .wrap {
+        position: relative;
+        z-index: 1;
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: clamp(40px, 8vh, 80px) max(20px, env(safe-area-inset-left))
+          max(56px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-right));
+      }
+
+      .back-link {
+        display: inline-flex; align-items: center; gap: 6px;
+        color: var(--muted); text-decoration: none;
+        font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+        margin-bottom: 32px; transition: color 0.15s;
+      }
+      .back-link:hover { color: var(--text); }
+
+      h1 {
+        font-size: clamp(28px, 6vw, 48px); font-weight: 800; margin: 0 0 8px;
+        background: linear-gradient(180deg, #ffffff 0%, #ffd7e6 60%, var(--accent) 130%);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+      }
+      .subtitle { color: var(--muted); font-size: 14px; margin: 0 0 28px; }
+
+      .controls {
+        display: flex; flex-wrap: wrap; align-items: center;
+        justify-content: space-between; gap: 16px; margin-bottom: 32px;
+      }
+      .year-toggle { display: inline-flex; gap: 6px; }
+      .year-btn {
+        padding: 8px 18px; border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04); border: 1px solid var(--border);
+        color: var(--muted); font-family: inherit; font-size: 14px; font-weight: 700;
+        cursor: pointer; transition: all 0.15s;
+      }
+      .year-btn:hover { color: var(--text); }
+      .year-btn.active {
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #fff; border-color: transparent;
+      }
+      .legend { display: flex; flex-wrap: wrap; gap: 14px; }
+      .legend-item {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 12px; color: var(--muted); font-weight: 600;
+      }
+      .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+
+      .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+      .month-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border); border-radius: 14px;
+        padding: 16px 18px; min-height: 120px;
+      }
+      .month-name {
+        font-size: 12px; font-weight: 700; letter-spacing: 0.12em;
+        text-transform: uppercase; color: var(--accent); margin: 0 0 12px;
+      }
+      .holiday {
+        display: flex; align-items: flex-start; gap: 8px;
+        font-size: 13px; line-height: 1.45; margin-bottom: 10px;
+      }
+      .holiday:last-child { margin-bottom: 0; }
+      .holiday-dots { display: inline-flex; gap: 3px; padding-top: 5px; flex-shrink: 0; }
+      .holiday-day {
+        color: var(--muted); font-weight: 700; flex-shrink: 0;
+        min-width: 48px; font-variant-numeric: tabular-nums;
+      }
+      .holiday-name { color: var(--text); }
+      .prov { color: var(--accent); font-weight: 700; }
+      .month-empty { color: var(--muted); opacity: 0.4; font-size: 20px; }
+
+      .footnote { margin-top: 28px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+      @media (max-width: 780px) { .month-grid { grid-template-columns: repeat(2, 1fr); } }
+      @media (max-width: 480px) { .month-grid { grid-template-columns: 1fr; } }
+      @media (prefers-reduced-motion: reduce) { .star { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <div id="stars" aria-hidden="true"></div>
+    <main class="wrap">
+      <a class="back-link" href="/">← BALTORATORA</a>
+      <h1>Public Holidays</h1>
+      <p class="subtitle">Malaysia · Federal &amp; Selangor / Kuala Lumpur / Putrajaya</p>
+
+      <div class="controls">
+        <div class="year-toggle" id="year-toggle" role="group" aria-label="Select year"></div>
+        <div class="legend" id="legend" aria-label="Region legend"></div>
+      </div>
+
+      <div class="month-grid" id="month-grid"></div>
+
+      <p class="footnote">
+        <span class="prov">*</span> Subject to change — lunar sighting / gazette dependent.
+        Source: JPM cabinet gazette (HKA 2026 / 2027).
+      </p>
+    </main>
+
+    <script src="holidays.js"></script>
+    <script>
+      // --- starfield (same as landing) ---
+      (function () {
+        var host = document.getElementById("stars");
+        var n = Math.min(160, Math.floor((window.innerWidth * window.innerHeight) / 9000));
+        var frag = document.createDocumentFragment();
+        for (var i = 0; i < n; i++) {
+          var s = document.createElement("div");
+          s.className = "star";
+          var size = Math.random() < 0.15 ? 3 : Math.random() < 0.5 ? 2 : 1;
+          s.style.width = s.style.height = size + "px";
+          s.style.left = Math.random() * 100 + "%";
+          s.style.top = Math.random() * 100 + "%";
+          s.style.setProperty("--dur", (2 + Math.random() * 4).toFixed(1) + "s");
+          frag.appendChild(s);
+        }
+        host.appendChild(frag);
+      })();
+
+      var REGIONS = {
+        FED: { label: "Federal", color: "#ff5d8f" },
+        SGR: { label: "Selangor", color: "#38bdf8" },
+        KUL: { label: "Kuala Lumpur", color: "#fbbf24" },
+        PJY: { label: "Putrajaya", color: "#34d399" },
+      };
+      var MONTHS = ["January","February","March","April","May","June",
+                    "July","August","September","October","November","December"];
+      var DOW = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+      var YEARS = [];
+      HOLIDAYS.forEach(function (h) {
+        var yr = h.date.slice(0, 4);
+        if (YEARS.indexOf(yr) === -1) YEARS.push(yr);
+      });
+      YEARS.sort();
+
+      function esc(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      }
+      // Parse 'YYYY-MM-DD' in UTC so weekday/day never drift with the viewer's timezone.
+      function parts(date) {
+        var p = date.split("-");
+        return { y: +p[0], m: +p[1], d: +p[2] };
+      }
+      function weekday(date) {
+        var p = parts(date);
+        return DOW[new Date(Date.UTC(p.y, p.m - 1, p.d)).getUTCDay()];
+      }
+      function regionCodes(h) {
+        return h.scope === "federal" ? ["FED"] : h.states;
+      }
+      function dotsHtml(h) {
+        return regionCodes(h).map(function (code) {
+          var r = REGIONS[code];
+          return '<span class="dot" style="background:' + r.color + '" title="' + r.label + '"></span>';
+        }).join("");
+      }
+      function holidayHtml(h) {
+        var p = parts(h.date);
+        var day = ("0" + p.d).slice(-2);
+        var star = h.provisional ? '<span class="prov">*</span>' : "";
+        return (
+          '<div class="holiday">' +
+            '<span class="holiday-dots">' + dotsHtml(h) + "</span>" +
+            '<span class="holiday-day">' + weekday(h.date) + " " + day + "</span>" +
+            '<span class="holiday-name">' + esc(h.name) + star + "</span>" +
+          "</div>"
+        );
+      }
+
+      function renderLegend() {
+        document.getElementById("legend").innerHTML =
+          ["FED", "SGR", "KUL", "PJY"].map(function (code) {
+            var r = REGIONS[code];
+            return '<span class="legend-item"><span class="dot" style="background:' +
+              r.color + '"></span>' + r.label + "</span>";
+          }).join("");
+      }
+
+      function renderYearToggle(active) {
+        var el = document.getElementById("year-toggle");
+        el.innerHTML = YEARS.map(function (yr) {
+          return '<button type="button" class="year-btn' + (yr === active ? " active" : "") +
+            '" data-year="' + yr + '">' + yr + "</button>";
+        }).join("");
+        Array.prototype.forEach.call(el.querySelectorAll(".year-btn"), function (btn) {
+          btn.addEventListener("click", function () { render(btn.getAttribute("data-year")); });
+        });
+      }
+
+      function render(year) {
+        renderYearToggle(year);
+        var byMonth = [];
+        for (var i = 0; i < 12; i++) byMonth.push([]);
+        HOLIDAYS.filter(function (h) { return h.date.slice(0, 4) === year; })
+          .forEach(function (h) { byMonth[parts(h.date).m - 1].push(h); });
+        byMonth.forEach(function (list) {
+          list.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+        });
+        document.getElementById("month-grid").innerHTML =
+          MONTHS.map(function (name, i) {
+            var body = byMonth[i].length
+              ? byMonth[i].map(holidayHtml).join("")
+              : '<div class="month-empty">—</div>';
+            return '<div class="month-card"><div class="month-name">' + name + "</div>" + body + "</div>";
+          }).join("");
+      }
+
+      // Default to the current year if the data covers it, else the earliest year.
+      (function () {
+        renderLegend();
+        var current = String(new Date().getFullYear());
+        render(YEARS.indexOf(current) !== -1 ? current : YEARS[0]);
+      })();
+    </script>
+  </body>
+</html>
