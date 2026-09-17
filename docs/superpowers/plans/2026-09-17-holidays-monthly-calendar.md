@@ -1,3 +1,139 @@
+# Holidays Monthly Calendar Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Replace the `/holidays` annual 12-month-card view with a single-month, Monday-start day-grid calendar that has a year dropdown, a 2×6 month selector, and an HQ/Branch toggle that shades rest days and flags holidays landing on rest days; and switch the homepage mini-calendar to Monday-start.
+
+**Architecture:** Fully static. `landing/holidays.html` is rewritten (CSS + inline vanilla JS keyed on `{year, month, location}`). `landing/holidays.js` is unchanged (weekday/rest-day derived at render). `landing/index.html` gets a two-line mini-calendar tweak. No D1/API/build.
+
+**Tech Stack:** Static HTML/CSS + vanilla JS. Node used only for a headless DOM-shim render harness. `npm test` (Vitest over `lib/`) stays green.
+
+**Spec:** `docs/superpowers/specs/2026-09-17-holidays-monthly-calendar-design.md`
+
+---
+
+## File Structure
+
+| File | Responsibility | Change |
+|------|----------------|--------|
+| `landing/holidays.js` | Bundled holiday data (`const HOLIDAYS`, 38 entries) | **none** |
+| `landing/holidays.html` | Monthly calendar page: controls, day grid, month list, render logic | **rewrite** |
+| `landing/index.html` | Homepage mini-calendar week-start | **2-line edit** |
+
+**Working branch:** `feat/holidays-monthly-calendar` (already created; spec already committed here).
+
+**Rest-day model:** `getUTCDay()` values. HQ rest = `[0,1]` (Sun, Mon); Branch rest = `[1,2]` (Mon, Tue). Grid column → weekday map `COL_UTCDAY = [1,2,3,4,5,6,0]` (Mon…Sun).
+
+---
+
+## Task 1: Rewrite `/holidays` as a monthly calendar
+
+**Files:**
+- Modify (full rewrite): `landing/holidays.html`
+
+The render logic is verified by executing it headlessly against the real `HOLIDAYS` with a DOM shim (the "test").
+
+- [ ] **Step 1: Write the failing harness and run it against the current (old) page**
+
+Run this from Git Bash (nothing is written to disk):
+
+```bash
+node <<'EOF'
+const fs = require('fs');
+const base = 'C:/Users/user/ebrightv2/landing/';
+const js = fs.readFileSync(base + 'holidays.js', 'utf8');
+const html = fs.readFileSync(base + 'holidays.html', 'utf8');
+const scripts = [...html.matchAll(/<script>\s*([\s\S]*?)<\/script>/g)].map(m => m[1]);
+if (!scripts.length) { console.error('FAIL: no inline script'); process.exit(1); }
+const inline = scripts[scripts.length - 1];
+
+const store = {};
+function elem() {
+  return { _html:'', _text:'', _val:'',
+    get innerHTML(){return this._html;}, set innerHTML(v){this._html=v;},
+    get textContent(){return this._text;}, set textContent(v){this._text=v;},
+    get value(){return this._val;}, set value(v){this._val=v;},
+    style:{setProperty(){}}, className:'',
+    appendChild(){}, addEventListener(){}, querySelectorAll(){return [];} };
+}
+const document = {
+  getElementById(id){ return store[id] || (store[id]=elem()); },
+  createElement(){ return elem(); }, createDocumentFragment(){ return elem(); } };
+const window = { innerWidth:1200, innerHeight:800 };
+new Function('document','window', js + '\n' + inline)(document, window);
+
+const fails=[]; const chk=(c,m)=>{ if(!c) fails.push(m); };
+const count=(s,sub)=>s.split(sub).length-1;
+const R=()=>store['calendar'].innerHTML;
+const L=()=>store['month-list'].innerHTML;
+const cur=new Date(); const curY=String(cur.getFullYear());
+
+if (typeof globalThis.__setState !== 'function') { console.error('FAIL: __setState not exposed (old page?)'); process.exit(1); }
+
+chk(store['year-select'].innerHTML.includes('value="2026"'), 'year select missing 2026');
+chk(store['year-select'].innerHTML.includes('value="2027"'), 'year select missing 2027');
+chk(count(store['legend'].innerHTML,'legend-item')===4, 'legend should have 4 items');
+
+// September 2026, HQ
+globalThis.__setState('2026', 8, 'HQ');
+chk(store['cal-title'].textContent==='September 2026','title should be September 2026, got '+store['cal-title'].textContent);
+chk(count(store['month-nav'].innerHTML,'month-btn')===12,'month-nav should have 12 buttons');
+chk(store['month-nav'].innerHTML.includes('month-btn active" data-month="8"'),'September should be active');
+chk(store['loc-toggle'].innerHTML.includes('loc-btn active" data-loc="HQ"'),'HQ should be active');
+chk(R().indexOf('>Mo<') !== -1 && R().indexOf('>Mo<') < R().indexOf('>Su<'),'header should be Monday-first');
+chk(count(R(),'class="dow')===7,'should have 7 day headers');
+chk(R().includes('dow rest">Mo'),'HQ: Monday header rest-shaded');
+chk(R().includes('dow rest">Su'),'HQ: Sunday header rest-shaded');
+chk(!R().includes('dow rest">Tu'),'HQ: Tuesday header NOT rest-shaded');
+chk(count(R(),'<div class="cal-cell"></div>')+count(R(),'<div class="cal-cell rest"></div>')===1,'Sep 2026 should have exactly 1 leading blank cell');
+chk(count(R(),'class="cal-dot"')===1,'Sep grid should have exactly 1 holiday dot');
+chk(R().includes('#ff5d8f'),'Sep holiday dot should be federal pink');
+chk(L().includes('Hari Malaysia'),'list missing Hari Malaysia');
+chk(L().includes('Wed 16'),'Hari Malaysia should render as Wed 16');
+chk(L().includes('(Federal)'),'Hari Malaysia should be labelled Federal');
+chk(!L().includes('falls on a rest day'),'Sep/HQ: nothing falls on a rest day');
+
+// May 2026: Wesak (Sun 31) rest flag differs by location
+globalThis.__setState('2026', 4, 'HQ');
+{ const i=L().indexOf('Hari Wesak'); const seg=L().slice(i, i+140);
+  chk(i!==-1,'May list missing Hari Wesak');
+  chk(seg.includes('falls on a rest day'),'HQ: Wesak (Sun 31 May) should be flagged'); }
+globalThis.__setState('2026', 4, 'BRANCH');
+{ const i=L().indexOf('Hari Wesak'); const seg=L().slice(i, i+140);
+  chk(seg.indexOf('falls on a rest day')===-1,'Branch: Wesak (Sun) should NOT be flagged'); }
+chk(R().includes('dow rest">Mo'),'Branch: Monday header rest-shaded');
+chk(R().includes('dow rest">Tu'),'Branch: Tuesday header rest-shaded');
+chk(!R().includes('dow rest">Su'),'Branch: Sunday header NOT rest-shaded');
+
+// Feb 2026: CNY (Tue 17) rest flag differs by location
+globalThis.__setState('2026', 1, 'BRANCH');
+{ const i=L().indexOf('Tue 17'); const seg=L().slice(i, i+160);
+  chk(i!==-1,'Feb list missing Tue 17 (CNY)');
+  chk(seg.includes('falls on a rest day'),'Branch: CNY (Tue 17 Feb) should be flagged'); }
+globalThis.__setState('2026', 1, 'HQ');
+{ const i=L().indexOf('Tue 17'); const seg=L().slice(i, i+160);
+  chk(seg.indexOf('falls on a rest day')===-1,'HQ: CNY (Tue 17) should NOT be flagged'); }
+
+// today ring (dynamic to run date)
+if (store['year-select'].innerHTML.includes('value="'+curY+'"')) {
+  globalThis.__setState(curY, cur.getMonth(), 'HQ');
+  chk(count(R(),'today')===1,'current month should have exactly one today cell');
+  globalThis.__setState(curY, (cur.getMonth()+6)%12, 'HQ');
+  chk(count(R(),'today')===0,'non-current month should have no today cell');
+}
+
+if (fails.length){ console.error('FAIL:\n - '+fails.join('\n - ')); process.exit(1); }
+console.log('OK: monthly calendar verified (Mon-start grid, rest shading, today ring, rest-day flags HQ/Branch)');
+EOF
+```
+
+Expected: **FAIL** — `FAIL: __setState not exposed (old page?)` (the current `holidays.html` is the old 12-month-card version).
+
+- [ ] **Step 2: Rewrite `landing/holidays.html`**
+
+Replace the ENTIRE contents of `landing/holidays.html` with exactly this:
+
+```html
 <!doctype html>
 <html lang="en">
   <head>
@@ -231,10 +367,10 @@
       var MONTHS_FULL = ["January","February","March","April","May","June",
                          "July","August","September","October","November","December"];
       var MONTHS_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-      var DOW_HEAD = ["Mo","Tu","We","Th","Fr","Sa","Su"];
-      var DOW3 = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-      var COL_UTCDAY = [1, 2, 3, 4, 5, 6, 0];
-      var REST = { HQ: [0, 1], BRANCH: [1, 2] };
+      var DOW_HEAD = ["Mo","Tu","We","Th","Fr","Sa","Su"];   // Monday-first column headers
+      var DOW3 = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]; // getUTCDay() -> label
+      var COL_UTCDAY = [1, 2, 3, 4, 5, 6, 0];                  // grid column -> getUTCDay()
+      var REST = { HQ: [0, 1], BRANCH: [1, 2] };               // HQ: Sun+Mon; Branch: Mon+Tue
       var LOC_LABEL = { HQ: "HQ", BRANCH: "Branch" };
 
       function esc(s) {
@@ -380,3 +516,160 @@
     </script>
   </body>
 </html>
+```
+
+IMPORTANT: preserve all special characters exactly — `←`, `·`, `&amp;`, the em-dash `—` in the footnote and in the `— falls on a rest day` string. UTF-8.
+
+- [ ] **Step 3: Run the harness to verify it passes**
+
+Run the same `node <<'EOF' ... EOF` block from Step 1.
+Expected: `OK: monthly calendar verified (Mon-start grid, rest shading, today ring, rest-day flags HQ/Branch)`.
+
+- [ ] **Step 4: Confirm the test suite is still green**
+
+Run: `npm test`
+Expected: `Test Files 25 passed (25)`, `Tests 343 passed (343)`.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add landing/holidays.html
+git commit -m "$(cat <<'EOF'
+feat(landing): rebuild /holidays as a monthly calendar
+
+Single-month Mon-start day grid, year dropdown + 2x6 month buttons +
+HQ/Branch toggle. Shades each location's rest days and flags holidays
+that land on a rest day. Today highlighted. Static; holidays.js unchanged.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+---
+
+## Task 2: Homepage mini-calendar → Monday-start
+
+**Files:**
+- Modify: `landing/index.html` (mini-calendar script, ~lines 356 and 363)
+
+- [ ] **Step 1: Change the day-of-week header row**
+
+Replace this line:
+
+```js
+        const dows = ["S", "M", "T", "W", "T", "F", "S"];
+```
+
+with:
+
+```js
+        const dows = ["M", "T", "W", "T", "F", "S", "S"];
+```
+
+- [ ] **Step 2: Shift the leading-blank offset to Monday-based**
+
+Replace this line:
+
+```js
+        const firstDow = new Date(y, m, 1).getDay();
+```
+
+with:
+
+```js
+        const firstDow = (new Date(y, m, 1).getDay() + 6) % 7;
+```
+
+- [ ] **Step 3: Verify the edits landed and the old form is gone**
+
+Run:
+```bash
+grep -c '\["M", "T", "W", "T", "F", "S", "S"\]' landing/index.html
+grep -c '(new Date(y, m, 1).getDay() + 6) % 7' landing/index.html
+grep -c '\["S", "M", "T", "W", "T", "F", "S"\]' landing/index.html
+```
+Expected: `1`, then `1`, then `0` (old Sunday-first array removed).
+
+- [ ] **Step 4: Verify the Monday-start offset with a headless check**
+
+September 2026 starts on a Tuesday, so a Monday-start grid must render exactly **1** empty leading cell. Run:
+
+```bash
+node <<'EOF'
+// Replicate the homepage offset formula for Sep 2026 (month index 8).
+const firstDow = (new Date(2026, 8, 1).getDay() + 6) % 7;
+if (firstDow !== 1) { console.error('FAIL: expected 1 leading blank for Sep 2026, got ' + firstDow); process.exit(1); }
+console.log('OK: homepage Monday-start offset = 1 leading blank for Sep 2026');
+EOF
+```
+Expected: `OK: homepage Monday-start offset = 1 leading blank for Sep 2026`.
+(Note: this uses local-time `new Date(2026, 8, 1)`, matching the homepage script. Sep 1 2026 is a Tuesday in every timezone.)
+
+- [ ] **Step 5: Confirm the test suite is still green**
+
+Run: `npm test`
+Expected: `Tests 343 passed (343)`.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add landing/index.html
+git commit -m "$(cat <<'EOF'
+feat(landing): start homepage mini-calendar on Monday
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+EOF
+)"
+```
+
+---
+
+## Task 3: Final verification, deploy (user-gated), branch finish
+
+**Files:** none (verification + deployment only)
+
+- [ ] **Step 1: Full green + clean tree**
+
+Run: `npm test` → expect `Tests 343 passed (343)`.
+Run: `git status --short` → expect empty.
+Run: `git diff --stat main...HEAD -- landing/` → expect `holidays.html` and `index.html` changed (holidays.js NOT changed).
+
+- [ ] **Step 2: Deploy — ONLY after the user confirms**
+
+Deployment is outward-facing; do not run without explicit user go-ahead. When confirmed:
+
+```bash
+npx wrangler pages deploy landing --project-name=baltoratora-landing
+```
+
+(If wrangler is not authenticated, ask the user to run `! npx wrangler login` in the session first.)
+
+Then verify production:
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://www.baltoratora.my/holidays
+curl -s https://www.baltoratora.my/holidays | grep -c 'month-nav'
+```
+Expected: `200`, then `1`. And ask the user to eyeball `www.baltoratora.my/holidays` (year dropdown, month buttons, HQ/Branch shading, today ring) on desktop + mobile.
+
+- [ ] **Step 3: Finish the branch**
+
+Use the superpowers:finishing-a-development-branch skill (PR or local merge, per the user's choice).
+
+---
+
+## Self-Review
+
+**Spec coverage:**
+- Single-month day grid, Monday-start, default current month, highlight today — Task 1 (`buildCalendar`, `lead`, `todayD`). ✓
+- Year dropdown — Task 1 (`year-select` + options + change handler). ✓
+- Month selector 2×6 clickable — Task 1 (`buildMonthNav`, `.month-nav` grid `repeat(6,1fr)` × 12 buttons). ✓
+- HQ/Branch toggle shading rest days — Task 1 (`REST`, `COL_UTCDAY`, `colRest`, `.dow.rest`/`.cal-cell.rest`). ✓
+- Holidays-this-month list + rest-day flag — Task 1 (`buildList`, `isRestDay`). ✓
+- Region legend + provisional footnote kept — Task 1 (`buildLegend`, footnote markup). ✓
+- Homepage mini-calendar Monday-start — Task 2. ✓
+- `holidays.js` unchanged; static; deploy unchanged — Tasks 1-3. ✓
+
+**Placeholder scan:** none — every code step has full content; harness is complete. ✓
+
+**Type/name consistency:** `state {year:string, month:number, location:'HQ'|'BRANCH'}` used consistently across `render`, `buildCalendar`, `buildList`, handlers, and `__setState`. `REGIONS` codes `FED/SGR/KUL/PJY` consistent between `buildLegend`, `buildCalendar`, `buildList`. `REST`/`COL_UTCDAY`/`isRestDay` consistent. Harness assertions match rendered class names (`month-btn`, `loc-btn`, `dow rest`, `cal-cell`, `cal-dot`, `today`, `mh-rest` text). ✓

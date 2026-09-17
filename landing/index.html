@@ -353,14 +353,14 @@
         document.getElementById("cal-head").textContent = monthName + " " + y;
 
         const grid = document.getElementById("cal-grid");
-        const dows = ["S", "M", "T", "W", "T", "F", "S"];
+        const dows = ["M", "T", "W", "T", "F", "S", "S"];
         dows.forEach((d) => {
           const el = document.createElement("div");
           el.className = "cal-dow";
           el.textContent = d;
           grid.appendChild(el);
         });
-        const firstDow = new Date(y, m, 1).getDay();
+        const firstDow = (new Date(y, m, 1).getDay() + 6) % 7;
         const daysInMonth = new Date(y, m + 1, 0).getDate();
         for (let i = 0; i < firstDow; i++) {
           const e = document.createElement("div");
