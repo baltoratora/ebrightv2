@@ -32,3 +32,18 @@ export function normalize(s: string): string {
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
 }
+
+const GREEN_PCT = 0.05;
+const YELLOW_PCT = 0.15;
+
+/** Canonical items sorted A–Z by displayed name (deterministic). */
+export function sortedItems(cat: Category): string[] {
+  return [...cat.items].sort((a, b) => a.localeCompare(b, "en"));
+}
+
+/** Colour bucket from index-distance and list size N (hit is handled upstream). */
+export function bucket(distance: number, n: number): Bucket {
+  if (distance <= Math.ceil(GREEN_PCT * n)) return "green";
+  if (distance <= Math.ceil(YELLOW_PCT * n)) return "yellow";
+  return "red";
+}
