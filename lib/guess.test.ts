@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalize, sortedItems, bucket, resolveGuess, suggest } from "./guess";
+import { normalize, sortedItems, bucket, resolveGuess, suggest, pickAnswer } from "./guess";
 import type { Category } from "./guess";
 
 describe("normalize", () => {
@@ -88,5 +88,32 @@ describe("suggest", () => {
   });
   it("returns [] for empty query", () => {
     expect(suggest("", GEO)).toEqual([]);
+  });
+});
+
+const ITEMS = ["Alpha", "Bravo", "Charlie", "Delta", "Echo"];
+
+describe("pickAnswer", () => {
+  it("returns a member of the list", () => {
+    expect(ITEMS).toContain(pickAnswer(ITEMS));
+  });
+  it("is deterministic for a given seed", () => {
+    const a = pickAnswer(ITEMS, { seed: 123 });
+    const b = pickAnswer(ITEMS, { seed: 123 });
+    expect(a).toBe(b);
+    expect(ITEMS).toContain(a);
+  });
+  it("different seeds can differ but always return members", () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      expect(ITEMS).toContain(pickAnswer(ITEMS, { seed }));
+    }
+  });
+  it("never returns the excluded item", () => {
+    for (const seed of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]) {
+      expect(pickAnswer(ITEMS, { seed, exclude: "Charlie" })).not.toBe("Charlie");
+    }
+  });
+  it("handles a single-item list even when it is excluded", () => {
+    expect(pickAnswer(["Only"], { exclude: "Only" })).toBe("Only");
   });
 });

@@ -72,3 +72,31 @@ export function suggest(raw: string, cat: Category, limit = 8): string[] {
   }
   return [...prefix, ...substr].slice(0, limit);
 }
+
+/** Deterministic 32-bit hash of an integer seed (for seeded answer selection). */
+function hashSeed(seed: number): number {
+  let h = seed | 0;
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+  h = h ^ (h >>> 16);
+  return Math.abs(h);
+}
+
+/**
+ * Pick one answer. Unlimited mode passes no seed (uses Math.random) and may pass
+ * `exclude` to avoid an immediate repeat. Daily (future) passes a date-derived seed.
+ * Pure given its arguments (for a fixed seed).
+ */
+export function pickAnswer(
+  items: string[],
+  opts: { seed?: number; exclude?: string } = {}
+): string {
+  const { seed, exclude } = opts;
+  const pool = exclude ? items.filter((i) => i !== exclude) : items;
+  if (pool.length === 0) return items[0]; // only item was excluded
+  const idx =
+    seed === undefined
+      ? Math.floor(Math.random() * pool.length)
+      : hashSeed(seed) % pool.length;
+  return pool[idx];
+}
