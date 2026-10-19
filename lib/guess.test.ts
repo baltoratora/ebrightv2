@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalize, sortedItems, bucket, resolveGuess, suggest, pickAnswer } from "./guess";
+import { normalize, sortedItems, bucket, resolveGuess, suggest, pickAnswer, evaluateGuess } from "./guess";
 import type { Category } from "./guess";
 
 describe("normalize", () => {
@@ -115,5 +115,29 @@ describe("pickAnswer", () => {
   });
   it("handles a single-item list even when it is excluded", () => {
     expect(pickAnswer(["Only"], { exclude: "Only" })).toBe("Only");
+  });
+});
+
+describe("evaluateGuess", () => {
+  const sorted = ["Ant", "Bear", "Cat", "Dog", "Eel"]; // indices 0..4
+
+  it("reports a hit at distance 0", () => {
+    expect(evaluateGuess("Cat", "Cat", sorted)).toEqual({
+      item: "Cat", distance: 0, dir: "hit", bucket: "green",
+    });
+  });
+  it("answer later in list -> down (▼)", () => {
+    const r = evaluateGuess("Ant", "Dog", sorted); // ai=3 > gi=0
+    expect(r.distance).toBe(3);
+    expect(r.dir).toBe("down");
+  });
+  it("answer earlier in list -> up (▲)", () => {
+    const r = evaluateGuess("Eel", "Bear", sorted); // ai=1 < gi=4
+    expect(r.distance).toBe(3);
+    expect(r.dir).toBe("up");
+  });
+  it("sets the colour bucket from distance and list size", () => {
+    // N=5: green<=ceil(.05*5)=1, yellow<=ceil(.15*5)=1 -> distance 3 is red
+    expect(evaluateGuess("Ant", "Dog", sorted).bucket).toBe("red");
   });
 });

@@ -100,3 +100,16 @@ export function pickAnswer(
       : hashSeed(seed) % pool.length;
   return pool[idx];
 }
+
+/** Evaluate one guess against the answer within the sorted list. */
+export function evaluateGuess(
+  guessItem: string,
+  answer: string,
+  sorted: string[]
+): GuessRow {
+  const gi = sorted.indexOf(guessItem);
+  const ai = sorted.indexOf(answer);
+  const distance = Math.abs(ai - gi);
+  const dir: Direction = ai === gi ? "hit" : ai > gi ? "down" : "up";
+  return { item: guessItem, distance, dir, bucket: bucket(distance, sorted.length) };
+}
