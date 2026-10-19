@@ -60,11 +60,9 @@ const COUNTRY_ALIASES: Record<string, string> = {
   "us": "United States",
   "united states of america": "United States",
   "america": "United States",
-  "washington dc": "United States",
   "uk": "United Kingdom",
   "britain": "United Kingdom",
   "great britain": "United Kingdom",
-  "england": "United Kingdom",
   "uae": "United Arab Emirates",
   "turkiye": "Turkey",
   "czech republic": "Czechia",
@@ -184,6 +182,8 @@ const CAPITAL_OF: Record<string, string> = {
   "Hungary": "Budapest",
   "Iceland": "Reykjavik",
   "India": "New Delhi",
+  // Indonesia's capital relocation to Nusantara (IKN) was legislated in 2022
+  // but is not yet effective; Jakarta remains the commonly-taught answer.
   "Indonesia": "Jakarta",
   "Iran": "Tehran",
   "Iraq": "Baghdad",
@@ -271,7 +271,7 @@ const CAPITAL_OF: Record<string, string> = {
   "South Korea": "Seoul",
   "South Sudan": "Juba",
   "Spain": "Madrid",
-  "Sri Lanka": "Colombo",
+  "Sri Lanka": "Sri Jayawardenepura Kotte",
   "Sudan": "Khartoum",
   "Suriname": "Paramaribo",
   "Sweden": "Stockholm",
@@ -311,16 +311,21 @@ const CAPITAL_ALIASES: Record<string, string> = {
   "cape town": "Pretoria",
   "bloemfontein": "Pretoria",
   "the hague": "Amsterdam",
-  "sri jayawardenepura kotte": "Colombo",
-  "kotte": "Colombo",
+  "colombo": "Sri Jayawardenepura Kotte",
+  "kotte": "Sri Jayawardenepura Kotte",
   "putrajaya": "Kuala Lumpur",
   "yangon": "Naypyidaw",
   "rangoon": "Naypyidaw",
+  "nay pyi taw": "Naypyidaw",
   "nur sultan": "Astana",
   "kiev": "Kyiv",
   "abidjan": "Yamoussoukro",
   "dar es salaam": "Dodoma",
   "bujumbura": "Gitega",
+  "cotonou": "Porto-Novo",
+  "lobamba": "Mbabane",
+  "nusantara": "Jakarta",
+  "luxembourg": "Luxembourg City",
   "washington dc": "Washington",
   "washington d c": "Washington",
 };
@@ -371,9 +376,8 @@ const ANIMAL_ITEMS: string[] = [
 ];
 
 /*
- * FRUITS & VEG — common fruits and vegetables (plus common herbs/legumes to
- * reach a generous list). Botanical edge cases listed ONCE (Tomato appears
- * once; no fruit/veg split). ~151 entries.
+ * FRUITS & VEG — common fruits and vegetables. Botanical edge cases listed
+ * ONCE (Tomato appears once; no fruit/veg split). No herbs.
  */
 const FRUITVEG_ITEMS: string[] = [
   "Apple", "Apricot", "Avocado", "Banana", "Blackberry",
@@ -403,17 +407,14 @@ const FRUITVEG_ITEMS: string[] = [
   "Rutabaga", "Scallion", "Shallot", "Snap Pea", "Snow Pea",
   "Sorrel", "Soybean", "Spinach", "Squash", "Sweet Potato",
   "Taro", "Turnip", "Water Chestnut", "Watercress", "Yam",
-  "Zucchini", "Butternut Squash", "Acorn Squash", "Spaghetti Squash", "Jalapeno",
-  "Basil", "Chive", "Cilantro", "Dill", "Lemongrass",
-  "Marjoram", "Mint", "Oregano", "Parsley", "Rosemary",
-  "Sage", "Tarragon", "Thyme",
+  "Zucchini",
 ];
 
 /*
- * SPORTS — common, kid-friendly. No weapon-type sports (archery, fencing,
- * shooting, biathlon, modern pentathlon, javelin, paintball all excluded).
- * Contact sports with no weapon (boxing, judo, karate, taekwondo, wrestling)
- * are included. ~154 entries.
+ * SPORTS — common, kid-friendly. Rule: exclude sports built around firearms or
+ * hunting (Shooting, Biathlon, Modern Pentathlon, Paintball, Laser Tag,
+ * Spearfishing are excluded). Archery, Fencing and Javelin are included.
+ * Contact sports (boxing, judo, karate, taekwondo, wrestling) are included.
  */
 const SPORT_ITEMS: string[] = [
   "Air Hockey", "Artistic Swimming", "Athletics", "Australian Football", "Badminton",
@@ -446,7 +447,7 @@ const SPORT_ITEMS: string[] = [
   "Tobogganing", "Trampolining", "Triathlon", "Tug of War", "Ultimate Frisbee",
   "Volleyball", "Wakeboarding", "Walking", "Water Polo", "Water Skiing",
   "Weightlifting", "Wheelchair Basketball", "Windsurfing", "Wrestling", "Yoga",
-  "Zumba",
+  "Zumba", "Archery", "Fencing", "Javelin",
 ];
 
 export const CATEGORIES: Category[] = [

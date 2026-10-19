@@ -34,10 +34,21 @@ describe("category data integrity", () => {
     expect(byId.countries.items.length).toBe(195);
   });
 
-  it("Animals, Fruits & Veg, Sports each have >= 150 items", () => {
+  it("categories meet their minimum sizes (animals>=150, fruitveg>=130, sports>=150)", () => {
     expect(byId.animals.items.length).toBeGreaterThanOrEqual(150);
-    expect(byId.fruitveg.items.length).toBeGreaterThanOrEqual(150);
+    expect(byId.fruitveg.items.length).toBeGreaterThanOrEqual(130);
     expect(byId.sports.items.length).toBeGreaterThanOrEqual(150);
+  });
+
+  it("every alias target exists in its own category (no cross-category leakage)", () => {
+    for (const cat of CATEGORIES) {
+      for (const [key, val] of Object.entries(cat.aliases ?? {})) {
+        expect(
+          cat.items,
+          `alias "${key}" in ${cat.label} targets "${val}", which is not an item in ${cat.label}`
+        ).toContain(val);
+      }
+    }
   });
 
   describe("Capitals (derived from CAPITAL_OF)", () => {
