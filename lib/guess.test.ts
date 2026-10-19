@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { normalize, sortedItems, bucket } from "./guess";
+import { normalize, sortedItems, bucket, resolveGuess, suggest } from "./guess";
 import type { Category } from "./guess";
 
 describe("normalize", () => {
@@ -53,5 +53,40 @@ describe("bucket", () => {
     expect(bucket(9, 150)).toBe("yellow");
     expect(bucket(23, 150)).toBe("yellow");
     expect(bucket(24, 150)).toBe("red");
+  });
+});
+
+const GEO: Category = {
+  id: "geo", label: "Geo", emoji: "x", note: "",
+  items: ["United States", "United Kingdom", "Ivory Coast", "India", "Indonesia"],
+  aliases: { "usa": "United States", "uk": "United Kingdom", "cote d ivoire": "Ivory Coast" },
+};
+
+describe("resolveGuess", () => {
+  it("resolves exact canonical case-insensitively", () => {
+    expect(resolveGuess("india", GEO)).toBe("India");
+  });
+  it("resolves via alias", () => {
+    expect(resolveGuess("USA", GEO)).toBe("United States");
+    expect(resolveGuess("Côte d'Ivoire", GEO)).toBe("Ivory Coast");
+  });
+  it("returns null for unknown input", () => {
+    expect(resolveGuess("Narnia", GEO)).toBeNull();
+    expect(resolveGuess("", GEO)).toBeNull();
+  });
+});
+
+describe("suggest", () => {
+  it("ranks prefix matches before substring matches, each group sorted", () => {
+    expect(suggest("in", GEO)).toEqual(["India", "Indonesia"]);
+  });
+  it("puts prefix before substring", () => {
+    expect(suggest("ited", GEO)).toEqual(["United Kingdom", "United States"]);
+  });
+  it("respects the limit", () => {
+    expect(suggest("united", GEO, 1)).toEqual(["United Kingdom"]);
+  });
+  it("returns [] for empty query", () => {
+    expect(suggest("", GEO)).toEqual([]);
   });
 });
