@@ -25,5 +25,6 @@ export const GAMES: GameEntry[] = [
   { name: "Frogger", desc: "cross the road & river", icon: "🐸", href: "/frogger", group: "Arcade" },
   { name: "Pac-Man", desc: "eat the dots, dodge the ghosts", icon: "👻", href: "/pacman", group: "Arcade" },
   { name: "Tower Defense", desc: "build towers, survive the waves", icon: "🏰", href: "/tower-defense", group: "Strategy" },
+  { name: "Rail Patrol", desc: "Aim, reload and protect the helpers", icon: "🎯", href: "/rail-patrol", group: "Arcade" },
   { name: "Guess", desc: "Narrow it down A–Z", icon: "🔤", href: "/guess", group: "Words" },
 ];

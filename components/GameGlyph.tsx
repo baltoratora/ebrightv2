@@ -23,6 +23,7 @@ const PATHS: Record<string, string[]> = {
   frogger: ["M6 7l-3-4 M18 7l3-4 M4 15l-2 5 M20 15l2 5 M5 10q7-7 14 0v6q-7 5-14 0z M8 11h.01 M16 11h.01"],
   pacman: ["M20 6a10 10 0 1 0 0 12l-8-6z M10 6h.01 M20 12h.01"],
   'tower-defense': ["M5 21V9L3 7V3h4v3h3V3h4v3h3V3h4v4l-2 2v12 M5 10h14 M10 21v-5h4v5"],
+  "rail-patrol": ["M20 12a8 8 0 1 1-16 0 8 8 0 0 1 16 0 M12 1v5 M12 18v5 M1 12h5 M18 12h5 M14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0"],
   evolve: ["M3 12c5-10 15-9 18 0-3 9-13 10-18 0z M3 12H1 M12 4l-1 5 M16 11h.01 M8 17l3-3"],
 };
 export function GameGlyph({ href }: { href: string }) {
