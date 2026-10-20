@@ -107,21 +107,21 @@ export function tick(state: SimState, rng: Rng, params: DifficultyParams): SimSt
   // 5. growth / mortality
   const regions = { ...s.regions };
   const K: Record<string, number> = {};
+  const fMap: Record<string, number> = {};
   for (const id of ALL_REGIONS) {
-    const rs = regionState(id, period);
     const k = capacityK(id, period, s.eventModifiers[id], params);
     K[id] = k;
     const f = fitness(id, { period, traits: s.traits, niche: s.niche, penalties: s.activePenalties });
+    fMap[id] = f;
     const r = stepPopulation({ P: regions[id].P, f, K: k, dt: params.SIM_DT, params });
     regions[id] = { ...regions[id], P: r.Pnext };
-    void rs;
   }
   s = { ...s, regions };
 
-  // 6. migration
+  // 6. migration — favour suitable habitat (attract = fitness)
   const P: Record<string, number> = {};
   for (const id of ALL_REGIONS) P[id] = s.regions[id].P;
-  const delta = migrate({ P, K, edges: directedEdges(period, s.traits), focus: s.spreadFocus }, params);
+  const delta = migrate({ P, K, edges: directedEdges(period, s.traits), focus: s.spreadFocus, attract: fMap }, params);
   const migrated = { ...s.regions };
   for (const id of ALL_REGIONS) migrated[id] = { ...migrated[id], P: Math.max(0, migrated[id].P + (delta[id] ?? 0)) };
   s = { ...s, regions: migrated };

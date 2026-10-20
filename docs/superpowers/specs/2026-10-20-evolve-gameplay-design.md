@@ -13,6 +13,7 @@
   3. **Growth** — **no instant clamp** to a reduced `K`; overcrowding **decays over time**; disaster losses are a **separate, explicit, explained** one-time term (§4.3, §7.1).
   4. **Science qualified** — not "all deep water warm+anoxic" blanket; qualify by **time/place/evidence** (§1.1). Ordovician = predation **intensifies** (not "predators first appeared"), flagged as partly a balancing device (§2, §13). Terrestriality distinguishes **sustained terrestrial activity** from **reproductive independence**; deferral is a **scope** choice, not an overstated biological gate (§1.3).
 - **Rev 3.1** — migration semantics clarified at plan hand-off: per-step source budget = `migrationRate · SIM_DT · P0`; **absolute** edge conductance (open 1.0 / soft 0.2 / hard 0) applied to **actual flow**, so soft/hard penalties reduce throughput, not just relative destination weight (§4.5, §14).
+- **Rev 3.2** — M3 headless validation + tuning: §14 numbers marked **headless scenario validated** with results table (§14.1) and recorded tuning deltas (per-region extinction floor `0.5→0.01` logic fix; fitness-weighted migration; stronger Late Devonian pulses). Migration destination weight now `headroom × fitness`.
 
 ---
 
@@ -412,20 +413,25 @@ No new npm deps. Gates: `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run
 
 ---
 
-## 14. Provisional Normal-difficulty numbers (concrete starting point; `TODO(balance)`)
-Abstract "population units" (pu). **These demonstrate a complete run and will move during playtest.** All live in `difficulty.ts` so Relaxed/Hard become data-only later (§8.6).
+## 14. Normal-difficulty numbers — **headless scenario validated (2026-10-20)**
+Abstract "population units" (pu). These are now **validated by the headless scenario suite** (`lib/evolution/sim/scenarios.test.ts`) — reference wins both modes across 5 seeds, unprepared play goes extinct in both modes, and the recovery window behaves correctly. They are a validated **starting point for playtest**, not final/"fun" balance. All live in `difficulty.ts` so Relaxed/Hard become data-only later (§8.6).
+
+> **Tuning deltas from the Rev 3 provisional set (recorded per correction 5):**
+> - **Logic fix (not a constant):** per-region `extinctionFloor` lowered `0.5 → 0.01` pu — at 0.5 it wiped nascent migration seeds (< the amount a migration step delivers), draining sources into nothing. Global floor unchanged (1 pu).
+> - **Logic improvement:** migration now weights destinations by **attractiveness = fitness** (not headroom alone), so migrants favour suitable habitat instead of dispersing evenly into unsuitable sinks (e.g. fin-less Open Ocean). This is what let reference reach the Cambrian/Ordovician occupancy targets in time.
+> - **Constants retuned:** Late Devonian pulses strengthened so an unprepared (no-hypoxia, no-refuge) lineage actually goes extinct while a hypoxia-prepared one with a deep/freshwater refuge survives — Kellwasser loss `0.25 → 0.30` (+Nursery) and penalty `0.3 → 0.5`; Hangenberg loss `0.4 → 0.6` (+Open Ocean) and penalty `0.4 → 0.6`.
 
 **Timestep & pacing:** `SIM_DT = 0.25 s` (sim). Speeds: 1× = 1 sim-s/real-s, 2×, 3×. **Era budgets (sim-min @1×):** Cambrian 5 · Ordovician 8 · Silurian 7 · Devonian 10 (**= 30 min**).
 
 **Region baseline capacity `K_base` (pu):** Nursery 100 · Reef 150 · Open Ocean 120 · Deep Anoxic 80 · Estuary 90 · River 70 · Tidal Flats 60. **Start:** 10 pu in Nursery.
 
-**Population rates (per sim-second):** `r_max = 0.05` · `m_base = 0.005` · `m_stress = 0.04` · `m_crowd = 0.03`. Net per-capita at low P ≈ `0.05f − 0.005 − 0.04(1−f)`; **break-even ≈ f = 0.5** (f<0.5 declines; f=1 → `P*≈0.9·K`; f=0.75 → `≈0.6·K`). Overcrowding (`P>K`) declines at ≈ `m_crowd·(P/K−1)` per second — gradual. `extinctionFloor = 0.5 pu/region`; global extinction if total < `1 pu`.
+**Population rates (per sim-second):** `r_max = 0.05` · `m_base = 0.005` · `m_stress = 0.04` · `m_crowd = 0.03`. Net per-capita at low P ≈ `0.05f − 0.005 − 0.04(1−f)`; **break-even ≈ f = 0.5** (f<0.5 declines; f=1 → `P*≈0.9·K`; f=0.75 → `≈0.6·K`). Overcrowding (`P>K`) declines at ≈ `m_crowd·(P/K−1)` per second — gradual. `extinctionFloor = 0.01 pu/region` (clears only negligible remnants; must stay below migration seed sizes); global extinction if total < `1 pu`.
 
 **Fitness:** `f ∈ [0,1]`; matched tolerance in a hostile region moves `f` from ~0.2 (unadapted) to ~0.8 (adapted).
 
 **Occupancy:** `establishHigh = 0.25·K_base`, `establishLow = 0.15·K_base` (e.g. Nursery occupied at **25 pu**, drops at **15 pu**).
 
-**Migration:** `migrationRate = 0.1 /s` → per-step source budget `= migrationRate · SIM_DT · P0`. **Absolute** edge conductance: open `1.0`, soft `0.2`, hard `0` (penalty applied to **actual flow**, §4.5). Combined inflow capped by destination headroom.
+**Migration:** `migrationRate = 0.1 /s` → per-step source budget `= migrationRate · SIM_DT · P0`. **Absolute** edge conductance: open `1.0`, soft `0.2`, hard `0` (penalty applied to **actual flow**, §4.5). Destination weight = `headroom × attractiveness(=fitness)` so migrants favour suitable habitat. Combined inflow capped by destination headroom.
 
 **Economy:** `k_pop = 0.2`, `k_div = 0.5` → `incomeRate = 0.2·sqrt(totalPop) + 0.5·occupiedCount (+ catchUp)` EP/s. One-off **event-survival grant = +15 EP**. `catchUp` floor = **+0.5 EP/s** when `occupiedCount ≤ 1`. Mutation **declineEP = +5**.
 
@@ -435,14 +441,28 @@ Abstract "population units" (pu). **These demonstrate a complete run and will mo
 
 **Dominate targets:** Cambrian 2 · Ordovician 2 · Silurian 3 · Devonian 4 (§8.5). **Recovery window = 90 s**, one per run.
 
-**Extinction shocks (eventFactor on K + explicit one-time disasterLoss):** Hirnantian — Nursery+Reef `×0.4` + **20%** one-time loss; surface cold penalty (`−0.3 f` without thermal tol); deep/offshore unaffected. Kellwasser — Reef `×0.3` + **25%** one-time loss; shallow anoxia (`−0.3 f` without hypoxia tol). Hangenberg — Reef `→ 0` + **40%** one-time loss; broad anoxia.
+**Extinction shocks (eventFactor on K + explicit one-time disasterLoss + ongoing fitness penalty mitigated by a trait):** Hirnantian — Nursery+Reef `×0.4` K + **20%** one-time loss; surface cold penalty (`−0.3 f` without thermal tol); deep/offshore unaffected. Kellwasser — Reef `×0.3` K + **30%** one-time loss (Reef+Nursery); shallow anoxia (`−0.5 f` without hypoxia tol). Hangenberg — Reef `→ 0` K + **60%** one-time loss (Reef+Nursery+Estuary+Open Ocean); broad anoxia (`−0.6 f` without hypoxia tol).
 
 **Reference run (sanity):** start Nursery → spread R1→R2 (open) in Cambrian (hit target 2, no traits) → buy armour + pick r/K in Ordovician, survive Hirnantian via depth/thermal (target 2) → paired fins/osmoregulation in Silurian, occupy 3 → lobed limbs/air-gulping/hypoxia in Devonian, spread off the reef before Hangenberg, occupy 4 non-reef regions, survive both pulses → Survival win / Dominate win. Demonstrates every system engages within 30 sim-min.
+
+### 14.1 Headless validation results (`scenarios.test.ts`)
+| Scenario | Policy (legal actions only) | Seeds | Outcome |
+|---|---|---|---|
+| Survival win | reference | 11, 23, 37, 101, 7 | **won**, reached Devonian |
+| Dominate win | reference | 11, 23, 37, 101, 7 | **won**, 0 missed targets, no recovery used |
+| Determinism | reference | 11 | identical outcome + step count on re-run |
+| Extinction (survival) | passive | 11, 23, 37 | **lost — extinction** |
+| Extinction (dominate) | neglect-survival | 11 | **lost — extinction** (Devonian pulses) |
+| Recovery success | recover-success | 11, 23, 37 | **won** via the one recovery window |
+| Recovery miss | under-expand | 11, 23, 37 | **lost — missed target** at the recovery deadline |
+| Later miss (lifeline spent) | later-miss | 11 | **lost — missed target** in the Devonian, ≥2 misses |
+
+**Margins / trade-offs observed:** reference clears Cambrian/Ordovician targets comfortably once migration favours suitable habitat; the win depends on buying thermal (Hirnantian) and hypoxia (Devonian pulses) plus a deep-water or freshwater refuge — omitting tolerances is fatal in the Devonian, confirming "preparation matters". Policy/seed coverage: 5 seeds for reference (both modes), 3 seeds for passive/under-expand/recover-success; single seed for neglect/later-miss (deterministic, representative). **Not** a claim of fun or final balance.
 
 ---
 
 ## 15. Open items for later balancing
-- All §14 constants (`TODO(balance)`, playtest).
+- §14 constants are headless-validated but not play-validated — real playtest may still shift them (pacing feel, difficulty curve).
 - **Relaxed/Hard** difficulty presets — deferred until Normal is playtested (§8.6).
 - D1 **leaderboard** wiring — deferred (recommend post-balance).
 - Optional user **raster era backgrounds** — deferred (art slot exists).

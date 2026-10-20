@@ -12,17 +12,18 @@ function withReef(P: number) {
 
 describe("applyShock", () => {
   it("applies a one-time disasterLoss and is idempotent per shock id", () => {
+    const loss = NORMAL.shocks.hangenberg.loss.fraction;
     const r1 = applyShock(withReef(100), "hangenberg", NORMAL);
-    expect(r1.regions.reef.P).toBeCloseTo(100 * (1 - 0.4));
+    expect(r1.regions.reef.P).toBeCloseTo(100 * (1 - loss));
     expect(r1.schedule.firedShocks).toContain("hangenberg");
     const r2 = applyShock(r1, "hangenberg", NORMAL);
     expect(r2.regions.reef.P).toBeCloseTo(r1.regions.reef.P);
   });
   it("reduces capacity via eventModifiers and records a report", () => {
     const r = applyShock(withReef(80), "kellwasser", NORMAL);
-    expect(r.eventModifiers.reef).toBe(0.3);
+    expect(r.eventModifiers.reef).toBe(NORMAL.shocks.kellwasser.capacity.factor);
     expect(r.lastShockReport?.id).toBe("kellwasser");
-    expect(r.lastShockReport?.lostFraction).toBeCloseTo(0.25);
+    expect(r.lastShockReport?.lostFraction).toBeCloseTo(NORMAL.shocks.kellwasser.loss.fraction);
   });
   it("adds an ongoing fitness penalty mitigated by a trait", () => {
     const r = applyShock(withReef(80), "hirnantian", NORMAL);

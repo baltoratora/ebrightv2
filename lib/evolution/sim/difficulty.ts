@@ -75,13 +75,13 @@ export const NORMAL: DifficultyParams = {
     },
     kellwasser: {
       capacity: { regions: ["reef"], factor: 0.3 },
-      loss: { regions: ["reef"], fraction: 0.25 },
-      penalty: { regions: ["nursery", "reef", "estuary", "tidalFlats", "openOcean"], amount: 0.3, mitigatedBy: "hypoxia" },
+      loss: { regions: ["reef", "nursery"], fraction: 0.3 },
+      penalty: { regions: ["nursery", "reef", "estuary", "tidalFlats", "openOcean"], amount: 0.5, mitigatedBy: "hypoxia" },
     },
     hangenberg: {
       capacity: { regions: ["reef"], factor: 0.0 },
-      loss: { regions: ["reef", "nursery", "estuary"], fraction: 0.4 },
-      penalty: { regions: ["nursery", "reef", "estuary", "tidalFlats", "openOcean"], amount: 0.4, mitigatedBy: "hypoxia" },
+      loss: { regions: ["reef", "nursery", "estuary", "openOcean"], fraction: 0.6 },
+      penalty: { regions: ["nursery", "reef", "estuary", "tidalFlats", "openOcean"], amount: 0.6, mitigatedBy: "hypoxia" },
     },
   },
 };

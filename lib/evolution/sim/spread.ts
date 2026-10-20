@@ -10,11 +10,15 @@ export interface MigrateWorld {
   K: Record<string, number>;
   edges: { from: string; to: string; gate: EdgeGate }[];
   focus?: string | null; // optional spread focus: extra weight to this destination
+  // optional per-destination attractiveness (e.g. fitness) so migrants favour
+  // suitable habitat rather than dispersing evenly into unsuitable sinks.
+  attract?: Record<string, number>;
 }
 
 export function migrate(w: MigrateWorld, params: DifficultyParams): Record<string, number> {
   const P0 = { ...w.P };
   const headroom = (id: string) => Math.max(0, (w.K[id] ?? 0) - (P0[id] ?? 0));
+  const attract = (id: string) => (w.attract ? Math.max(0, w.attract[id] ?? 0) : 1);
   const cond = (g: EdgeGate) => params.conductance[g];
 
   // group edges by source
@@ -31,7 +35,7 @@ export function migrate(w: MigrateWorld, params: DifficultyParams): Record<strin
     // split by destination headroom (focus doubles its weight)
     let totalWeight = 0;
     const weights = outs.map((e) => {
-      const w2 = headroom(e.to) * (w.focus && e.to === w.focus ? 2 : 1);
+      const w2 = headroom(e.to) * attract(e.to) * (w.focus && e.to === w.focus ? 2 : 1);
       totalWeight += w2;
       return w2;
     });
