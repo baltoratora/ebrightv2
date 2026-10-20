@@ -12,6 +12,7 @@ type Game = {
 };
 
 const GAMES: Game[] = [
+  { name: "Evolve", desc: "Guide a lineage across a changing Earth", icon: "🐟", href: "/evolve", ready: true },
   { name: "Sudoku", desc: "Fill the grid 1–9", icon: "🔢", href: "/sudoku", ready: true },
   { name: "Minesweeper", desc: "Clear the field", icon: "💣", href: "/minesweeper", ready: true },
   { name: "Wordle", desc: "Guess the word in 6", icon: "🟩", href: "/wordle", ready: true },

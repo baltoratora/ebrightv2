@@ -3179,3 +3179,139 @@ a.game-card:hover {
   .evo-compare { grid-template-columns: repeat(2, 1fr); }
   .evo-hud { gap: 10px; font-size: 0.78rem; }
 }
+
+/* ===================== Evolve gameplay (/evolve) ===================== */
+.evo-app {
+  min-height: 100vh; min-height: 100dvh; position: relative; z-index: 1;
+  background: linear-gradient(180deg, #0c2227 0%, #0a1a1e 100%);
+  color: var(--evo-parchment); font-family: var(--font-jakarta), system-ui, sans-serif;
+  padding: clamp(10px, 2.4vw, 22px); display: flex; flex-direction: column; gap: 14px;
+}
+.evo-muted { color: #9bb4b2; }
+
+/* buttons */
+.evo-btn { background: rgba(255,255,255,0.06); color: var(--evo-parchment); border: 1px solid rgba(255,255,255,0.16);
+  padding: 9px 16px; border-radius: 10px; cursor: pointer; font: inherit; font-size: 0.9rem; }
+.evo-btn:hover { background: rgba(255,255,255,0.12); }
+.evo-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.evo-btn--primary { background: var(--evo-accent); color: #0b0f14; border-color: var(--evo-accent); font-weight: 600; }
+.evo-btn--primary:hover { filter: brightness(1.06); }
+.evo-btn--sm { padding: 6px 11px; font-size: 0.82rem; border-radius: 8px; }
+.evo-btn.is-active { background: var(--evo-accent-2, #3f8f86); color: #061012; border-color: var(--evo-accent-2, #3f8f86); font-weight: 600; }
+.evo-btn:focus-visible, .evo-choice:focus-visible, .evo-node:focus-visible,
+.evo-dock__header:focus-visible, .evo-science__summary:focus-visible, input:focus-visible {
+  outline: 2px solid var(--evo-focus, #e8a24a); outline-offset: 2px;
+}
+
+/* start screen */
+.evo-start { flex: 1; display: grid; place-items: center; }
+.evo-start__card { background: rgba(10,22,26,0.78); border: 1px solid rgba(255,255,255,0.1); border-radius: 18px;
+  padding: clamp(18px, 4vw, 32px); max-width: 560px; width: 100%; display: flex; flex-direction: column; gap: 14px; }
+.evo-start__title { font-size: clamp(2rem, 6vw, 3rem); margin: 0; }
+.evo-start__tag { margin: 0; color: #bcd2d0; }
+.evo-start__modes { border: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.evo-start__modes legend { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.08em; color: #9bb4b2; margin-bottom: 4px; }
+.evo-start__modes label { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px; cursor: pointer; font-size: 0.9rem; }
+.evo-start__modes label.is-active { border-color: var(--evo-accent); background: rgba(232,162,74,0.08); }
+.evo-start__diff { font-size: 0.9rem; }
+.evo-start__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* HUD bar */
+.evo-bar { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: rgba(10,22,26,0.82);
+  border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 10px 14px; backdrop-filter: blur(6px); }
+.evo-bar__era { display: flex; flex-direction: column; line-height: 1.15; }
+.evo-bar__period { font-weight: 600; font-size: 0.95rem; }
+.evo-bar__mode { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--evo-accent); }
+.evo-bar__stats { display: flex; gap: 16px; margin: 0; }
+.evo-bar__stats div { display: flex; flex-direction: column; }
+.evo-bar__stats dt { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: #9bb4b2; }
+.evo-bar__stats dd { margin: 0; font-family: var(--font-mono), monospace; font-weight: 600; font-size: 1rem; }
+.evo-bar__objective { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 10px;
+  background: rgba(63,143,134,0.16); font-size: 0.85rem; }
+.evo-bar__objective.is-behind { background: rgba(232,120,74,0.2); }
+.evo-bar__objlabel { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: #9bb4b2; }
+.evo-bar__objval { font-weight: 600; }
+.evo-bar__timer { font-family: var(--font-mono), monospace; }
+.evo-bar__warn { color: #ffd9c4; font-size: 0.78rem; }
+.evo-bar__controls { display: flex; gap: 6px; margin-left: auto; }
+
+/* run layout — map + living world central, panels secondary */
+.evo-run { display: flex; flex-direction: column; gap: 14px; flex: 1; }
+.evo-run__main { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+.evo-run__world { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.evo-run__lineage .evo-scene { aspect-ratio: 20 / 7; }
+.evo-run__creature { width: 42%; max-width: 420px; height: auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.25)); }
+.evo-run__panels { display: flex; flex-direction: column; gap: 12px; position: sticky; top: 10px; }
+
+/* paleo map (hero) */
+.evo-paleo { margin: 0; }
+.evo-paleo__svg { width: 100%; height: auto; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); display: block; max-height: 56vh; }
+.evo-paleo__continent { font-size: 3px; fill: #0b0f14; opacity: 0.8; font-family: var(--font-jakarta), sans-serif; pointer-events: none; }
+.evo-paleo__note { margin-top: 6px; font-size: 0.75rem; color: #9bb4b2; font-style: italic; }
+.evo-node { cursor: pointer; }
+.evo-node__label { font-size: 2.8px; fill: var(--evo-parchment); font-family: var(--font-jakarta), sans-serif; pointer-events: none; }
+.evo-node.is-locked { cursor: default; }
+.evo-node.is-selected .evo-node__label { fill: var(--evo-accent); font-weight: 700; }
+
+/* collapsible panels */
+.evo-dock { background: rgba(10,22,26,0.72); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; overflow: hidden; }
+.evo-dock__header { width: 100%; display: flex; align-items: center; gap: 8px; background: none; border: none; color: var(--evo-parchment);
+  padding: 11px 14px; cursor: pointer; font: inherit; font-weight: 600; text-align: left; }
+.evo-dock__title { flex: 1; }
+.evo-dock__badge { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; color: #0b0f14; background: var(--evo-accent); padding: 2px 7px; border-radius: 999px; }
+.evo-dock__chevron { color: var(--evo-accent); }
+.evo-dock__body { padding: 2px 14px 14px; }
+
+/* inspector */
+.evo-inspector__empty, .evo-shop__empty { color: #9bb4b2; font-size: 0.86rem; margin: 4px 0; }
+.evo-inspector__name { margin: 2px 0 6px; font-size: 1rem; }
+.evo-inspector__status { margin: 0 0 6px; font-size: 0.82rem; font-weight: 600; }
+.evo-status--occupied { color: #8fe0b0; }
+.evo-status--colonizing { color: var(--evo-accent); }
+.evo-status--inaccessible { color: #9bb4b2; }
+.evo-inspector__detail { margin: 0 0 6px; font-size: 0.88rem; color: #cdddda; }
+.evo-inspector__limit { margin: 0 0 8px; font-size: 0.86rem; }
+
+/* trait shop */
+.evo-shop { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.evo-shop__row { border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 10px 12px; }
+.evo-shop__row.is-owned { opacity: 0.7; }
+.evo-shop__head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.evo-shop__name { font-weight: 600; font-size: 0.92rem; }
+.evo-shop__cost { font-family: var(--font-mono), monospace; font-size: 0.8rem; color: var(--evo-accent); }
+.evo-shop__trade { margin: 4px 0 8px; font-size: 0.8rem; color: #a9c2c0; }
+
+/* modals */
+.evo-modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px;
+  background: rgba(4,10,12,0.66); backdrop-filter: blur(3px); }
+.evo-modal__card { background: #0e2228; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px;
+  padding: clamp(16px, 3vw, 26px); max-width: 520px; width: 100%; display: flex; flex-direction: column; gap: 12px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.5); }
+.evo-modal__title { margin: 0; font-size: 1.3rem; }
+.evo-modal__loss { color: #ffd9c4; font-size: 0.9rem; margin: 0; }
+.evo-modal__hint { margin: 0; font-size: 0.78rem; color: #9bb4b2; }
+.evo-choices { display: flex; flex-direction: column; gap: 8px; }
+.evo-choice { display: flex; flex-direction: column; gap: 2px; text-align: left; background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.14); border-radius: 10px; padding: 11px 14px; cursor: pointer; color: var(--evo-parchment); font: inherit; }
+.evo-choice:hover { background: rgba(232,162,74,0.12); border-color: var(--evo-accent); }
+.evo-choice span { font-size: 0.82rem; color: #a9c2c0; }
+.evo-choice--decline { background: rgba(255,255,255,0.03); }
+.evo-debrief__advice { background: rgba(63,143,134,0.14); border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; }
+
+/* science notes */
+.evo-science { border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.03); }
+.evo-science__summary { cursor: pointer; padding: 7px 11px; font-size: 0.78rem; color: var(--evo-accent); list-style: none; }
+.evo-science__summary::-webkit-details-marker { display: none; }
+.evo-science__summary::before { content: "\25B8  "; }
+.evo-science[open] .evo-science__summary::before { content: "\25BE  "; }
+.evo-science__body { padding: 0 11px 10px; font-size: 0.8rem; color: #bcd2d0; line-height: 1.45; }
+
+@media (max-width: 720px) {
+  .evo-run__main { grid-template-columns: 1fr; }
+  .evo-run__panels { position: static; }
+  .evo-run__lineage .evo-scene { aspect-ratio: 16 / 7; }
+  .evo-run__creature { width: 56%; }
+  .evo-paleo__svg { max-height: none; }
+  .evo-bar__controls { margin-left: 0; }
+}
