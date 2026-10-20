@@ -24,13 +24,14 @@ function advice(cause: string): string {
   }
 }
 
-export function EndDebrief({ state, onAgain, onHome }: { state: SimState; onAgain: () => void; onHome: () => void }) {
+export function EndDebrief({ state, newBest, onAgain, onHome }: { state: SimState; newBest?: boolean; onAgain: () => void; onHome: () => void }) {
   const o = state.outcome;
   if (!o) return null;
   return (
     <div className="evo-modal" role="dialog" aria-modal="true" aria-label="Run complete">
       <div className="evo-modal__card evo-debrief">
         <h2 className="evo-modal__title">{o.status === "won" ? "🌱 " : "🜍 "}{CAUSE_TITLE[o.cause]}</h2>
+        {newBest ? <p className="evo-debrief__best">★ New best for {state.mode === "dominate" ? "Dominate" : "Survival"} mode</p> : null}
         <p>
           You reached the <strong>{periodLabel(o.finalPeriod)}</strong> with {occupiedCount(state)} region(s) occupied.
           {state.schedule.firedShocks.length > 0 ? ` You weathered: ${state.schedule.firedShocks.join(", ")}.` : ""}

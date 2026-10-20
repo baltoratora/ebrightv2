@@ -3302,6 +3302,12 @@ a.game-card:hover {
 .evo-choice span { font-size: 0.82rem; color: #a9c2c0; }
 .evo-choice--decline { background: rgba(255,255,255,0.03); }
 .evo-debrief__advice { background: rgba(63,143,134,0.14); border-radius: 10px; padding: 10px 12px; font-size: 0.9rem; }
+.evo-debrief__best { margin: 0; color: var(--evo-accent); font-weight: 600; }
+.evo-start__best { display: flex; flex-direction: column; gap: 4px; margin: 0; font-size: 0.85rem;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 12px; }
+.evo-start__best div { display: flex; justify-content: space-between; gap: 10px; }
+.evo-start__best dt { color: #9bb4b2; }
+.evo-start__best dd { margin: 0; text-align: right; }
 
 /* science notes */
 .evo-science { border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; background: rgba(255,255,255,0.03); }

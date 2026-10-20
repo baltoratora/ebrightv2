@@ -59,11 +59,14 @@ export function useEvolveGame(init: EvolveGameInit) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [rerender]);
 
-  // Test-only acceleration hook, gated behind ?test=1 — NOT a production control
-  // and NOT a user-facing UI. It only calls the real advance()/reads state, so
-  // simulation rules are preserved (headless browser tests drive legal UI clicks
-  // for all decisions and use this purely to fast-forward time).
+  // Test-only acceleration hook: DEVELOPMENT builds only, and additionally gated
+  // behind ?test=1. The `process.env.NODE_ENV` check is statically replaced at
+  // build time, so this entire block (and the `__evolve` symbol) is dead-code
+  // eliminated from production bundles — `?test=1` can never expose it in prod.
+  // It only calls the real advance()/reads state, so simulation rules are
+  // preserved (headless browser tests drive legal UI clicks for decisions).
   useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
     if (typeof window === "undefined") return;
     if (new URLSearchParams(window.location.search).get("test") !== "1") return;
     const w = window as unknown as { __evolve?: unknown };

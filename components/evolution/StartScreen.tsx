@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Mode } from "@/lib/evolution/sim/state";
+import { loadBest, describeBest, type BestMap } from "./bestResult";
 
 export function StartScreen({
   hasSave,
@@ -14,6 +15,11 @@ export function StartScreen({
 }) {
   const [mode, setMode] = useState<Mode>("survival");
   const [confirming, setConfirming] = useState(false);
+  const [best, setBest] = useState<BestMap>({});
+
+  useEffect(() => {
+    setBest(loadBest());
+  }, []);
 
   const start = () => {
     if (hasSave) setConfirming(true);
@@ -41,6 +47,17 @@ export function StartScreen({
         <div className="evo-start__diff">
           Difficulty: <strong>Normal</strong> <span className="evo-muted">(Relaxed / Hard coming soon)</span>
         </div>
+
+        {best.survival || best.dominate ? (
+          <dl className="evo-start__best">
+            {best.survival ? (
+              <div><dt>Best Survival</dt><dd>{describeBest(best.survival)}</dd></div>
+            ) : null}
+            {best.dominate ? (
+              <div><dt>Best Dominate</dt><dd>{describeBest(best.dominate)}</dd></div>
+            ) : null}
+          </dl>
+        ) : null}
 
         <details className="evo-science">
           <summary className="evo-science__summary">How to play</summary>

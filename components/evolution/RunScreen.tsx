@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useEvolveGame, type EvolveGameInit } from "./useEvolveGame";
 import type { RegionId } from "@/lib/evolution/sim/state";
+import { occupiedCount } from "@/lib/evolution/sim/state";
+import { recordResult } from "./bestResult";
 import type { TraitId } from "@/lib/evolution/traits/traits";
 import { Environment } from "./Environment";
 import { Creature } from "./Creature";
@@ -19,6 +21,24 @@ const ART_TRAITS: TraitId[] = ["armor", "jaws", "paired-fins", "lobed-limbs"];
 export function RunScreen({ init, onExit, onAgain }: { init: EvolveGameInit; onExit: () => void; onAgain: () => void }) {
   const { state, speed, dispatch, setSpeed } = useEvolveGame(init);
   const [selected, setSelected] = useState<RegionId | null>(null);
+  const [newBest, setNewBest] = useState(false);
+  const recordedRef = useRef(false);
+
+  // record the per-mode best result once, when the run reaches a terminal state
+  useEffect(() => {
+    if (state.status !== "running" && state.outcome && !recordedRef.current) {
+      recordedRef.current = true;
+      const { improved } = recordResult(state.mode, {
+        status: state.outcome.status,
+        cause: state.outcome.cause,
+        finalPeriod: state.outcome.finalPeriod,
+        occupied: occupiedCount(state),
+        missedTargets: state.outcome.missedTargets,
+        usedRecovery: state.outcome.usedRecoveryWindow,
+      });
+      setNewBest(improved);
+    }
+  }, [state]);
 
   const creatureTraits = state.traits.filter((t): t is TraitId => (ART_TRAITS as string[]).includes(t));
 
@@ -47,7 +67,7 @@ export function RunScreen({ init, onExit, onAgain }: { init: EvolveGameInit; onE
       </div>
 
       {state.status === "running" ? <DecisionModal state={state} dispatch={dispatch} /> : null}
-      {state.status !== "running" ? <EndDebrief state={state} onAgain={onAgain} onHome={onExit} /> : null}
+      {state.status !== "running" ? <EndDebrief state={state} newBest={newBest} onAgain={onAgain} onHome={onExit} /> : null}
     </div>
   );
 }
