@@ -3198,10 +3198,14 @@ a.game-card:hover {
 .evo-btn--primary:hover { filter: brightness(1.06); }
 .evo-btn--sm { padding: 6px 11px; font-size: 0.82rem; border-radius: 8px; }
 .evo-btn.is-active { background: var(--evo-accent-2, #3f8f86); color: #061012; border-color: var(--evo-accent-2, #3f8f86); font-weight: 600; }
-.evo-btn:focus-visible, .evo-choice:focus-visible, .evo-node:focus-visible,
+.evo-btn:focus-visible, .evo-choice:focus-visible,
 .evo-dock__header:focus-visible, .evo-science__summary:focus-visible, input:focus-visible {
   outline: 2px solid var(--evo-focus, #e8a24a); outline-offset: 2px;
 }
+/* tight focus ring on the map node itself, not its bounding group. Remove the
+   UA default box on any focus; add a keyboard-only ring on the node circle. */
+.evo-node:focus { outline: none; }
+.evo-node:focus-visible circle { stroke: var(--evo-focus, #e8a24a); stroke-width: 1.8; }
 
 /* start screen */
 .evo-start { flex: 1; display: grid; place-items: center; }

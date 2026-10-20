@@ -23,6 +23,7 @@ npm-debug.log*
 # local visual-capture tooling (not part of the project)
 /tmp-shots/
 /tmp-evoshots.mjs
+/tmp-evogame.mjs
 
 # env files (NEVER commit secrets)
 .env

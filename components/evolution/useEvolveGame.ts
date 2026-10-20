@@ -59,6 +59,26 @@ export function useEvolveGame(init: EvolveGameInit) {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, [rerender]);
 
+  // Test-only acceleration hook, gated behind ?test=1 — NOT a production control
+  // and NOT a user-facing UI. It only calls the real advance()/reads state, so
+  // simulation rules are preserved (headless browser tests drive legal UI clicks
+  // for all decisions and use this purely to fast-forward time).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("test") !== "1") return;
+    const w = window as unknown as { __evolve?: unknown };
+    w.__evolve = {
+      advance: (ms: number) => {
+        gameRef.current!.advance(ms);
+        rerender();
+      },
+      state: () => gameRef.current!.state,
+    };
+    return () => {
+      delete (window as unknown as { __evolve?: unknown }).__evolve;
+    };
+  }, [rerender]);
+
   const g = gameRef.current;
 
   // autosave at decision points (pause / pending / period / status changes)
