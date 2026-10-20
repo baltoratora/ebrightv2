@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "clean": "node -e \"const fs=require('fs');for(const d of ['.next','out'])fs.rmSync(d,{recursive:true,force:true});console.log('cleaned .next + out')\"",
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",

@@ -1,0 +1,133 @@
+/* Product-owned module: no changes to global game rules or other site routes. */
+.shell {
+  --evo-accent: #dfc58e !important;
+  --evo-accent-2: #a5c3a5 !important;
+  --evo-parchment: #edf1de !important;
+  --evo-focus: #f6dfaa !important;
+  background: #061e28;
+  padding: 22px clamp(14px, 3vw, 42px) 36px;
+  color: #e6eddf;
+  overflow-x: clip;
+  font-size: 13px;
+}
+.shell :global(.evo-run) { max-width: 1400px; width: 100%; margin: 0 auto; gap: 0; }
+.masthead { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 22px; }
+.brand { display: flex; align-items: center; gap: 12px; font-family: Georgia, serif; font-size: 25px; letter-spacing: 3px; }
+.brand > span { display: grid; place-items: center; width: 37px; height: 37px; border: 1px solid #c0d3b55c; color: #e3cb91; border-radius: 50%; font-size: 28px; }
+.brand small { display: block; font-family: var(--font-jakarta), sans-serif; font-size: 9px; letter-spacing: 1.7px; color: #a5bfb8; text-transform: uppercase; margin-top: 4px; }
+.shell :global(.evo-bar) { border: 1px solid #b9d0bd22; border-bottom: none; padding: 15px 21px; border-radius: 14px 14px 0 0; background: #0a2831; gap: 20px; box-shadow: none; }
+.shell :global(.evo-bar__period) { font-size: 11px; color: #d5dfcb; }
+.shell :global(.evo-bar__mode) { font-size: 9px; letter-spacing: 2px; margin-top: 3px; }
+.shell :global(.evo-bar__stats) { margin-left: auto; gap: 25px; }
+.shell :global(.evo-bar__stats dt) { font-size: 9px; letter-spacing: 1.2px; }
+.shell :global(.evo-bar__stats dd) { font-family: var(--font-jakarta), sans-serif; font-weight: 400; font-size: 20px; }
+.shell :global(.evo-bar__objective) { background: transparent; padding: 0; gap: 7px; flex-wrap: wrap; max-width: 190px; font-size: 10px; }
+.shell :global(.evo-bar__objlabel) { display: none; }
+.shell :global(.evo-bar__objval) { font-weight: 400; color: #b5c8bc; }
+.shell :global(.evo-bar__timer) { color: #e2d4ac; }
+.shell :global(.evo-bar__controls) { margin-left: 0; gap: 4px; }
+.shell :global(.evo-btn) { color: #e4ebdd; background: #d4dec608; border-color: #baceb52e; border-radius: 7px; padding: 9px 13px; }
+.shell :global(.evo-btn--sm) { font-size: 10px; padding: 7px 10px; }
+.shell :global(.evo-btn--primary) { color: #152d30; background: #e1c790; border-color: #e1c790; }
+.shell :global(.evo-btn.is-active) { background: #b4c6a5; color: #132c30; border-color: #b4c6a5; }
+.shell :global(.evo-btn:hover:not(:disabled)) { filter: brightness(1.12); }
+.liveRegion { position: relative; }
+.scene { position: relative; height: 500px; overflow: hidden; background: #124c55; border-radius: 0 0 14px 14px; border: 1px solid #bfd1b522; border-top: none; isolation: isolate; }
+.canvas { display: block; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.sceneShade { position: absolute; inset: 0; background: linear-gradient(180deg, #03232d39, transparent 37%, transparent 60%, #041c28ed); pointer-events: none; }
+.chapter { position: absolute; z-index: 1; left: 27px; top: 25px; max-width: 370px; pointer-events: none; }
+.eyebrow { color: #bdd3b8; text-transform: uppercase; letter-spacing: 2px; font-size: 9px; }
+.chapter h1 { font: 36px/1.15 Georgia, serif; letter-spacing: -.8px; color: #eef0d8; margin: 9px 0 12px; }
+.chapter h1 em { color: #cfdec2; font-weight: 400; font-style: normal; }
+.chapter p { color: #b3cec3; font-size: 11px; line-height: 1.6; max-width: 300px; margin: 0; }
+.fieldNote { position: absolute; top: 29px; right: 26px; display: flex; flex-direction: column; align-items: flex-end; }
+.fieldNote > span { font-size: 8px; letter-spacing: 1.8px; color: #bfd2bb; }
+.fieldNote strong { font: 31px/1.3 Georgia, serif; font-variant-numeric: tabular-nums; color: #ebecd1; }
+.fieldNote small { color: #aec6b7; font-size: 9px; }
+.heroAnimal { position: absolute; top: 25%; left: 30%; width: 52%; max-width: 560px; pointer-events: none; animation: hover-swim 7s ease-in-out infinite; }
+.animal { width: 100%; height: auto; display: block; filter: drop-shadow(0 15px 13px #00212c77); animation: creature-reveal .9s ease-out; }
+.animal :global(.evo-living-tail) { transform-box: fill-box; transform-origin: left center; animation: tail-beat 2.5s ease-in-out infinite; }
+.scene[data-paused="true"] .heroAnimal, .scene[data-paused="true"] .animal :global(.evo-living-tail) { animation-play-state: paused; }
+.specimenLabel { position: absolute; top: 66%; left: 16%; font: 17px Georgia, serif; color: #d6dfc2; }
+.specimenLabel small { display: block; font: 8px var(--font-jakarta), sans-serif; letter-spacing: 1.7px; color: #a4c2b4; margin-bottom: 5px; }
+.sceneBottom { position: absolute; z-index: 1; bottom: 18px; left: 23px; right: 23px; }
+.migrationLabel { color: #adc8bb; font-size: 10px; margin: 0 0 10px; }
+.habitats { display: grid; grid-template-columns: repeat(auto-fit, minmax(115px, 1fr)); gap: 7px; }
+.habitats button { border: 1px solid #d1dfc52c; border-radius: 8px; padding: 9px 12px; color: #e4ecdd; background: #09232ed9; text-align: left; font: inherit; cursor: pointer; transition: background .2s, border-color .2s; }
+.habitats button[aria-pressed="true"] { background: #30524bd9; border-color: #c2d5ab8c; }
+.habitats button span { font-size: 10px; display: inline-block; }
+.habitats button b { float: right; font-size: 12px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.habitats button small { display: block; color: #acc5b8; font-size: 9px; margin-top: 4px; }
+.notice { position: absolute; z-index: 2; left: 50%; top: 22px; transform: translateX(-50%); max-width: 90%; text-align: center; pointer-events: none; }
+.notice span { display: block; border: 1px solid #e0d8a16a; border-radius: 30px; background: #143c3aee; color: #eee9c9; padding: 10px 20px; font-size: 12px; animation: adaptation-arrives .7s ease-out; box-shadow: 0 8px 30px #001b2780; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .85fr); gap: 22px; margin-top: 22px; align-items: start; }
+.mapPanel { background: #0b2931; padding: 19px; border: 1px solid #bed0b51a; border-radius: 12px; }
+.sectionHeading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; }
+.sectionHeading span { font-size: 9px; letter-spacing: 2px; color: #c6d6be; }
+.sectionHeading small { font-size: 9px; color: #9eb9ae; }
+.shell :global(.evo-paleo) { margin: 0; }
+.shell :global(.evo-paleo__svg) { width: 100%; height: auto; max-height: 380px; aspect-ratio: 1; border: 0; border-radius: 9px; display: block; background: #10383d; }
+.shell :global(.evo-paleo__continent) { font-size: 2.4px; fill: #bac7ac; font-family: Georgia, serif; }
+.shell :global(.evo-node__label) { font-size: 2.5px; fill: #e4e9d2; paint-order: stroke; stroke: #10313b; stroke-width: .7px; stroke-linejoin: round; }
+.shell :global(.evo-paleo__note), .visualNote { font-size: 9px; color: #a1bbae; line-height: 1.6; }
+.visualNote { margin: 8px 0 0; }
+.mapLegend { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5px 12px; margin: 12px 0; }
+.mapLegend button { display: flex; align-items: center; gap: 7px; padding: 7px 3px; font: inherit; font-size: 10px; text-align: left; color: #b9cdbf; border: 0; border-bottom: 1px solid #c7d9bd19; background: transparent; cursor: pointer; }
+.mapLegend button[aria-pressed="true"] { color: #e9d8a9; }
+.mapLegend button > span { display: inline-grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; border: 1px solid #aec3a344; font-size: 9px; }
+.mapLegend button small { margin-left: auto; color: #e0e4c8; font-variant-numeric: tabular-nums; }
+.details { display: flex; flex-direction: column; gap: 13px; min-width: 0; }
+.shell :global(.evo-dock) { border-radius: 11px; border: 1px solid #bed0b522; background: #0b2931; }
+.shell :global(.evo-dock__header) { padding: 15px 16px; font-size: 11px; color: #d9e4d4; }
+.shell :global(.evo-dock__title) { font-weight: 500; }
+.shell :global(.evo-dock__body) { padding: 0 16px 16px; }
+.shell :global(.evo-inspector__name) { font: 24px Georgia, serif; font-weight: 400; color: #e6e9cf; }
+.shell :global(.evo-inspector__detail), .shell :global(.evo-inspector__limit) { color: #a7c1b4; font-size: 11px; line-height: 1.7; }
+.shell :global(.evo-inspector__status) { color: #c4d7b1; font-size: 10px; font-weight: 400; }
+.shell :global(.evo-shop__row) { border-color: #c6d7b824; background: #14363c55; padding: 11px 12px; }
+.shell :global(.evo-shop__name) { font-weight: 500; font-size: 11px; }
+.shell :global(.evo-shop__trade) { font-size: 10px; line-height: 1.5; }
+.shell :global(.evo-shop__cost) { color: #e3cb91; font-size: 10px; }
+.shell :global(.evo-science) { border-color: #baceb522; background: transparent; }
+.shell :global(.evo-science__body) { font-size: 10px; }
+.shell :global(.evo-modal) { z-index: 100; padding: 18px; background: #01131c9e; backdrop-filter: blur(7px); overflow-y: auto; }
+.shell :global(.evo-modal__card) { background: linear-gradient(145deg, #13343a, #0b2631); border: 1px solid #b9cba840; border-radius: 16px; box-shadow: 0 25px 100px #00131ebb; max-height: calc(100dvh - 36px); overflow-y: auto; }
+.shell :global(.evo-modal__title) { font: 29px Georgia, serif; color: #ece9cc; }
+.shell :global(.evo-modal__card > p) { color: #b2c8ba; font-size: 12px; }
+.shell :global(.evo-choice) { background: #cdddb608; border-color: #c6d7b833; padding: 14px; }
+.shell :global(.evo-choice:hover) { background: #a4c2911a; border-color: #b5d29588; }
+.shell :global(.evo-choice strong) { font-size: 12px; font-weight: 500; color: #e7ecd7; }
+.shell :global(.evo-choice span) { font-size: 10px; }
+.shell :global(.evo-modal__hint) { font-size: 10px; }
+.shell :global(.evo-start) { position: relative; min-height: calc(100dvh - 60px); border-radius: 14px; overflow: hidden; isolation: isolate; padding: 45px 6%; justify-items: end; }
+.startArt { position: absolute; inset: 0; z-index: -1; background: #124553; }
+.startArt::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #05242a00, #06232a44 40%, #06212ba1); }
+.startAnimal { position: absolute; width: 65%; height: auto; top: 35%; left: -5%; filter: drop-shadow(0 15px 25px #001e2699); animation: hover-swim 8s ease-in-out infinite; }
+.shell :global(.evo-start__card) { background: #0a2630ed; border: 1px solid #b3ccaa33; max-width: 450px; padding: 29px; position: relative; border-radius: 13px; }
+.shell :global(.evo-start__title) { font: 64px/.95 Georgia, serif; font-weight: 400; letter-spacing: -3px; margin: 8px 0; color: #e5e5c8; }
+.shell :global(.evo-start__tag) { color: #b9ccba; font-size: 12px; line-height: 1.7; margin-bottom: 8px; }
+.shell :global(.evo-start__modes label) { font-size: 11px; border-color: #b2c5a733; padding: 13px; }
+.shell :global(.evo-start__modes label.is-active) { border-color: #c8d0a477; background: #b1c58d0a; }
+.shell :global(.evo-start__diff) { font-size: 11px; }
+.shell :global(.evo-start__diff .evo-muted) { display: none; }
+@keyframes hover-swim { 0%,100% { transform: translate(0,0) rotate(-1deg); } 50% { transform: translate(7px,-8px) rotate(1deg); } }
+@keyframes tail-beat { 0%,100% { transform: scaleX(1) skewY(-3deg); } 50% { transform: scaleX(.93) skewY(3deg); } }
+@keyframes adaptation-arrives { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes creature-reveal { from { opacity: .55; filter: drop-shadow(0 0 18px #e0d59caa); } to { opacity: 1; filter: drop-shadow(0 15px 13px #00212c77); } }
+@media(min-width:1500px) { .scene { height: 560px; } .chapter h1 { font-size: 43px; } }
+@media(max-width:1000px) { .shell :global(.evo-bar) { gap: 12px; flex-wrap: wrap; } .shell :global(.evo-bar__stats) { margin-left: auto; } .shell :global(.evo-bar__controls) { margin-left: auto; } .chapter h1 { font-size: 30px; } .workspace { grid-template-columns: minmax(0, 1fr) minmax(270px, 1fr); gap: 14px; } }
+@media(max-width:650px) {
+  .shell { padding: 12px 10px 24px; } .masthead { margin-bottom: 13px; } .brand { font-size: 21px; } .brand small { font-size: 7px; letter-spacing: 1px; } .brand > span { width: 31px; height: 31px; font-size: 23px; }
+  .shell :global(.evo-bar) { padding: 13px; } .shell :global(.evo-bar__era) { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 5px; }
+  .shell :global(.evo-bar__stats) { margin: 0; justify-content: space-between; width: 100%; gap: 12px; } .shell :global(.evo-bar__stats dd) { font-size: 20px; } .shell :global(.evo-bar__stats dt) { font-size: 8px; }
+  .shell :global(.evo-bar__objective) { max-width: 150px; font-size: 9px; } .shell :global(.evo-bar__controls) { gap: 3px; } .shell :global(.evo-bar__controls .evo-btn) { padding: 8px; min-height: 36px; }
+  .scene { height: 475px; } .chapter { left: 18px; top: 22px; max-width: 240px; } .chapter h1 { font-size: 27px; } .chapter p { font-size: 10px; max-width: 220px; } .eyebrow { font-size: 8px; letter-spacing: 1.2px; }
+  .fieldNote { top: 157px; right: 16px; } .fieldNote > span { font-size: 7px; } .fieldNote strong { font-size: 24px; } .fieldNote small { font-size: 8px; }
+  .heroAnimal { width: 89%; max-width: none; top: 39%; left: 0%; } .specimenLabel { left: 26%; top: 80%; font-size: 15px; } .specimenLabel small { font-size: 7px; }
+  .sceneBottom { bottom: 13px; left: 12px; right: 12px; } .habitats { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 5px; } .habitats button { padding: 9px 7px; } .habitats button span { font-size: 9px; } .habitats button b { float: none; display: block; font-size: 13px; } .habitats button small { font-size: 8px; } .migrationLabel { font-size: 9px; max-width: 280px; }
+  .scene:has(.habitats button:nth-child(4)) { height: 565px; } .notice { width: 90%; top: 180px; } .notice span { font-size: 10px; padding: 10px 12px; }
+  .workspace { grid-template-columns: 1fr; margin-top: 14px; } .mapPanel { padding: 15px; } .shell :global(.evo-paleo__svg) { max-height: none; }
+  .shell :global(.evo-start) { padding: 155px 14px 24px; min-height: calc(100dvh - 35px); } .shell :global(.evo-start__card) { max-width: 100%; padding: 22px; } .shell :global(.evo-start__title) { font-size: 53px; } .startAnimal { top: 2%; left: 5%; width: 90%; }
+  .shell :global(.evo-modal__card) { padding: 20px; } .shell :global(.evo-modal__title) { font-size: 25px; }
+}
+@media(prefers-reduced-motion:reduce) { .heroAnimal, .startAnimal, .animal, .animal :global(.evo-living-tail), .notice span { animation: none !important; } }
