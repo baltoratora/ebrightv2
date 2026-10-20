@@ -15,6 +15,7 @@
 - **Rev 3.1** — migration semantics clarified at plan hand-off: per-step source budget = `migrationRate · SIM_DT · P0`; **absolute** edge conductance (open 1.0 / soft 0.2 / hard 0) applied to **actual flow**, so soft/hard penalties reduce throughput, not just relative destination weight (§4.5, §14).
 - **Rev 3.2** — M3 headless validation + tuning: §14 numbers marked **headless scenario validated** with results table (§14.1) and recorded tuning deltas (per-region extinction floor `0.5→0.01` logic fix; fitness-weighted migration; stronger Late Devonian pulses). Migration destination weight now `headroom × fitness`.
 - **Rev 3.3** — pre-M4 engine follow-ups implemented: ordinary Cambrian/Silurian events (telegraphed, pausing briefings, mild capacity nudge — §7.1) and a mutation offer at each era transition (§6) are now built with pause/scheduling/save-resume tests. Confirmed the Late Devonian penalties leave an **alternative viable strategy**: a freshwater-refuge lineage **without** hypoxia tolerance survives (§14.1). Extinction tests now explicitly separate "end condition fires" (tested strategy-independently) from "a given strategy loses".
+- **Rev 3.4** — incident note (see §16): a reported "broken /evolve render" was **not** a code/CSS defect. Root cause was a **stale dev-server process holding port 3000** (restarts silently moved to :3001) with a `.next` corrupted by interleaving production `npm run build` with `next dev`. Resolved operationally (kill stale processes, clean `.next`, one fresh dev server); added a `clean` npm script. CSS, computed styles, and the production static export were all verified correct.
 
 ---
 
@@ -468,6 +469,20 @@ Abstract "population units" (pu). These are now **validated by the headless scen
 - **Relaxed/Hard** difficulty presets — deferred until Normal is playtested (§8.6).
 - D1 **leaderboard** wiring — deferred (recommend post-balance).
 - Optional user **raster era backgrounds** — deferred (art slot exists).
+
+---
+
+## 16. Incident: reported "broken /evolve render" (resolved, no code defect)
+
+**Symptom (reported):** native unstyled buttons, vertically stacked HUD, oversized SVG map labels, unbounded creature/scene, niche modal in document flow instead of as an overlay, and the global starfield visible — i.e. the entire `.evo-*` gameplay stylesheet appeared to be absent.
+
+**Root cause:** operational, not code/CSS. A **stale `next dev` process kept holding port 3000** across restarts; each "restart" silently bound a *new* dev server to :3001 (Next's "Port 3000 is in use … using 3001 instead"), so the browser on `:3000` was served by an **old process** whose `.next` assets were **mismatched/corrupted** — a result of interleaving production `npm run build` (which rewrites the shared `.next`/versioned CSS chunk URLs) with `next dev`, and of `.next` being cleared while a server still referenced it. The page's HTML then pointed at CSS chunk URLs that no longer existed → stylesheet 404 → every `.evo-*` rule missing.
+
+**Why earlier screenshot checks passed:** the headless Playwright checks targeted whichever freshly-compiled server I pointed them at (and used `?test=1`), which had a consistent `.next`; the browser pointed at the *stale* `:3000` server did not. The code was never at fault — verification confirmed **all** `.evo-*` rules present in the served CSS, correct computed styles (`.evo-run__main` grid, `.evo-paleo__svg` bounded, `.evo-modal` `position: fixed`, `.evo-bar` flex) in **both** dev and the production static export, no console errors, and `window.__evolve` absent from production JS.
+
+**Resolution:** killed all stale dev/next processes, confirmed port 3000 free, removed `.next`, started a **single** fresh dev server (verified on :3000), and re-verified desktop + mobile rendering, a fresh run, and reload/resume — all correct.
+
+**Action items:** (1) added a `clean` npm script (`npm run clean` → removes `.next`/`out`) to prevent build/dev artifact mixing; (2) never run a production `build` against the `.next` a live `dev` server uses — stop dev first; (3) after any dev restart, confirm the server actually bound :3000 (watch for the "using 3001 instead" warning) before testing.
 
 ---
 
