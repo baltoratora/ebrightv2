@@ -1,5 +1,6 @@
 /** Small, original SVG symbols stay crisp without platform emoji fonts. */
 const PATHS: Record<string, string[]> = {
+  "blast-arena": ["M17 14a7 7 0 1 1-14 0 7 7 0 0 1 14 0 M13 8l2-4 3 1 M19 2v3 M19 8h3 M21 3l-2 2"],
   sudoku: ["M4 4h16v16H4z M9 4v16 M15 4v16 M4 9h16 M4 15h16"],
   minesweeper: ["M12 3v3 M12 18v3 M3 12h3 M18 12h3 M5 5l2 2 M17 17l2 2 M5 19l2-2 M17 7l2-2", "M17 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0"],
   wordle: ["M3 5h5v5H3z M10 5h5v5h-5z M17 5h4v5h-4z M3 13h5v5H3z M10 13h5v5h-5z M17 13h4v5h-4z"],

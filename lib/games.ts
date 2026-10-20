@@ -2,6 +2,7 @@ export type GameGroup = "Puzzles" | "Words" | "Cards" | "Strategy" | "Arcade" | 
 export type GameEntry = { name: string; desc: string; icon: string; href: string; group: GameGroup };
 
 export const GAMES: GameEntry[] = [
+  { name: "Blast Arena", desc: "Bombs, bots and clever escapes", icon: "💥", href: "/blast-arena", group: "Arcade" },
   { name: "Evolve", desc: "Guide a lineage across a changing Earth", icon: "🐟", href: "/evolve", group: "Adventure" },
   { name: "Sudoku", desc: "Fill the grid 1–9", icon: "🔢", href: "/sudoku", group: "Puzzles" },
   { name: "Minesweeper", desc: "Clear the field", icon: "💣", href: "/minesweeper", group: "Puzzles" },
