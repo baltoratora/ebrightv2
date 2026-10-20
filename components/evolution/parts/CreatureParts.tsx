@@ -16,27 +16,43 @@ export interface PartCtx {
   idPrefix: string;
   body: BodyConfig;
   anchors: Anchors;
+  enhancedEyes?: boolean;
 }
 
 const r2 = (v: number) => +v.toFixed(2);
 
 function Body({ idPrefix, body }: PartCtx) {
   const grad = `${idPrefix}-bodyGrad`;
+  const clip = `${idPrefix}-skinClip`;
+  const { snoutX: s, tailBaseX: tail, centerY: c, depth: d, midX } = body;
   return (
     <g>
       <defs>
         <linearGradient id={grad} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={CREATURE.main} />
-          <stop offset="1" stopColor={CREATURE.mainDark} />
+          <stop offset="0" stopColor="#aec0a0" />
+          <stop offset="0.3" stopColor="#d4c59c" />
+          <stop offset="0.65" stopColor="#b4ad81" />
+          <stop offset="1" stopColor="#6f8063" />
         </linearGradient>
+        <clipPath id={clip}><path d={bodyPath(body)} /></clipPath>
       </defs>
-      <path d={bodyPath(body)} fill={`url(#${grad})`} />
+      <path d={bodyPath(body)} fill={`url(#${grad})`} stroke="#d0dec25c" strokeWidth={0.5} />
+      <g clipPath={`url(#${clip})`} pointerEvents="none">
+        {/* Subtle muscle segments and irregular pigment; original illustration. */}
+        {Array.from({ length: 15 }, (_, i) => {
+          const x = midX - 18 + i * (tail - midX + 12) / 16;
+          return <path key={i} d={`M ${x} ${c - d} Q ${x + 8} ${c} ${x - 1} ${c + d}`} fill="none" stroke="#465f46" strokeOpacity={0.17} strokeWidth={0.6} />;
+        })}
+        {Array.from({ length: 36 }, (_, i) => <ellipse key={i} cx={s + 16 + ((i * 37) % Math.max(1, tail - s - 20))} cy={c - d * 0.6 + ((i * 13) % Math.max(1, d * 1.2))} rx={0.7 + i % 3 * 0.45} ry={0.5 + i % 2 * 0.3} fill="#365d45" opacity={0.14} />)}
+        <path d={`M ${s + 5} ${c + 3} Q ${midX} ${c + d * .9} ${tail} ${c}`} stroke="#efe3b9" strokeOpacity={0.45} strokeWidth={0.8} fill="none" />
+        {[0, 1, 2, 3].map(i => <path key={i} d={`M ${s + 25 + i * 4} ${c - body.headDepth * .65} Q ${s + 30 + i * 4} ${c} ${s + 25 + i * 4} ${c + body.headDepth * .6}`} stroke="#536d50" strokeOpacity={0.35} strokeWidth={0.7} fill="none" />)}
+      </g>
       <path
         d={`M ${r2(body.snoutX + 14)} ${body.centerY + 1} C ${r2(body.midX)} ${body.centerY - 2} ${r2(body.tailBaseX - 14)} ${body.centerY + 1} ${r2(body.tailBaseX)} ${body.centerY + 2}`}
         fill="none"
-        stroke={CREATURE.outline}
-        strokeOpacity={0.2}
-        strokeWidth={1.4}
+        stroke="#667a56"
+        strokeOpacity={0.25}
+        strokeWidth={0.7}
         strokeLinecap="round"
       />
     </g>
@@ -45,25 +61,31 @@ function Body({ idPrefix, body }: PartCtx) {
 
 function Tail({ idPrefix, body }: PartCtx) {
   const grad = `${idPrefix}-tailGrad`;
+  const clip = `${idPrefix}-tailClip`;
   return (
-    <g>
+    <g className="evo-living-tail">
       <defs>
         <linearGradient id={grad} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor={CREATURE.fin} />
-          <stop offset="1" stopColor={CREATURE.mainDark} />
+          <stop offset="0" stopColor="#a1b58f" stopOpacity={0.8} />
+          <stop offset="1" stopColor="#98c2a6" stopOpacity={0.45} />
         </linearGradient>
+        <clipPath id={clip}><path d={tailPath(body)} /></clipPath>
       </defs>
-      <path d={tailPath(body)} fill={`url(#${grad})`} />
+      <path d={tailPath(body)} fill={`url(#${grad})`} stroke="#c5d9b758" strokeWidth={0.55} />
+      <g clipPath={`url(#${clip})`} stroke="#c2d4ac" strokeWidth={0.5} strokeOpacity={0.4}>
+        {[-3, -2, -1, 0, 1, 2, 3].map(i => <path key={i} d={`M ${body.tailBaseX} ${body.centerY} Q ${body.tailBaseX + 25} ${body.centerY + i * 4} ${body.tailBaseX + 48} ${body.centerY + i * 8}`} fill="none" />)}
+      </g>
     </g>
   );
 }
 
-function Eye({ anchors, body }: PartCtx) {
+function Eye({ anchors, body, enhancedEyes }: PartCtx) {
   const { x, y } = anchors.eyes;
-  const r = Math.max(3.5, body.headDepth * 0.3);
+  const r = Math.max(3.5, body.headDepth * 0.3) * (enhancedEyes ? 1.2 : 1);
   return (
     <g>
-      <circle cx={x} cy={y} r={r2(r)} fill={CREATURE.eye} />
+      <circle cx={x} cy={y} r={r2(r * 1.2)} fill="#d4d9b3" fillOpacity={0.8} />
+      <circle cx={x} cy={y} r={r2(r)} fill="#16383b" />
       <circle cx={r2(x - r * 0.35)} cy={r2(y - r * 0.35)} r={r2(r * 0.3)} fill={CREATURE.eyeHighlight} />
     </g>
   );
@@ -77,7 +99,7 @@ function MouthSimple({ anchors }: PartCtx) {
       fill="none"
       stroke={CREATURE.accent}
       strokeOpacity={0.8}
-      strokeWidth={2}
+      strokeWidth={0.8}
       strokeLinecap="round"
     />
   );
@@ -95,7 +117,7 @@ function Jaws({ body, anchors }: PartCtx) {
   );
 }
 
-function Armor({ body }: PartCtx) {
+function Armor({ body, idPrefix }: PartCtx) {
   const { snoutX: s, midX, centerY: c, depth: d, headDepth: hd } = body;
   const tip = headTip(body);
   const headRun = midX - s;
@@ -109,8 +131,9 @@ function Armor({ body }: PartCtx) {
   const tick = (x: number) => `M ${r2(x)} ${r2(c - d + 2)} L ${r2(x)} ${r2(c - d + band - 2)}`;
   return (
     <g>
-      <path d={path} fill={CREATURE.armor} />
-      <path d={`${tick(s + headRun * 0.42)} ${tick(midX - 6)}`} fill="none" stroke={CREATURE.armorDark} strokeOpacity={0.5} strokeWidth={1.4} strokeLinecap="round" />
+      <defs><linearGradient id={`${idPrefix}-plate`} x1="0" y1="0" x2="0.3" y2="1"><stop offset="0" stopColor="#e4d9b4" /><stop offset="1" stopColor="#9c9f83" /></linearGradient></defs>
+      <path d={path} fill={`url(#${idPrefix}-plate)`} stroke="#d9dbc27a" strokeWidth={0.5} />
+      <path d={`${tick(s + headRun * 0.42)} ${tick(midX - 6)}`} fill="none" stroke="#656f59" strokeOpacity={0.5} strokeWidth={0.8} strokeLinecap="round" />
     </g>
   );
 }
@@ -122,12 +145,12 @@ function fin(fx: number, fy: number, scale: number) {
 
 function FinPectoral({ anchors }: PartCtx) {
   const { x, y } = anchors.flank;
-  return <path d={fin(x, y, 1)} fill={CREATURE.fin} fillOpacity={0.92} />;
+  return <path d={fin(x, y, 1)} fill="#a8bb91" fillOpacity={0.75} stroke="#d6dcb76a" strokeWidth={0.6} />;
 }
 
 function FinPelvic({ anchors }: PartCtx) {
   const { x, y } = anchors.underside;
-  return <path d={fin(x, y, 0.7)} fill={CREATURE.fin} fillOpacity={0.92} />;
+  return <path d={fin(x, y, 0.7)} fill="#a8bb91" fillOpacity={0.75} stroke="#d6dcb76a" strokeWidth={0.6} />;
 }
 
 function lobe(fx: number, fy: number) {
@@ -138,7 +161,7 @@ function LimbFore({ anchors }: PartCtx) {
   const { x, y } = anchors.flank;
   return (
     <g>
-      <path d={lobe(x, y)} fill={CREATURE.fin} />
+      <path d={lobe(x, y)} fill="#a8b38b" stroke="#d9ddbe66" strokeWidth={0.5} />
       <path d={`M ${r2(x + 16)} ${r2(y + 27)} l 6 2 M ${r2(x + 18)} ${r2(y + 24)} l 7 1 M ${r2(x + 19)} ${r2(y + 21)} l 6 0`} fill="none" stroke={CREATURE.outline} strokeOpacity={0.6} strokeWidth={1.3} strokeLinecap="round" />
     </g>
   );
@@ -148,7 +171,7 @@ function LimbHind({ anchors }: PartCtx) {
   const { x, y } = anchors.underside;
   return (
     <g>
-      <path d={lobe(x, y)} fill={CREATURE.fin} />
+      <path d={lobe(x, y)} fill="#a8b38b" stroke="#d9ddbe66" strokeWidth={0.5} />
       <path d={`M ${r2(x + 16)} ${r2(y + 27)} l 6 1 M ${r2(x + 18)} ${r2(y + 24)} l 6 0`} fill="none" stroke={CREATURE.outline} strokeOpacity={0.6} strokeWidth={1.3} strokeLinecap="round" />
     </g>
   );

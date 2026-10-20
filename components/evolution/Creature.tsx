@@ -18,9 +18,10 @@ export interface CreatureProps {
   showAttachments?: boolean;
   label?: string;
   className?: string;
+  enhancedEyes?: boolean;
 }
 
-export function Creature({ form, traits, showAttachments = false, label, className }: CreatureProps) {
+export function Creature({ form, traits, showAttachments = false, label, className, enhancedEyes = false }: CreatureProps) {
   const rawId = useId();
   const idPrefix = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
   const body = BODIES[form];
@@ -36,7 +37,7 @@ export function Creature({ form, traits, showAttachments = false, label, classNa
     >
       {layers.map(({ partId }) => {
         const Part = PART_COMPONENTS[partId];
-        return <Part key={partId} idPrefix={`${idPrefix}-${partId}`} body={body} anchors={anchors} />;
+        return <Part key={partId} idPrefix={`${idPrefix}-${partId}`} body={body} anchors={anchors} enhancedEyes={enhancedEyes} />;
       })}
 
       {showAttachments ? (

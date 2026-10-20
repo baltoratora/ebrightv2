@@ -11,6 +11,7 @@ import { evoCssVars } from "@/lib/evolution/palette";
 import { StartScreen } from "./StartScreen";
 import { RunScreen } from "./RunScreen";
 import { hasResumableSave, loadSave } from "./storage";
+import styles from "./immersion/Immersion.module.css";
 
 type Session = { key: number } & ({ mode: Mode } | { resume: string });
 
@@ -45,7 +46,7 @@ export function EvolveGame() {
   }
 
   return (
-    <main className="evo-app" style={evoCssVars() as CSSProperties}>
+    <main className={`evo-app ${styles.shell}`} style={evoCssVars() as CSSProperties}>
       {inner}
     </main>
   );

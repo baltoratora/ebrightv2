@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import type { Mode } from "@/lib/evolution/sim/state";
 import { loadBest, describeBest, type BestMap } from "./bestResult";
+import { SeaBackdrop } from "./immersion/LivingScene";
+import { Creature } from "./Creature";
+import styles from "./immersion/Immersion.module.css";
 
 export function StartScreen({
   hasSave,
@@ -28,7 +31,9 @@ export function StartScreen({
 
   return (
     <div className="evo-start">
+      <div className={styles.startArt} aria-hidden="true"><SeaBackdrop /><Creature form="cambrian" traits={[]} className={styles.startAnimal} /></div>
       <div className="evo-start__card">
+        <span className={styles.eyebrow}>A NATURAL-HISTORY ADVENTURE</span>
         <h1 className="evo-start__title">Evolve</h1>
         <p className="evo-start__tag">Guide one fictional lineage across a real, changing Earth — Cambrian to Devonian.</p>
 
