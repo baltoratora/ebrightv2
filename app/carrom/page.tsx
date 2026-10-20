@@ -1,19 +1,12 @@
 import { Carrom } from "@/components/Carrom";
-import { BackBar } from "@/components/BackBar";
+import { GameShell } from "@/components/GameShell";
 
 export const metadata = { title: "Carrom" };
 
 export default function CarromPage() {
   return (
-    <main className="page page--game">
-      <BackBar href="/thinking" label="← Thinking Mode" />
-      <header className="brand">
-        <div>
-          <h1>Carrom</h1>
-          <span className="tag">flick &amp; pocket</span>
-        </div>
-      </header>
+    <GameShell title="Carrom" description="flick &amp; pocket">
       <Carrom />
-    </main>
+    </GameShell>
   );
 }

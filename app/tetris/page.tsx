@@ -1,19 +1,13 @@
+import { ClientGame } from "@/components/ClientGame";
 import { Tetris } from "@/components/Tetris";
-import { BackBar } from "@/components/BackBar";
+import { GameShell } from "@/components/GameShell";
 
 export const metadata = { title: "Tetris" };
 
 export default function TetrisPage() {
   return (
-    <main className="page page--game">
-      <BackBar href="/thinking" label="← Thinking Mode" />
-      <header className="brand">
-        <div>
-          <h1>Tetris</h1>
-          <span className="tag">stack &amp; clear lines</span>
-        </div>
-      </header>
-      <Tetris />
-    </main>
+    <GameShell title="Tetris" description="stack &amp; clear lines">
+      <ClientGame><Tetris /></ClientGame>
+    </GameShell>
   );
 }

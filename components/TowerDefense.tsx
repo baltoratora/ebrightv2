@@ -1,5 +1,7 @@
 "use client";
 
+import { ignoreGameKey } from "@/lib/game-input";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   advanceEnemy,
@@ -411,8 +413,8 @@ export function TowerDefense() {
       }
       const cv = canvasRef.current!;
       const rect = cv.getBoundingClientRect();
-      const col = Math.floor((e.clientX - rect.left) / CELL);
-      const row = Math.floor((e.clientY - rect.top) / CELL);
+      const col = Math.floor(((e.clientX - rect.left) / rect.width) * W / CELL);
+      const row = Math.floor(((e.clientY - rect.top) / rect.height) * H / CELL);
 
       if (sellModeRef.current) {
         // Sell mode: remove a tower and refund gold
@@ -448,8 +450,8 @@ export function TowerDefense() {
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const cv = canvasRef.current!;
     const rect = cv.getBoundingClientRect();
-    const col = Math.floor((e.clientX - rect.left) / CELL);
-    const row = Math.floor((e.clientY - rect.top) / CELL);
+    const col = Math.floor(((e.clientX - rect.left) / rect.width) * W / CELL);
+    const row = Math.floor(((e.clientY - rect.top) / rect.height) * H / CELL);
     hoverRef.current = { col, row };
   }, []);
 
@@ -486,6 +488,7 @@ export function TowerDefense() {
   // ── keyboard ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (ignoreGameKey(e)) return;
       // Don't hijack typing in inputs (e.g. the leaderboard name field).
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;

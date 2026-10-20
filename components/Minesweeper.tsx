@@ -49,14 +49,18 @@ export function Minesweeper() {
 
   // Load stored best when difficulty changes
   useEffect(() => {
-    const stored = localStorage.getItem(`ms_best_${difficulty}`);
-    setBestTime(stored ? Number(stored) : null);
+    try {
+      const stored = localStorage.getItem(`ms_best_${difficulty}`);
+      const n = stored === null ? NaN : Number(stored);
+      setBestTime(Number.isFinite(n) && n >= 0 ? n : null);
+    } catch { setBestTime(null); }
     setIsNewBest(false);
   }, [difficulty]);
 
   // Check and save personal best on win
   useEffect(() => {
     if (status !== "won") return;
+    try {
     const key = `ms_best_${difficulty}`;
     const stored = localStorage.getItem(key);
     const best = stored ? Number(stored) : null;
@@ -65,6 +69,7 @@ export function Minesweeper() {
       setBestTime(time);
       setIsNewBest(true);
     }
+    } catch { /* Private or full storage must not stop play. */ }
   }, [status, difficulty, time]);
 
   useEffect(() => {
@@ -174,9 +179,20 @@ export function Minesweeper() {
         <div className="ms-best">Best: {fmtTime(bestTime)}</div>
       )}
 
+      <div className="sudoku-controls">
+        <button
+          className={`btn ghost${flagMode ? " on" : ""}`}
+          onClick={() => setFlagMode((m) => !m)}
+          aria-pressed={flagMode}
+        >
+          {flagMode ? "🚩 Flag mode" : "⛏ Dig mode"}
+        </button>
+      </div>
+
+      <div className="ms-board-scroll" tabIndex={0} role="region" aria-label="Minefield, scroll horizontally on larger difficulties">
       <div
         className="ms-board"
-        style={{ "--cols": cfg.cols } as React.CSSProperties}
+        style={{ "--cols": cfg.cols, "--rows": cfg.rows } as React.CSSProperties}
       >
         {board.map((row, r) =>
           row.map((cell, c) => {
@@ -228,6 +244,8 @@ export function Minesweeper() {
         )}
       </div>
 
+      </div>
+
       {status === "won" ? (
         <div className="sudoku-win" aria-live="polite">
           🎉 Cleared! {time}s{isNewBest && <span className="ms-new-best"> New best!</span>}
@@ -237,15 +255,7 @@ export function Minesweeper() {
         <div className="sudoku-win lost" aria-live="polite">💥 Boom. Hit New to try again.</div>
       ) : null}
 
-      <div className="sudoku-controls">
-        <button
-          className={`btn ghost${flagMode ? " on" : ""}`}
-          onClick={() => setFlagMode((m) => !m)}
-          aria-pressed={flagMode}
-        >
-          {flagMode ? "🚩 Flag mode" : "⛏ Dig mode"}
-        </button>
-      </div>
+
 
       <div className="sudoku-foot">
         <span className="muted sudoku-hint">

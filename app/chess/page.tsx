@@ -1,19 +1,12 @@
 import { Chessboard } from "@/components/Chess";
-import { BackBar } from "@/components/BackBar";
+import { GameShell } from "@/components/GameShell";
 
 export const metadata = { title: "Chess" };
 
 export default function ChessPage() {
   return (
-    <main className="page page--game">
-      <BackBar href="/thinking" label="← Thinking Mode" />
-      <header className="brand">
-        <div>
-          <h1>Chess</h1>
-          <span className="tag">vs the computer</span>
-        </div>
-      </header>
+    <GameShell title="Chess" description="vs the computer">
       <Chessboard />
-    </main>
+    </GameShell>
   );
 }

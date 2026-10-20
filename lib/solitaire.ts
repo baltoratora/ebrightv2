@@ -160,3 +160,15 @@ export function tableauToTableau(
   flipTop(n.tableau[fromPile]);
   return n;
 }
+
+/** A foundation card may return to the tableau to unlock a blocked sequence. */
+export function foundationToTableau(s: GameState, foundation: number, toPile: number): GameState | null {
+  const pile = s.foundations[foundation];
+  const dest = s.tableau[toPile];
+  if (!pile?.length || !dest) return null;
+  const card = pile[pile.length - 1];
+  if (!canStackTableau(card, dest[dest.length - 1])) return null;
+  const next = cloneState(s);
+  next.tableau[toPile].push(next.foundations[foundation].pop()!);
+  return next;
+}

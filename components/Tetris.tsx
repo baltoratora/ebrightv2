@@ -1,5 +1,7 @@
 "use client";
 
+import { ignoreGameKey } from "@/lib/game-input";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   newGame,
@@ -107,6 +109,7 @@ export function Tetris() {
   // Keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (ignoreGameKey(e)) return;
       if (g.over) return;
       if (e.key === "p" || e.key === "P") {
         setPaused((p) => !p);

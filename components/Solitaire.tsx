@@ -8,6 +8,9 @@ import {
   wasteToTableau,
   tableauToFoundation,
   tableauToTableau,
+  foundationToTableau,
+  canStackTableau,
+  canToFoundation,
   isWin,
   color,
   SUITS,
@@ -51,6 +54,7 @@ const WIN_CARDS = Array.from({ length: 26 }, (_, i) => {
 type Selected =
   | null
   | { type: "waste" }
+  | { type: "foundation"; pile: number }
   | { type: "tableau"; pile: number; index: number };
 
 function CardFace({
@@ -106,7 +110,8 @@ export function Solitaire() {
   const [game, setGame] = useState<GameState>(() => newGame());
   const [drawMode, setDrawMode] = useState<1 | 3>(1);
   const [selected, setSelected] = useState<Selected>(null);
-  const [history, setHistory] = useState<GameState[]>([]);
+  const [history, setHistory] = useState<{ game: GameState; score: number }[]>([]);
+  const [message, setMessage] = useState("");
   const [score, setScore] = useState(0);
   const [showWinAnim, setShowWinAnim] = useState(false);
   const startedRef = useRef<number | null>(null);
@@ -137,13 +142,14 @@ export function Solitaire() {
 
   const apply = useCallback(
     (next: GameState | null): boolean => {
-      if (!next) return false;
+      if (!next) { setMessage("That move isn’t available. Build down in alternating colours; empty columns need a King."); return false; }
+      setMessage("");
       if (startedRef.current === null) startedRef.current = Date.now();
-      setHistory((h) => [...h, game]);
+      setHistory((h) => [...h, { game, score }]);
       setGame(next);
       return true;
     },
-    [game],
+    [game, score],
   );
 
   const start = useCallback(() => {
@@ -153,18 +159,20 @@ export function Solitaire() {
     setHistory([]);
     setSelected(null);
     setScore(0);
+    setMessage("");
     setShowWinAnim(false);
   }, []);
 
   const undo = useCallback(() => {
-    setHistory((h) => {
-      if (!h.length) return h;
-      setGame(h[h.length - 1]);
-      return h.slice(0, -1);
-    });
+    const previous = history.at(-1);
+    if (!previous) return;
+    setGame(previous.game);
+    setScore(previous.score);
+    setHistory(history.slice(0, -1));
     setSelected(null);
-  }, []);
-
+    setMessage("");
+    setShowWinAnim(false);
+  }, [history]);
   // Synchronous loop: move every available card to foundations at once,
   // drawing from stock as needed when no direct foundation move is available.
   const autoComplete = useCallback(() => {
@@ -188,7 +196,7 @@ export function Solitaire() {
 
       if (next) {
         // Foundation move succeeded — record it and reset stuck detector.
-        hist.push(cur);
+        hist.push({ game: cur, score: score + gain });
         cur = next;
         gain += 5;
         noFoundationStreak = 0;
@@ -201,7 +209,7 @@ export function Solitaire() {
         const drawn = draw(cur, drawMode);
         if (!drawn) break; // stock and waste both empty — truly stuck
 
-        hist.push(cur);
+        hist.push({ game: cur, score: score + gain });
         cur = drawn;
         // Auto-complete draws score nothing (+5 is for foundation moves only; no −2 penalty).
       }
@@ -213,7 +221,7 @@ export function Solitaire() {
       setGame(cur);
       setScore((s) => s + gain);
     }
-  }, [game, history, drawMode]);
+  }, [game, history, drawMode, score]);
 
   const onStock = () => {
     setSelected(null);
@@ -237,6 +245,10 @@ export function Solitaire() {
       if (apply(wasteToTableau(game, toPile))) {
         setSelected(null);
         return true;
+      }
+    } else if (selected?.type === "foundation") {
+      if (apply(foundationToTableau(game, selected.pile, toPile))) {
+        setScore((s) => s - 5); setSelected(null); return true;
       }
     } else if (selected?.type === "tableau") {
       if (apply(tableauToTableau(game, selected.pile, selected.index, toPile))) {
@@ -271,24 +283,30 @@ export function Solitaire() {
     if (selected) moveSelectedToTableau(pile);
   };
 
-  const onFoundation = () => {
-    let moved = false;
-    if (selected?.type === "waste") {
-      moved = apply(wasteToFoundation(game));
-    } else if (selected?.type === "tableau") {
-      const p = game.tableau[selected.pile];
-      if (selected.index === p.length - 1) {
-        moved = apply(tableauToFoundation(game, selected.pile));
-      }
+  const selectedCard = selected?.type === "waste" ? game.waste.at(-1) : selected?.type === "tableau" ? game.tableau[selected.pile][selected.index] : selected?.type === "foundation" ? game.foundations[selected.pile].at(-1) : undefined;
+  const foundationReady = selectedCard && selected?.type !== "foundation" &&
+    (selected?.type !== "tableau" || selected.index === game.tableau[selected.pile].length - 1) &&
+    canToFoundation(selectedCard, game.foundations[SUITS.indexOf(selectedCard.suit)]);
+
+  const onFoundation = (fi: number) => {
+    if (!selected || selected.type === "foundation") {
+      setSelected(game.foundations[fi].length ? { type: "foundation", pile: fi } : null);
+      return;
     }
+    if (!foundationReady || !selectedCard || SUITS.indexOf(selectedCard.suit) !== fi) {
+      setMessage("Foundations build Ace to King in the same suit."); return;
+    }
+    const moved = selected.type === "waste" ? apply(wasteToFoundation(game)) : apply(tableauToFoundation(game, selected.pile));
     if (moved) { setSelected(null); setScore((s) => s + 5); }
   };
 
   // Called when a card is dropped onto a foundation slot
-  const onFoundationDrop = () => {
+  const onFoundationDrop = (fi: number) => {
     const src = dragSrcRef.current;
     dragSrcRef.current = null;
     if (!src) return;
+    const card = src.type === "waste" ? game.waste.at(-1) : src.type === "tableau" ? game.tableau[src.pile][src.index] : undefined;
+    if (!card || SUITS.indexOf(card.suit) !== fi) return;
     let moved = false;
     if (src.type === "waste") {
       moved = apply(wasteToFoundation(game));
@@ -309,6 +327,9 @@ export function Solitaire() {
     let moved = false;
     if (src.type === "waste") {
       moved = apply(wasteToTableau(game, toPile));
+    } else if (src.type === "foundation") {
+      moved = apply(foundationToTableau(game, src.pile, toPile));
+      if (moved) setScore((s) => s - 5);
     } else if (src.type === "tableau") {
       moved = apply(tableauToTableau(game, src.pile, src.index, toPile));
     }
@@ -353,13 +374,13 @@ export function Solitaire() {
               <button
                 key={m}
                 className={`seg-btn${drawMode === m ? " active" : ""}`}
-                onClick={() => setDrawMode(m)}
+                onClick={() => { if (m === drawMode) return; if (history.length && !won && !window.confirm("Change draw mode and deal a new game?")) return; setDrawMode(m); start(); }}
               >
                 Draw {m}
               </button>
             ))}
           </div>
-          <span className="sol-score" aria-live="polite">Score: {score}</span>
+          <span className="sol-score" aria-live="polite">{score} pts · {game.foundations.reduce((n, p) => n + p.length, 0)}/52</span>
           <div style={{ display: "flex", gap: 8 }}>
             {allFaceUp && !won && (
               <button className="btn ghost" onClick={autoComplete}>
@@ -369,12 +390,16 @@ export function Solitaire() {
             <button className="btn ghost" onClick={undo} disabled={!history.length}>
               ↶ Undo
             </button>
-            <button className="btn ghost" onClick={start}>
+            <button className="btn ghost" onClick={() => { if (!history.length || won || window.confirm("Deal a new game? This game will be replaced.")) start(); }}>
               New
             </button>
           </div>
         </div>
 
+        <div className="sol-feedback" role="status">{message || (selectedCard ? `${cardLabel(selectedCard)} selected · tap a highlighted destination` : "Tap a card, then its destination.")}</div>
+        <div className="sol-actions"><span>{game.stock.length} in stock</span>
+          <button className="btn ghost" disabled={!foundationReady} onClick={() => { if (selectedCard) onFoundation(SUITS.indexOf(selectedCard.suit)); }}>Send to foundation ↑</button>
+        </div>
         <div className="sol-top">
           <div
             className="sol-stock"
@@ -407,18 +432,18 @@ export function Solitaire() {
           <div className="sol-spacer" />
           {game.foundations.map((f, fi) => (
             <div
-              className="sol-found"
+              className={`sol-found${foundationReady && selectedCard?.suit === SUITS[fi] ? " legal" : ""}`}
               key={fi}
               role="button"
               tabIndex={0}
               aria-label={`Foundation pile ${SUIT_NAMES[SUITS[fi]] ?? ""}`.trim()}
-              onClick={onFoundation}
-              onKeyDown={(e) => activateOnKey(e, onFoundation)}
+              onClick={() => onFoundation(fi)}
+              onKeyDown={(e) => activateOnKey(e, () => onFoundation(fi))}
               onDragOver={(e) => e.preventDefault()}
-              onDrop={onFoundationDrop}
+              onDrop={() => onFoundationDrop(fi)}
             >
               {f.length ? (
-                <CardFace card={f[f.length - 1]} />
+                <CardFace card={f[f.length - 1]} selected={selected?.type === "foundation" && selected.pile === fi} draggable onDragStart={() => { dragSrcRef.current = { type: "foundation", pile: fi }; }} />
               ) : (
                 <div className="sol-slot suit">{SYM[SUITS[fi]]}</div>
               )}
@@ -431,7 +456,7 @@ export function Solitaire() {
         <div className="sol-tableau">
           {game.tableau.map((pile, pi) => (
             <div
-              className="sol-pile"
+              className={`sol-pile${selectedCard && !(selected?.type === "tableau" && selected.pile === pi) && canStackTableau(selectedCard, pile.at(-1)) ? " legal" : ""}`}
               key={pi}
               onDragOver={(e) => e.preventDefault()}
               onDrop={() => onTableauDrop(pi)}

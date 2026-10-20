@@ -1,5 +1,7 @@
 "use client";
 
+import { ignoreGameKey } from "@/lib/game-input";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FLEET,
@@ -44,6 +46,7 @@ export function Battleship() {
   const [difficulty, setDifficulty] = useState<Difficulty>("medium");
 
   // Track the most-recently-shot cell key for animations
+  const [fleetView, setFleetView] = useState<"enemy" | "player">("enemy");
   const [lastEnemyShot, setLastEnemyShot] = useState<string | null>(null);
   const [lastPlayerShot, setLastPlayerShot] = useState<string | null>(null);
 
@@ -51,6 +54,7 @@ export function Battleship() {
   useEffect(() => {
     if (phase !== "setup") return;
     const h = (e: KeyboardEvent) => {
+      if (ignoreGameKey(e)) return;
       if (e.key === "r" || e.key === "R") setHorizontal((v) => !v);
     };
     window.addEventListener("keydown", h);
@@ -325,7 +329,7 @@ export function Battleship() {
                 </button>
                 <button
                   className="btn"
-                  onClick={() => allReady && setPhase("playing")}
+                  onClick={() => { if (allReady) { setFleetView("enemy"); setPhase("playing"); } }}
                   disabled={!allReady}
                 >
                   Start
@@ -341,10 +345,20 @@ export function Battleship() {
 
         {phase !== "setup" && (
           <>
-            <div className="bs-label">
-              Enemy waters · {shipsRemaining(enemy.current)} ships left
+            <div className="bs-view-tabs" role="group" aria-label="Choose waters">
+              <button aria-pressed={fleetView === "enemy"} onClick={() => setFleetView("enemy")}>Enemy waters · {shipsRemaining(enemy.current)}</button>
+              <button aria-pressed={fleetView === "player"} onClick={() => setFleetView("player")}>Your fleet · {shipsRemaining(player.current)}</button>
             </div>
-            {EnemyGrid}
+            <div className="bs-active-boards">
+              <section className={fleetView === "enemy" ? "active" : ""} aria-label="Enemy waters">
+                <div className="bs-label">Enemy waters · {shipsRemaining(enemy.current)} ships left</div>
+                {EnemyGrid}
+              </section>
+              <section className={fleetView === "player" ? "active" : ""} aria-label="Your fleet">
+                <div className="bs-label">Your fleet · {shipsRemaining(player.current)} ships left</div>
+                {PlayerGrid}
+              </section>
+            </div>
           </>
         )}
 
@@ -379,13 +393,10 @@ export function Battleship() {
           </div>
         )}
 
-        <div className="bs-label">
-          Your fleet ·{" "}
-          {phase === "setup"
-            ? `${placedCount} of 5 placed`
-            : `${shipsRemaining(player.current)} ships left`}
-        </div>
-        {PlayerGrid}
+        {phase === "setup" && <>
+          <div className="bs-label">Your fleet · {placedCount} of 5 placed</div>
+          {PlayerGrid}
+        </>}
 
         <div className="sudoku-foot">
           <span className="muted sudoku-hint">

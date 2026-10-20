@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import { Starfield } from "@/components/Starfield";
 import "./globals.css";
+import "./games.css";
 
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],

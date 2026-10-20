@@ -1,5 +1,7 @@
 "use client";
 
+import { ignoreGameKey } from "@/lib/game-input";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { collideSeg, collideCircle, flipperSeg, bumperMultiplier, type Ball, type Seg } from "@/lib/pinball";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
@@ -325,6 +327,8 @@ export function Pinball() {
     const isLeft = (k: string) => k === "ArrowLeft" || k === "a" || k === "z";
     const isRight = (k: string) => k === "ArrowRight" || k === "l" || k === "/";
     const down = (e: KeyboardEvent) => {
+      if (ignoreGameKey(e)) return;
+      if (isLeft(e.key) || isRight(e.key)) e.preventDefault();
       if (isLeft(e.key)) leftUp.current = true;
       else if (isRight(e.key)) rightUp.current = true;
       else if (e.key === " ") {
@@ -389,6 +393,7 @@ export function Pinball() {
           onPointerDown={hold("l", true)}
           onPointerUp={hold("l", false)}
           onPointerLeave={hold("l", false)}
+          onPointerCancel={hold("l", false)}
         >
           ◀ Left
         </button>
@@ -397,6 +402,7 @@ export function Pinball() {
           aria-label="Charge and launch ball"
           onPointerDown={() => { if (launchingRef.current) plungerChargingRef.current = true; }}
           onPointerUp={() => { if (launchingRef.current) launch(); }}
+          onPointerCancel={() => { plungerChargingRef.current = false; }}
           onPointerLeave={() => { if (launchingRef.current && plungerChargingRef.current) launch(); }}
         >
           Launch
@@ -407,6 +413,7 @@ export function Pinball() {
           onPointerDown={hold("r", true)}
           onPointerUp={hold("r", false)}
           onPointerLeave={hold("r", false)}
+          onPointerCancel={hold("r", false)}
         >
           Right ▶
         </button>
