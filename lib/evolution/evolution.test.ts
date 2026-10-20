@@ -9,6 +9,7 @@ import {
   defaultDescriptor,
 } from "./creatures/lineage";
 import { ERA_PALETTES } from "./palette";
+import { BODIES, anchorsFor, bodyPath, tailPath } from "./creatures/bodies";
 
 describe("eras", () => {
   it("has the four periods in order, no skip", () => {
@@ -140,6 +141,52 @@ describe("lineage render resolution", () => {
       for (const l of renderDescriptor(id, ["armor", "jaws", "paired-fins", "lobed-limbs"])) {
         expect(PARTS[l.partId as PartId]).toBeTruthy();
       }
+    }
+  });
+});
+
+describe("parametric bodies", () => {
+  it("defines a body for every form", () => {
+    for (const id of FORM_ORDER) expect(BODIES[id]).toBeTruthy();
+  });
+
+  it("gives each form a distinct silhouette", () => {
+    const heads = FORM_ORDER.map((id) => BODIES[id].headShape);
+    const tails = FORM_ORDER.map((id) => BODIES[id].tailStyle);
+    // all four head shapes and tail styles are different
+    expect(new Set(heads).size).toBe(FORM_ORDER.length);
+    expect(new Set(tails).size).toBe(FORM_ORDER.length);
+    // bodies differ by full config signature too
+    const sigs = FORM_ORDER.map((id) => JSON.stringify(BODIES[id]));
+    expect(new Set(sigs).size).toBe(FORM_ORDER.length);
+    // lengths and depths actually vary (not all identical)
+    expect(new Set(FORM_ORDER.map((id) => BODIES[id].tailBaseX - BODIES[id].snoutX)).size).toBeGreaterThan(1);
+    expect(new Set(FORM_ORDER.map((id) => BODIES[id].depth)).size).toBeGreaterThan(1);
+  });
+
+  it("resolves attachments within the viewBox for every form", () => {
+    for (const id of FORM_ORDER) {
+      const a = anchorsFor(BODIES[id]);
+      // every part's attachment id is present in the derived anchors
+      for (const part of Object.values(PARTS)) {
+        expect(a[part.attachment]).toBeTruthy();
+      }
+      for (const point of Object.values(a)) {
+        expect(point.x).toBeGreaterThanOrEqual(0);
+        expect(point.x).toBeLessThanOrEqual(VIEWBOX.w);
+        expect(point.y).toBeGreaterThanOrEqual(0);
+        expect(point.y).toBeLessThanOrEqual(VIEWBOX.h);
+      }
+    }
+  });
+
+  it("produces valid body and tail paths for every form", () => {
+    for (const id of FORM_ORDER) {
+      const b = BODIES[id];
+      expect(bodyPath(b).startsWith("M")).toBe(true);
+      expect(tailPath(b).startsWith("M")).toBe(true);
+      expect(bodyPath(b)).not.toContain("NaN");
+      expect(tailPath(b)).not.toContain("NaN");
     }
   });
 });

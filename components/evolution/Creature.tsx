@@ -1,13 +1,13 @@
 "use client";
 
-// Renders a lineage form from its deterministic layer list. Each instance gets a
-// unique id prefix (React useId) so gradient ids never collide when several
-// creatures share a page. The optional dev overlay shows attachment points and
-// the viewBox bounds.
+// Renders a lineage form from its deterministic layer list, using the form's
+// parametric body + derived attachment anchors. Each instance gets a unique id
+// prefix (React useId) so gradient ids never collide across creatures.
 
 import { useId } from "react";
-import { VIEWBOX, ATTACHMENTS } from "@/lib/evolution/creatures/parts";
+import { VIEWBOX } from "@/lib/evolution/creatures/parts";
 import { renderDescriptor, type FormId } from "@/lib/evolution/creatures/lineage";
+import { BODIES, anchorsFor } from "@/lib/evolution/creatures/bodies";
 import type { TraitId } from "@/lib/evolution/traits/traits";
 import { UI } from "@/lib/evolution/palette";
 import { PART_COMPONENTS } from "./parts/CreatureParts";
@@ -23,6 +23,8 @@ export interface CreatureProps {
 export function Creature({ form, traits, showAttachments = false, label, className }: CreatureProps) {
   const rawId = useId();
   const idPrefix = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
+  const body = BODIES[form];
+  const anchors = anchorsFor(body);
   const layers = renderDescriptor(form, traits);
 
   return (
@@ -34,7 +36,7 @@ export function Creature({ form, traits, showAttachments = false, label, classNa
     >
       {layers.map(({ partId }) => {
         const Part = PART_COMPONENTS[partId];
-        return <Part key={partId} idPrefix={`${idPrefix}-${partId}`} />;
+        return <Part key={partId} idPrefix={`${idPrefix}-${partId}`} body={body} anchors={anchors} />;
       })}
 
       {showAttachments ? (
@@ -49,8 +51,8 @@ export function Creature({ form, traits, showAttachments = false, label, classNa
             strokeDasharray="4 4"
             strokeOpacity={0.5}
           />
-          {Object.values(ATTACHMENTS).map((a) => (
-            <g key={a.id}>
+          {Object.entries(anchors).map(([id, a]) => (
+            <g key={id}>
               <circle cx={a.x} cy={a.y} r={3.5} fill="none" stroke={UI.accent} strokeWidth={1.5} />
               <circle cx={a.x} cy={a.y} r={1} fill={UI.accent} />
               <text
@@ -60,7 +62,7 @@ export function Creature({ form, traits, showAttachments = false, label, classNa
                 fill={UI.accent}
                 style={{ fontFamily: "var(--font-mono), monospace" }}
               >
-                {a.id}
+                {id}
               </text>
             </g>
           ))}
