@@ -12,6 +12,7 @@
   2. **Migration** — destination-side **combined** inflow cap across ALL sources; **allocate accepted flows before deducting** from sources (§4.5).
   3. **Growth** — **no instant clamp** to a reduced `K`; overcrowding **decays over time**; disaster losses are a **separate, explicit, explained** one-time term (§4.3, §7.1).
   4. **Science qualified** — not "all deep water warm+anoxic" blanket; qualify by **time/place/evidence** (§1.1). Ordovician = predation **intensifies** (not "predators first appeared"), flagged as partly a balancing device (§2, §13). Terrestriality distinguishes **sustained terrestrial activity** from **reproductive independence**; deferral is a **scope** choice, not an overstated biological gate (§1.3).
+- **Rev 3.1** — migration semantics clarified at plan hand-off: per-step source budget = `migrationRate · SIM_DT · P0`; **absolute** edge conductance (open 1.0 / soft 0.2 / hard 0) applied to **actual flow**, so soft/hard penalties reduce throughput, not just relative destination weight (§4.5, §14).
 
 ---
 
@@ -194,12 +195,11 @@ Colonizing when P <  establishLow  = 0.15 · K_base
 ### 4.5 Spread — snapshot, destination-capped, allocate-before-deduct, conserving
 Automatic; each fixed step, **after** growth, in a migration sub-step:
 1. **Snapshot** all populations `P0` and capacities `K`.
-2. **Source proposals:** each **Occupied** source `s` has an emigration budget `cap_s = maxEmigFrac · P0[s]`, split across its open edges by conductance:
-   `prop(e) = cap_s · conductance(e) / Σ_{e'∈ s} conductance(e')`.
+2. **Source budget (per-second × step):** each **Occupied** source `s` has a per-step emigration budget `budget_s = migrationRate · SIM_DT · P0[s]`. Split the budget across the source's open edges by **destination headroom share** `share(e) = budget_s · headroom_{dest(e)} / Σ_{e'∈ s} headroom_{dest(e')}`, then apply the **absolute** edge conductance to the actual flow (open `= 1.0`, soft `≈ 0.2`, hard `≈ 0`): `prop(e) = share(e) · conductance(e)`. Because the penalty multiplies the **actual flow** (not just the relative weight), a soft/hard edge emits **absolutely less** and the unspent remainder **stays in the source** — a soft edge never carries the full budget just because it is the only outlet.
 3. **Destination acceptance (combined cap across ALL sources):** for each destination `d`, total proposed inflow `In_d = Σ_{e→d} prop(e)` and `headroom_d = max(0, K_d − P0[d])`. If `In_d > headroom_d`, scale **every** inflow to `d` by `a_d = headroom_d / In_d` (≤1); else `a_d = 1`. Accepted per-edge `acc(e) = prop(e) · a_{dest(e)}`.
 4. **Allocate, then deduct:** add **accepted** flow to destinations and deduct the **same accepted** amount from sources — `Δ[d] += Σ_{e→d} acc(e)`, `Δ[s] −= Σ_{e∈ s} acc(e)` — applying all `Δ` simultaneously.
 
-Guarantees: **combined** inflow to any `d` ≤ its headroom (no overfill even from many sources); only **accepted** amounts leave sources, so **population is conserved** and sources **keep unspent budget**; all reads come from `P0`, so results are **order-independent**; `Σ acc(e) from s ≤ cap_s`, so **no source goes negative**.
+Guarantees: **combined** inflow to any `d` ≤ its headroom (no overfill even from many sources); only **accepted** amounts leave sources, so **population is conserved** and sources **keep unspent budget**; all reads come from `P0`, so results are **order-independent**; `Σ share(e) = budget_s` and `conductance ≤ 1` ⇒ `Σ prop(e) ≤ budget_s` and thus `Σ acc(e) from s ≤ budget_s`, so **no source goes negative**.
 - **Edge conductance:** *open* (full, trait-independent — guarantees early expansion), *soft-gated* (low without the helpful trait, high with — never zero), *hard-gated* (≈0 until the trait is owned; only ever on later/optional regions, never a period's required Dominate set — §8.5).
 
 ---
@@ -425,7 +425,7 @@ Abstract "population units" (pu). **These demonstrate a complete run and will mo
 
 **Occupancy:** `establishHigh = 0.25·K_base`, `establishLow = 0.15·K_base` (e.g. Nursery occupied at **25 pu**, drops at **15 pu**).
 
-**Migration:** `maxEmigFrac = 0.1 /s`; combined inflow capped by destination headroom (§4.5). Soft-gate conductance ≈ 0.2× open; hard-gate ≈ 0 without trait.
+**Migration:** `migrationRate = 0.1 /s` → per-step source budget `= migrationRate · SIM_DT · P0`. **Absolute** edge conductance: open `1.0`, soft `0.2`, hard `0` (penalty applied to **actual flow**, §4.5). Combined inflow capped by destination headroom.
 
 **Economy:** `k_pop = 0.2`, `k_div = 0.5` → `incomeRate = 0.2·sqrt(totalPop) + 0.5·occupiedCount (+ catchUp)` EP/s. One-off **event-survival grant = +15 EP**. `catchUp` floor = **+0.5 EP/s** when `occupiedCount ≤ 1`. Mutation **declineEP = +5**.
 
