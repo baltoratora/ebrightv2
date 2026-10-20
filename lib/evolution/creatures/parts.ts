@@ -15,12 +15,12 @@ export interface AttachmentPoint {
 // Absolute positions within the viewBox. Lineage faces left: head at low x,
 // tail at high x. (Normalized source positions are in the design spec.)
 export const ATTACHMENTS: Record<AttachmentId, AttachmentPoint> = {
-  mouth: { id: "mouth", x: 36, y: 83 },
-  eyes: { id: "eyes", x: 57, y: 67 },
-  dorsal: { id: "dorsal", x: 120, y: 35 },
-  flank: { id: "flank", x: 120, y: 106 },
-  underside: { id: "underside", x: 130, y: 138 },
-  tail: { id: "tail", x: 224, y: 80 },
+  mouth: { id: "mouth", x: 46, y: 84 },
+  eyes: { id: "eyes", x: 58, y: 66 },
+  dorsal: { id: "dorsal", x: 120, y: 54 },
+  flank: { id: "flank", x: 118, y: 104 },
+  underside: { id: "underside", x: 150, y: 106 },
+  tail: { id: "tail", x: 208, y: 80 },
 };
 
 export type PartId =
