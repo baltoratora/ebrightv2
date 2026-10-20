@@ -1,0 +1,67 @@
+.root { width:100%;max-width:1080px;--rp-accent:#a7e7d6;--rp-edge:#bddce22a; }
+.root :global(.rp-toolbar) { display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:12px; }
+.root :global(.rp-location) { display:flex;flex:1;flex-direction:column;gap:4px;min-width:0; }
+.root :global(.rp-location span) { font-size:9px;letter-spacing:.15em;color:#88a4b8; }
+.root :global(.rp-location strong) { font-size:16px;letter-spacing:-.03em;color:#dbe9ed; }
+.root :global(.rp-stage) { position:relative;width:100%;height:clamp(260px,calc(100svh - 320px),580px);overflow:hidden;border:1px solid #7896aa66;border-radius:16px;background:#091222;isolation:isolate;box-shadow:0 20px 70px #0005,0 0 60px #b6e6ff08; }
+.root :global(.rp-canvas) { width:100%;height:100%!important;display:block;cursor:crosshair;touch-action:none;outline-offset:-4px; }
+.root :global(.rp-hud) { position:absolute;top:16px;left:18px;right:18px;display:flex;justify-content:space-between;gap:10px;pointer-events:none;text-shadow:0 2px 8px #000; }
+.root :global(.rp-hud > div) { display:flex;flex-direction:column;gap:4px; }
+.root :global(.rp-hud span) { color:#a4bdca;font-size:9px;letter-spacing:.14em; }
+.root :global(.rp-hud strong) { font-family:var(--font-mono),monospace;color:#eff8f5;font-size:25px;line-height:1; }
+.root :global(.rp-hud small) { font-size:10px;color:#f4d49e; }
+.root :global(.rp-shield) { align-items:flex-end; }
+.root :global(.rp-shield progress) { accent-color:#a4e4ce;width:100px;height:6px; }
+.root :global(.rp-route) { position:absolute;bottom:15px;left:50%;transform:translateX(-50%);display:flex;gap:5px;pointer-events:none; }
+.root :global(.rp-route span) { width:18px;height:3px;background:#96b7c440;border-radius:2px; }
+.root :global(.rp-route .current) { background:#d9f5e8;box-shadow:0 0 8px #b8fff488; }
+.root :global(.rp-route .done) { background:#85a9ab; }
+.root :global(.rp-overlay) { position:absolute;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;padding:20px;background:#070f1ed9;backdrop-filter:blur(4px);overflow:auto; }
+.root :global(.rp-card) { max-width:430px;text-align:center; }
+.root :global(.rp-kicker) { font-size:9px;letter-spacing:.16em;color:#9edbcb; }
+.root :global(.rp-card h2) { font-size:clamp(30px,4vw,48px);line-height:1.02;letter-spacing:-.06em;margin:14px 0;color:#f0f5f2; }
+.root :global(.rp-card p) { color:#aebdcc;font-size:13px;line-height:1.65;margin:0 auto 20px;max-width:350px; }
+.root :global(.rp-brief) { display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;color:#b7d6d2;font-size:10px; }
+.root :global(.rp-start) { min-height:46px!important;padding:12px 22px!important;background:#b5e6d4;color:#18392f;border:1px solid #d3f3e5;font-size:13px!important; }
+.root :global(.rp-new) { display:block;min-height:44px;margin:8px auto 0;background:none;border:0;color:#b5c7d0;text-decoration:underline;cursor:pointer; }
+.root :global(.rp-travel) { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#d9eae6;pointer-events:none; }
+.root :global(.rp-travel span) { color:#a7cbbd;letter-spacing:.18em;font-size:10px; }
+.root :global(.rp-travel strong) { font-size:24px;letter-spacing:-.04em; }
+.root :global(.rp-travel p) { font-size:11px;color:#a4bdc8; }
+.root :global(.rp-controls) { display:flex;align-items:center;gap:12px;padding:12px 0 0; }
+.root :global(.rp-ammo) { display:flex;align-items:center;gap:10px;flex:1; }
+.root :global(.rp-ammo > span) { display:flex;gap:4px; }
+.root :global(.rp-ammo i) { display:block;width:6px;height:18px;border:1px solid #68868b55;background:#243a4533;border-radius:2px; }
+.root :global(.rp-ammo .filled) { background:#b4e6d2;border-color:#c6f7e7;box-shadow:0 0 7px #b2e5d219; }
+.root :global(.rp-ammo strong) { color:#b0c8ca;font-size:12px;font-weight:500;font-variant-numeric:tabular-nums; }
+.root :global(.rp-reload) { min-height:44px;min-width:132px;position:relative;overflow:hidden;border:1px solid #adcfc14d;background:#263f3d;color:#d1f2e3;font-family:inherit;font-size:12px;font-weight:600;border-radius:11px;cursor:pointer; }
+.root :global(.rp-reload i) { position:absolute;bottom:0;left:0;height:3px;background:#b3e5d1; }
+.root :global(.rp-reload:disabled) { opacity:.5;cursor:default; }
+.root :global(.rp-sound) { white-space:nowrap; }
+.root :global(.rp-feedback) { min-height:20px;line-height:1.6;margin-top:10px;text-align:center;color:#bfd5d5;font-size:11px; }
+.root :global(.rp-best) { font-size:10px;color:#8196a9;text-align:center;margin:6px 0 0; }
+.root :global(.rp-results) { display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0 24px;text-align:center; }
+.root :global(.rp-results div) { min-width:0; }
+.root :global(.rp-results dt) { font-size:9px;color:#9db6c2;margin-bottom:5px; }
+.root :global(.rp-results dd) { margin:0;color:#d3f4e6;font-size:20px;font-family:var(--font-mono),monospace; }
+@media(max-width:767px) {
+ .root :global(.rp-toolbar) { gap:8px;margin-bottom:10px; }
+ .root :global(.rp-location strong) { font-size:13px; }
+ .root :global(.rp-location span) { font-size:8px;letter-spacing:.07em; }
+ .root :global(.rp-stage) { height:clamp(270px,calc(100svh - 300px),620px);border-radius:12px; }
+ .root :global(.rp-hud) { top:12px;left:12px;right:12px; }
+ .root :global(.rp-hud strong) { font-size:23px; }
+ .root :global(.rp-controls) { gap:8px; }
+ .root :global(.rp-reload) { min-width:115px; }
+ .root :global(.rp-ammo) { gap:6px; }
+ .root :global(.rp-ammo i) { width:5px;height:16px; }
+ .root :global(.rp-ammo > span) { gap:3px; }
+ .root :global(.rp-ammo strong) { font-size:10px; }
+ .root :global(.rp-card h2) { font-size:34px;margin:12px 0; }
+ .root :global(.rp-card p) { font-size:12px;margin-bottom:16px; }
+ .root :global(.rp-brief) { gap:7px;font-size:9px;margin-bottom:18px; }
+ .root :global(.rp-sound) { padding:8px!important;font-size:10px!important; }
+ .root :global(.rp-overlay) { padding:16px; }
+ .root :global(.rp-feedback) { font-size:10px; }
+}
+@media(max-height:650px) { .root :global(.rp-results) { gap:8px;margin:12px 0; } .root :global(.rp-card h2) { font-size:28px;margin:10px 0; } .root :global(.rp-card p) { font-size:11px;margin-bottom:12px; } }
