@@ -14,6 +14,7 @@
   4. **Science qualified** — not "all deep water warm+anoxic" blanket; qualify by **time/place/evidence** (§1.1). Ordovician = predation **intensifies** (not "predators first appeared"), flagged as partly a balancing device (§2, §13). Terrestriality distinguishes **sustained terrestrial activity** from **reproductive independence**; deferral is a **scope** choice, not an overstated biological gate (§1.3).
 - **Rev 3.1** — migration semantics clarified at plan hand-off: per-step source budget = `migrationRate · SIM_DT · P0`; **absolute** edge conductance (open 1.0 / soft 0.2 / hard 0) applied to **actual flow**, so soft/hard penalties reduce throughput, not just relative destination weight (§4.5, §14).
 - **Rev 3.2** — M3 headless validation + tuning: §14 numbers marked **headless scenario validated** with results table (§14.1) and recorded tuning deltas (per-region extinction floor `0.5→0.01` logic fix; fitness-weighted migration; stronger Late Devonian pulses). Migration destination weight now `headroom × fitness`.
+- **Rev 3.3** — pre-M4 engine follow-ups implemented: ordinary Cambrian/Silurian events (telegraphed, pausing briefings, mild capacity nudge — §7.1) and a mutation offer at each era transition (§6) are now built with pause/scheduling/save-resume tests. Confirmed the Late Devonian penalties leave an **alternative viable strategy**: a freshwater-refuge lineage **without** hypoxia tolerance survives (§14.1). Extinction tests now explicitly separate "end condition fires" (tested strategy-independently) from "a given strategy loses".
 
 ---
 
@@ -451,13 +452,14 @@ Abstract "population units" (pu). These are now **validated by the headless scen
 | Survival win | reference | 11, 23, 37, 101, 7 | **won**, reached Devonian |
 | Dominate win | reference | 11, 23, 37, 101, 7 | **won**, 0 missed targets, no recovery used |
 | Determinism | reference | 11 | identical outcome + step count on re-run |
-| Extinction (survival) | passive | 11, 23, 37 | **lost — extinction** |
-| Extinction (dominate) | neglect-survival | 11 | **lost — extinction** (Devonian pulses) |
+| Extinction reachable (survival) | passive | 11, 23, 37 | **lost — extinction** |
+| Extinction reachable (dominate) | neglect-survival (all-marine, no tolerance) | 11 | **lost — extinction** (Devonian pulses) |
+| **Alternative strategy** (no hypoxia) | refuge (osmoregulation → freshwater) | 11, 23, 37 | **won** — survives via the river refuge |
 | Recovery success | recover-success | 11, 23, 37 | **won** via the one recovery window |
 | Recovery miss | under-expand | 11, 23, 37 | **lost — missed target** at the recovery deadline |
 | Later miss (lifeline spent) | later-miss | 11 | **lost — missed target** in the Devonian, ≥2 misses |
 
-**Margins / trade-offs observed:** reference clears Cambrian/Ordovician targets comfortably once migration favours suitable habitat; the win depends on buying thermal (Hirnantian) and hypoxia (Devonian pulses) plus a deep-water or freshwater refuge — omitting tolerances is fatal in the Devonian, confirming "preparation matters". Policy/seed coverage: 5 seeds for reference (both modes), 3 seeds for passive/under-expand/recover-success; single seed for neglect/later-miss (deterministic, representative). **Not** a claim of fun or final balance.
+**Margins / trade-offs observed:** reference clears Cambrian/Ordovician targets comfortably once migration favours suitable habitat; the win depends on buying thermal (Hirnantian) plus **either** hypoxia tolerance **or** a freshwater refuge (osmoregulation) for the Devonian pulses — so there is more than one survival path. An all-marine lineage that buys neither dies in the pulses; a refuge lineage without hypoxia survives. Policy/seed coverage: 5 seeds for reference (both modes), 3 seeds for passive/under-expand/recover-success/refuge; single seed for neglect/later-miss (deterministic, representative). **Not** a claim of fun or final balance.
 
 ---
 

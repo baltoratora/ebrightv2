@@ -15,6 +15,7 @@ import { incomeRate, applyIncome, grantOnce } from "./economy";
 import { directedEdges, regionState } from "./regions";
 import { scheduleFor } from "../events/schedule";
 import { applyShock } from "../events/extinctions";
+import { applyOrdinary } from "../events/events";
 import { GAMEPLAY_TRAITS, exclusiveGroups, isUnlocked } from "./traits";
 import { dominateMet } from "./modes";
 
@@ -73,9 +74,10 @@ export function tick(state: SimState, rng: Rng, params: DifficultyParams): SimSt
 
   // 2. due warnings → pause (process the rest on later ticks)
   for (const ev of scheduleFor(period)) {
-    if (ev.shockAt !== undefined && elapsed >= ev.warnAt && !s.schedule.firedWarnings.includes(ev.id)) {
+    if (elapsed >= ev.warnAt && !s.schedule.firedWarnings.includes(ev.id)) {
       s = { ...s, schedule: { ...s.schedule, firedWarnings: [...s.schedule.firedWarnings, ev.id] } };
-      return pause(s, { kind: "extinctionBriefing", id: `warn:${ev.id}`, options: [], context: ev.context, requiresResume: true });
+      const kind = ev.kind === "extinction" ? "extinctionBriefing" : "event";
+      return pause(s, { kind, id: `warn:${ev.id}`, options: [], context: ev.context, requiresResume: true });
     }
   }
 
@@ -93,13 +95,17 @@ export function tick(state: SimState, rng: Rng, params: DifficultyParams): SimSt
     // no options to offer; continue this tick
   }
 
-  // 4. due shocks (warning already fired)
+  // 4. due effects (warning already fired): ordinary nudge or extinction shock
   for (const ev of scheduleFor(period)) {
-    if (ev.shockAt !== undefined && elapsed >= ev.shockAt && !s.schedule.firedShocks.includes(ev.id)) {
-      s = applyShock(s, ev.id, params);
-      if (totalPop(s) > 0) {
-        const g = grantOnce({ ep: s.ep, claimed: s.schedule.claimedGrants }, `survive:${ev.id}`, params.eventSurvivalGrant);
-        s = { ...s, ep: g.ep, schedule: { ...s.schedule, claimedGrants: g.claimed } };
+    if (elapsed >= ev.shockAt && !s.schedule.firedShocks.includes(ev.id)) {
+      if (ev.kind === "extinction") {
+        s = applyShock(s, ev.id, params);
+        if (totalPop(s) > 0) {
+          const g = grantOnce({ ep: s.ep, claimed: s.schedule.claimedGrants }, `survive:${ev.id}`, params.eventSurvivalGrant);
+          s = { ...s, ep: g.ep, schedule: { ...s.schedule, claimedGrants: g.claimed } };
+        }
+      } else {
+        s = applyOrdinary(s, ev);
       }
     }
   }

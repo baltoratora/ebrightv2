@@ -33,6 +33,9 @@ export function applyTransition(s: SimState): SimState {
     eventModifiers,
     activePenalties: [],
     objectives: { ...s.objectives, recoveryDeadline: null },
+    // offer a mutation at the start of the new period (spec §6: "+ one at each
+    // era transition"); the next tick fires it since totalElapsed ≥ nextMutationAt
+    schedule: { ...s.schedule, nextMutationAt: s.clock.totalElapsed },
   };
 }
 

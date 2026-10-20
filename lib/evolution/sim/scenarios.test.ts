@@ -12,6 +12,7 @@ import {
   recoverSuccessPolicy,
   laterMissPolicy,
   neglectSurvivalPolicy,
+  refugePolicy,
 } from "./headless";
 
 const REF_SEEDS = [11, 23, 37, 101, 7];
@@ -46,7 +47,12 @@ describe("Normal-difficulty scenarios (headless scenario validated)", () => {
     for (const p of r.trace) expect(p.ep).toBeGreaterThanOrEqual(0);
   });
 
-  it("EXTINCTION (survival): neglecting telegraphed threats drives the lineage extinct", () => {
+  // NOTE: these two tests assert that SPECIFIC unprepared strategies reach the
+  // extinction end condition — they are not a claim that any strategy lacking a
+  // given trait must lose (see the refuge test below). The extinction END
+  // CONDITION itself is tested directly, strategy-independently, in
+  // integration.test.ts ("ends the run as extinction when total ... below floor").
+  it("EXTINCTION reachable (survival): a do-nothing lineage goes extinct", () => {
     for (const seed of [11, 23, 37]) {
       const r = runHeadless({ mode: "survival", seed, policy: passivePolicy });
       expect(r.outcome.status).toBe("lost");
@@ -54,10 +60,17 @@ describe("Normal-difficulty scenarios (headless scenario validated)", () => {
     }
   });
 
-  it("EXTINCTION (dominate): an unprepared lineage goes extinct in the Devonian pulses", () => {
+  it("EXTINCTION reachable (dominate): an all-marine, no-tolerance lineage dies in the pulses", () => {
     const r = runHeadless({ mode: "dominate", seed: 11, policy: neglectSurvivalPolicy });
     expect(r.outcome.status).toBe("lost");
     expect(r.outcome.cause).toBe("extinction");
+  });
+
+  it("ALTERNATIVE strategy: a freshwater-refuge lineage survives WITHOUT hypoxia tolerance", () => {
+    for (const seed of [11, 23, 37]) {
+      const r = runHeadless({ mode: "survival", seed, policy: refugePolicy });
+      expect(r.outcome.status).toBe("won"); // the river refuge is spared the marine anoxia
+    }
   });
 
   it("RECOVERY success: recovering inside the window continues the run (to victory)", () => {

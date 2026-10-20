@@ -152,3 +152,13 @@ export const neglectSurvivalPolicy = makePolicy({
   acceptMutations: false,
   wishlist: () => ["armor", "paired-fins", "jaws"],
 });
+
+// Refuge: an alternative viable strategy WITHOUT hypoxia tolerance. It buys
+// thermal (Hirnantian) and osmoregulation (→ a freshwater river refuge the
+// marine anoxic pulses don't reach), so it survives the Late Devonian — showing
+// hypoxia is not the only path and lacking it is not automatically fatal.
+export const refugePolicy = makePolicy({
+  niche: "benthicGrazing",
+  acceptMutations: false,
+  wishlist: () => ["thermal", "osmoregulation", "armor", "paired-fins", "lobed-limbs", "airGulping"],
+});
