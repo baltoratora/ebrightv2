@@ -9,6 +9,7 @@ import {
   type Board,
   type Difficulty,
 } from "@/lib/sudoku";
+import { readSudokuProgress, pruneNotes, SUDOKU_DIFFICULTIES } from "@/lib/sudoku-progress";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
 import { GameInfo } from "@/components/GameInfo";
 
@@ -47,14 +48,7 @@ function wouldDuplicate(
   return false;
 }
 
-const DIFFICULTIES: Difficulty[] = [
-  "easy",
-  "medium",
-  "hard",
-  "expert",
-  "master",
-  "grandmaster",
-];
+const DIFFICULTIES = SUDOKU_DIFFICULTIES;
 
 export function Sudoku() {
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
@@ -69,9 +63,12 @@ export function Sudoku() {
   const [notesMode, setNotesMode] = useState(false);
   const [generating, setGenerating] = useState(true);
   const [seconds, setSeconds] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   const newGame = useCallback((diff: Difficulty) => {
     setGenerating(true);
+    setPaused(false);
+    setNotesMode(false);
     setBoard(null);
     try { localStorage.removeItem("sudoku_progress"); } catch {}
     setTimeout(() => {
@@ -94,17 +91,9 @@ export function Sudoku() {
     try {
       const raw = localStorage.getItem("sudoku_progress");
       if (raw) {
-        const saved = JSON.parse(raw) as {
-          puzzle: Board;
-          solution: Board;
-          board: Board;
-          notes: Notes;
-          history: GameState[];
-          seconds: number;
-          difficulty: Difficulty;
-          status: string;
-        };
-        if (saved.difficulty === difficulty && saved.status === "active") {
+        const saved = readSudokuProgress(JSON.parse(raw));
+        if (saved && saved.status === "active") {
+          setDifficulty(saved.difficulty);
           setPuzzle(saved.puzzle);
           setSolution(saved.solution);
           setBoard(saved.board);
@@ -124,10 +113,10 @@ export function Sudoku() {
   const won = useMemo(() => (board ? isComplete(board) : false), [board]);
 
   useEffect(() => {
-    if (generating || won) return;
-    const id = setInterval(() => setSeconds((s) => s + 1), 1000);
+    if (generating || won || paused) return;
+    const id = setInterval(() => { if (!document.hidden) setSeconds((s) => s + 1); }, 1000);
     return () => clearInterval(id);
-  }, [generating, won]);
+  }, [generating, won, paused]);
 
   // Persist progress to localStorage on every relevant state change.
   useEffect(() => {
@@ -191,10 +180,10 @@ export function Sudoku() {
   }, [board, notes]);
 
   // Apply a value (1-9) or erase (0) to a cell. Returns true if it changed
-  // something — used to decide whether to clear the selection afterward.
+  // something. Selection stays put for consistent touch/keyboard editing.
   const applyValue = useCallback(
     (r: number, c: number, num: number): boolean => {
-      if (!board || won || isGiven(r, c)) return false;
+      if (!board || won || paused || isGiven(r, c)) return false;
 
       if (notesMode && num !== 0) {
         if (board[r][c] !== 0) return false; // can't pencil into a filled cell
@@ -215,6 +204,7 @@ export function Sudoku() {
       if (num === 0 && board[r][c] === 0 && notes[r][c].length === 0)
         return false; // nothing to erase
 
+      if (num !== 0 && board[r][c] === num) return false;
       pushHistory();
       setBoard((prev) => {
         if (!prev) return prev;
@@ -222,48 +212,24 @@ export function Sudoku() {
         next[r][c] = num;
         return next;
       });
-      setNotes((prev) => {
-        const next = cloneNotes(prev);
-        next[r][c] = [];
-        return next;
-      });
+      setNotes((prev) => pruneNotes(prev, r, c, num));
       return true;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [board, notes, notesMode, won, puzzle, pushHistory],
+    [board, notes, notesMode, won, paused, puzzle, pushHistory],
   );
 
-  // Number pad: arm the digit (highlight), and if a cell is selected, fill it
-  // (cell-first). Clear the selection on a successful fill so the next pad
-  // click just re-arms instead of overwriting.
-  const onPad = useCallback(
-    (n: number) => {
-      setHighlightDigit(n);
-      if (selected && applyValue(selected[0], selected[1], n)) {
-        setSelected(null);
-      }
-    },
-    [selected, applyValue],
-  );
+  // Cell-first input keeps selection stable for both touch and keyboard.
+  const onPad = useCallback((n: number) => {
+    setHighlightDigit(n);
+    if (selected) applyValue(selected[0], selected[1], n);
+  }, [selected, applyValue]);
 
-  // Cell click: filled cell → highlight its number; empty cell with an armed
-  // digit → fill it (number-first); otherwise just select.
-  const onCell = useCallback(
-    (r: number, c: number) => {
-      if (!board) return;
-      const val = board[r][c];
-      if (val !== 0) {
-        setSelected([r, c]);
-        setHighlightDigit(val);
-      } else if (highlightDigit != null) {
-        const ok = applyValue(r, c, highlightDigit);
-        setSelected(ok ? null : [r, c]);
-      } else {
-        setSelected([r, c]);
-      }
-    },
-    [board, highlightDigit, applyValue],
-  );
+  const onCell = useCallback((r: number, c: number) => {
+    if (!board || paused) return;
+    setSelected([r, c]);
+    setHighlightDigit(board[r][c] || null);
+  }, [board, paused]);
 
   const onErase = useCallback(() => {
     if (selected) applyValue(selected[0], selected[1], 0);
@@ -300,7 +266,7 @@ export function Sudoku() {
   }, [redoStack, board, notes]);
 
   const smartNotes = useCallback(() => {
-    if (!board || won) return;
+    if (!board || won || paused) return;
     pushHistory();
     const candidates = computeCandidates(board);
     setNotes((prev) => {
@@ -309,26 +275,21 @@ export function Sudoku() {
           // Only fill empty cells (no given and no player-entered digit).
           if (board[r][c] !== 0) return cell;
           const cands = candidates[r][c];
-          if (cands.length === 0) return cell;
-          // Merge: union of existing notes and computed candidates.
-          const merged = [...new Set([...cell, ...cands])].sort(
-            (a, b) => a - b,
-          );
-          return merged;
+          return [...cands];
         }),
       );
       return next;
     });
-  }, [board, won, pushHistory]);
+  }, [board, won, paused, pushHistory]);
 
   const hint = useCallback(() => {
-    if (!board || !solution || won) return;
+    if (!board || !solution || won || paused) return;
     let target: [number, number] | null =
-      selected && board[selected[0]][selected[1]] === 0 ? selected : null;
+      selected && board[selected[0]][selected[1]] !== solution[selected[0]][selected[1]] ? selected : null;
     if (!target) {
       outer: for (let r = 0; r < 9; r++)
         for (let c = 0; c < 9; c++)
-          if (board[r][c] === 0) {
+          if (board[r][c] !== solution[r][c]) {
             target = [r, c];
             break outer;
           }
@@ -343,19 +304,21 @@ export function Sudoku() {
       next[r][c] = solution[r][c];
       return next;
     });
-    setNotes((prev) => {
-      const next = cloneNotes(prev);
-      next[r][c] = [];
-      return next;
-    });
+    setNotes((prev) => pruneNotes(prev, r, c, solution[r][c]));
     setSelected([r, c]);
-  }, [board, solution, selected, won, pushHistory]);
+  }, [board, solution, selected, won, paused, pushHistory]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (paused || e.altKey || e.isComposing) return;
       // Don't hijack keys while typing (e.g. the high-score name field).
       const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable || t.closest("nav, summary, [role=dialog]"))) return;
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key.toLowerCase() === "z") { e.preventDefault(); if (e.shiftKey) redo(); else undo(); }
+        else if (e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
+        return;
+      }
       if (e.key >= "1" && e.key <= "9") {
         const n = Number(e.key);
         setHighlightDigit(n);
@@ -379,7 +342,7 @@ export function Sudoku() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [applyValue, undo, redo, selected]);
+  }, [applyValue, undo, redo, selected, paused]);
 
   return (
     <div className="game-layout">
@@ -392,36 +355,34 @@ export function Sudoku() {
           { key: "Ctrl+Y", desc: "Redo" },
           { key: "Del", desc: "Erase cell" },
         ]}
-        tips={["Start with rows or columns that already have 7+ numbers"]}
+        tips={["Start with rows or columns that already have 7+ numbers", "Hints reveal a correct number and add 42 seconds to your time.", "Your puzzle and difficulty save automatically on this device."]}
       />
     <div className="sudoku">
       <div className="sudoku-bar">
-        <div className="seg">
-          {DIFFICULTIES.map((d) => (
-            <button
-              key={d}
-              className={`seg-btn${d === difficulty ? " active" : ""}`}
-              onClick={() => {
-                setDifficulty(d);
-                newGame(d);
-              }}
-            >
-              {d[0].toUpperCase() + d.slice(1)}
-            </button>
-          ))}
-        </div>
+        <label className="game-select-label">Difficulty
+          <select className="game-select" value={difficulty} disabled={generating} onChange={(e) => {
+            const d = e.target.value as Difficulty;
+            if (history.length > 0 && !won && !window.confirm("Replace this puzzle with a new difficulty?")) return;
+            setDifficulty(d); newGame(d);
+          }}>{DIFFICULTIES.map((d) => <option key={d} value={d}>{d[0].toUpperCase() + d.slice(1)}</option>)}</select>
+        </label>
         {!generating && !won && board ? (
           <span className="sudoku-timer">
             {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
           </span>
         ) : null}
-        <button className="btn ghost" onClick={() => newGame(difficulty)}>
-          New
+        <button className="btn ghost" onClick={() => { if (!history.length || won || window.confirm("Start a new puzzle? Your current progress will be replaced.")) newGame(difficulty); }}>
+          New puzzle
         </button>
       </div>
 
+      <div className="sudoku-play-state">
+        <span>{notesMode ? "Notes mode · pencil in possibilities" : "Select a cell, then choose a number"}</span>
+        <button className="btn ghost" disabled={generating || won} onClick={() => setPaused((p) => !p)}>{paused ? "Resume" : "Pause"}</button>
+      </div>
       <div className="sudoku-main">
         <div className="sudoku-grid-wrap">
+          {paused && <button className="sudoku-pause" onClick={() => setPaused(false)}>Paused · Tap to resume</button>}
           {generating || !board ? (
             <div className="sudoku-loading">
               <div className="spinner" />
@@ -463,6 +424,8 @@ export function Sudoku() {
                     <button
                       key={key}
                       className={cls}
+                      aria-pressed={!!isSel}
+                      disabled={paused || won}
                       onClick={() => onCell(r, c)}
                       aria-label={`Row ${r + 1}, column ${c + 1}${
                         val !== 0
@@ -525,32 +488,33 @@ export function Sudoku() {
             <button
               className="btn ghost"
               onClick={undo}
-              disabled={history.length === 0}
+              disabled={paused || history.length === 0}
+              title="Undo last move (U or Ctrl+Z)"
             >
               ↶ Undo
             </button>
             <button
               className="btn ghost"
               onClick={redo}
-              disabled={redoStack.length === 0}
+              disabled={paused || redoStack.length === 0}
             >
               ↷ Redo
             </button>
-            <button className="btn ghost" onClick={hint} disabled={won}>
-              💡 Hint
+            <button className="btn ghost" onClick={hint} title="Reveal a correct number (+42 seconds)" disabled={won || paused}>
+              Hint
             </button>
             <button
               className={`btn ghost${notesMode ? " on" : ""}`}
               onClick={() => setNotesMode((m) => !m)}
               aria-pressed={notesMode}
             >
-              ✏️ Notes {notesMode ? "on" : "off"}
+              Notes {notesMode ? "on" : "off"}
             </button>
-            <button className="btn ghost" onClick={onErase}>
+            <button className="btn ghost" onClick={onErase} disabled={paused || !selected || won}>
               ⌫ Erase
             </button>
-            <button className="btn ghost" onClick={smartNotes} disabled={won}>
-              Notes ✦
+            <button className="btn ghost" onClick={smartNotes} disabled={won || paused}>
+              Auto notes
             </button>
           </div>
         </div>

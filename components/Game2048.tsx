@@ -1,5 +1,8 @@
 "use client";
 
+import { read2048Save, type Saved2048 } from "@/lib/g2048-save";
+import { ignoreGameKey } from "@/lib/game-input";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { spawnTile, slide, canMove, isWin, type Grid } from "@/lib/g2048";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
@@ -31,14 +34,7 @@ const TILE_FG: Record<number, string> = {
 function tileBg(v: number) { return TILE_BG[v] ?? "#3c3a32"; }
 function tileFg(v: number) { return TILE_FG[v] ?? "#f9f6f2"; }
 
-type State = {
-  grid: Grid;
-  score: number;
-  best: number;
-  over: boolean;
-  won: boolean;
-  winSeen: boolean;
-};
+type State = Saved2048;
 
 const BLANK: Grid = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
 const LS_KEY = "g2048_state";
@@ -53,10 +49,12 @@ export function Game2048() {
     try {
       const raw = localStorage.getItem(LS_KEY);
       if (raw) {
-        const s = JSON.parse(raw) as State;
-        setState(s);
-        if (s.won && !s.winSeen) setShowWin(true);
-        return;
+        const s = read2048Save(JSON.parse(raw));
+        if (s) {
+          setState(s);
+          if (s.won && !s.winSeen) setShowWin(true);
+          return;
+        }
       }
     } catch {}
     setState({ grid: spawnTile(spawnTile(BLANK)), score: 0, best: 0, over: false, won: false, winSeen: false });
@@ -109,6 +107,7 @@ export function Game2048() {
   // Arrow-key input.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (ignoreGameKey(e)) return;
       // Don't hijack arrows while typing (e.g. the leaderboard name field).
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;

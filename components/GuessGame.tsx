@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CATEGORIES } from "@/lib/guess-categories";
 import {
   evaluateGuess,
+  candidateRange,
   pickAnswer,
   resolveGuess,
   sortedItems,
@@ -68,6 +69,8 @@ export function GuessGame() {
   const [status, setStatus] = useState<Status>("playing");
   const [input, setInput] = useState("");
   const [message, setMessage] = useState("");
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(true);
   const [announce, setAnnounce] = useState("");
   const [stats, setStats] = useState<Stats>(ZERO_STATS);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -83,9 +86,10 @@ export function GuessGame() {
     }
     if (initedFor.current === cat.id) return;
     initedFor.current = cat.id;
-    setStats(lsGet<Stats>(statsKey(cat.id)) ?? ZERO_STATS);
+    const storedStats = lsGet<Stats>(statsKey(cat.id));
+    setStats(storedStats && (Object.keys(ZERO_STATS) as (keyof Stats)[]).every((key) => Number.isInteger(storedStats[key]) && storedStats[key] >= 0) ? storedStats : ZERO_STATS);
     const saved = lsGet<SavedGame>(gameKey(cat.id));
-    if (saved && saved.status === "playing" && cat.items.includes(saved.answer)) {
+    if (saved && saved.status === "playing" && cat.items.includes(saved.answer) && Array.isArray(saved.guesses) && saved.guesses.every((g) => cat.items.includes(g)) && new Set(saved.guesses).size === saved.guesses.length && !saved.guesses.includes(saved.answer)) {
       setAnswer(saved.answer);
       setGuesses(saved.guesses);
       setStatus("playing");
@@ -140,6 +144,7 @@ export function GuessGame() {
     const row = evaluateGuess(resolved, answer, sorted);
     const nextGuesses = [...guesses, resolved];
     setGuesses(nextGuesses);
+    setActiveSuggestion(-1);
     setInput("");
     setMessage("");
 
@@ -161,6 +166,7 @@ export function GuessGame() {
 
   function giveUp() {
     if (!cat || status !== "playing") return;
+    if (!window.confirm("Reveal the answer and end this round?")) return;
     setStatus("gaveup");
     persistGame(answer, guesses, "gaveup");
     bumpStats((prev) => ({ ...prev, gamesPlayed: prev.gamesPlayed + 1, gaveUp: prev.gaveUp + 1 }));
@@ -173,8 +179,8 @@ export function GuessGame() {
   }
 
   const suggestions = useMemo(
-    () => (cat && status === "playing" ? suggest(input, cat, 8) : []),
-    [input, cat, status]
+    () => (cat && status === "playing" ? suggest(input, cat, 12).filter((s) => !guesses.includes(s)).slice(0, 6) : []),
+    [input, cat, status, guesses]
   );
 
   const rows = useMemo(
@@ -184,6 +190,8 @@ export function GuessGame() {
         .map((g) => evaluateGuess(g, answer, sorted)),
     [guesses, answer, sorted]
   );
+
+  const range = candidateRange(sorted, rows);
 
   const avg = stats.wins > 0 ? (stats.totalGuessesOnWins / stats.wins).toFixed(1) : "—";
 
@@ -220,7 +228,13 @@ export function GuessGame() {
           W {stats.wins} · avg {avg}
         </span>
       </div>
-      <p className="guess-caption">Guesses are arranged alphabetically</p>
+      <div className="guess-range" role="status">
+        <span>{status === "playing" ? "Your answer is in this A–Z range" : "Round complete"}</span>
+        <strong>{range ? range.first === range.last ? range.first : `${range.first} → ${range.last}` : "Choose another category"}</strong>
+        <span>{range?.count ?? 0} possibilities · {guesses.length} guesses</span>
+        <progress value={sorted.length - (range?.count ?? sorted.length)} max={sorted.length} aria-label="Search narrowed" />
+      </div>
+      <p className="guess-caption">▲ earlier · ▼ later · number = places away</p>
 
       {status === "won" && (
         <div className="guess-banner guess-banner--win">
@@ -233,7 +247,8 @@ export function GuessGame() {
         </div>
       )}
 
-      <ul className="guess-list">
+      <details className="guess-rules"><summary>About this category</summary><p>{cat.note}</p></details>
+      <ul className="guess-list" aria-label="Your guesses">
         {rows.map((r) => (
           <li key={r.item} className={`guess-row guess-row--${r.dir === "hit" ? "hit" : r.bucket}`}>
             <span className="guess-item">{r.item}</span>
@@ -248,10 +263,10 @@ export function GuessGame() {
       {status === "playing" ? (
         <div className="guess-inputbar">
           {message && <div className="guess-msg">{message}</div>}
-          {suggestions.length > 0 && input && (
-            <ul className="guess-suggest">
-              {suggestions.map((s) => (
-                <li key={s}>
+          {suggestionsOpen && suggestions.length > 0 && input && (
+            <ul className="guess-suggest" id="guess-suggestions" role="listbox" aria-label="Suggested guesses">
+              {suggestions.map((s, i) => (
+                <li key={s} id={`guess-option-${i}`} role="option" aria-selected={activeSuggestion === i}>
                   <button type="button" onClick={() => submit(s)}>
                     {s}
                   </button>
@@ -262,7 +277,7 @@ export function GuessGame() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              submit(input);
+              submit(suggestionsOpen && activeSuggestion >= 0 && suggestions[activeSuggestion] ? suggestions[activeSuggestion] : input);
             }}
           >
             <input
@@ -272,7 +287,22 @@ export function GuessGame() {
               onChange={(e) => {
                 setInput(e.target.value);
                 setMessage("");
+                setActiveSuggestion(-1);
+                setSuggestionsOpen(true);
               }}
+              onFocus={() => setSuggestionsOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowDown" && suggestions.length) { e.preventDefault(); setSuggestionsOpen(true); setActiveSuggestion((i) => Math.min(i + 1, suggestions.length - 1)); }
+                else if (e.key === "ArrowUp" && suggestions.length) { e.preventDefault(); setActiveSuggestion((i) => Math.max(i - 1, 0)); }
+                else if (e.key === "Escape") { setSuggestionsOpen(false); setActiveSuggestion(-1); }
+              }}
+              role="combobox"
+              aria-autocomplete="list"
+              aria-expanded={!!(suggestionsOpen && input && suggestions.length)}
+              aria-controls="guess-suggestions"
+              aria-activedescendant={suggestionsOpen && activeSuggestion >= 0 && suggestions[activeSuggestion] ? `guess-option-${activeSuggestion}` : undefined}
+              autoCapitalize="none"
+              spellCheck={false}
               placeholder={`Guess a ${cat.label.toLowerCase().replace(/s$/, "")}…`}
               autoComplete="off"
               aria-label={`Guess a ${cat.label}`}

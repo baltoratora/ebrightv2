@@ -1,5 +1,7 @@
 "use client";
 
+import { ignoreGameKey } from "@/lib/game-input";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { bounceOffRect, getLevelRows, getLevelSpeedMult, makeBricks, type Ball, type Brick } from "@/lib/breakout";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
@@ -314,6 +316,8 @@ export function Breakout() {
   // Keyboard controls
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (ignoreGameKey(e)) return;
+      if (e.key.startsWith("Arrow")) e.preventDefault();
       if (e.key === "ArrowLeft") padX.current = Math.max(effectivePW() / 2, padX.current - 26);
       else if (e.key === "ArrowRight") padX.current = Math.min(W - effectivePW() / 2, padX.current + 26);
       else if (e.key === " ") { e.preventDefault(); launch(); }

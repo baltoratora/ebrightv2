@@ -11,7 +11,9 @@ export function GameInfo({
   tips?: string[];
 }) {
   return (
-    <aside className="game-info">
+    <details className="game-info">
+      <summary>How to play <span aria-hidden="true">+</span></summary>
+      <div className="gi-content">
       <div className="gi-section">
         <div className="gi-heading">Controls</div>
         <ul className="gi-list">
@@ -33,6 +35,7 @@ export function GameInfo({
           </ul>
         </div>
       )}
-    </aside>
+    </div>
+    </details>
   );
 }

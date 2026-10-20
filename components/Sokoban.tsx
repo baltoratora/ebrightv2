@@ -1,5 +1,7 @@
 "use client";
 
+import { ignoreGameKey } from "@/lib/game-input";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   LEVELS,
@@ -144,6 +146,7 @@ export function Sokoban() {
   // Keyboard handler — arrow keys, WASD, Z=undo, R=reset
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (ignoreGameKey(e)) return;
       // Don't hijack typing in inputs (e.g. the leaderboard name field).
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
@@ -245,7 +248,7 @@ export function Sokoban() {
         <div className="sok-grid-wrap">
           <div
             className="sok-grid"
-            style={{ gridTemplateColumns: `repeat(${level.w}, 1fr)` }}
+            style={{ gridTemplateColumns: `repeat(${level.w}, 1fr)`, "--sok-cols": level.w } as React.CSSProperties}
           >
             {Array.from({ length: level.h }, (_, r) =>
               Array.from({ length: level.w }, (_, c) => {

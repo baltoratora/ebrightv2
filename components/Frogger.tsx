@@ -1,5 +1,7 @@
 "use client";
 
+import { ignoreGameKey } from "@/lib/game-input";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   advanceLane,
@@ -381,6 +383,7 @@ export function Frogger() {
   // ── keyboard ──────────────────────────────────────────────────────────────
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (ignoreGameKey(e)) return;
       // Don't hijack typing in inputs (e.g. the leaderboard name field).
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;

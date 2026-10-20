@@ -1,3 +1,4 @@
+import { foundationToTableau } from "./solitaire";
 import { describe, it, expect } from "vitest";
 import {
   newGame,
@@ -101,5 +102,20 @@ describe("isWin", () => {
     const g = newGame();
     g.foundations = [full("S"), full("H"), full("D"), full("C")];
     expect(isWin(g)).toBe(true);
+  });
+});
+
+describe("foundationToTableau", () => {
+  it("returns a foundation top to a legal column without mutating the original", () => {
+    const game = newGame();
+    game.foundations = [[card("S", 1), card("S", 2)], [], [], []];
+    game.tableau = [[card("H", 3)], [card("D", 5)], [], [], [], [], []];
+    const moved = foundationToTableau(game, 0, 0)!;
+    expect(moved.tableau[0].map((c) => c.id)).toEqual(["H3", "S2"]);
+    expect(moved.foundations[0]).toHaveLength(1);
+    expect(game.foundations[0]).toHaveLength(2);
+    expect(foundationToTableau(game, 0, 1)).toBeNull();
+    expect(foundationToTableau(game, 0, 2)).toBeNull();
+    expect(foundationToTableau(game, 1, 0)).toBeNull();
   });
 });

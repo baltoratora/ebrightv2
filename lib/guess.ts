@@ -113,3 +113,17 @@ export function evaluateGuess(
   const dir: Direction = ai === gi ? "hit" : ai > gi ? "down" : "up";
   return { item: guessItem, distance, dir, bucket: bucket(distance, sorted.length) };
 }
+
+/** Remaining inclusive A–Z range derived only from clues already shown. */
+export function candidateRange(sorted: string[], rows: Pick<GuessRow, "item" | "dir">[]): { first: string; last: string; count: number } | null {
+  let lo = 0;
+  let hi = sorted.length - 1;
+  for (const row of rows) {
+    const index = sorted.indexOf(row.item);
+    if (index < 0) continue;
+    if (row.dir === "hit") { lo = Math.max(lo, index); hi = Math.min(hi, index); }
+    else if (row.dir === "down") lo = Math.max(lo, index + 1);
+    else hi = Math.min(hi, index - 1);
+  }
+  return lo <= hi ? { first: sorted[lo], last: sorted[hi], count: hi - lo + 1 } : null;
+}

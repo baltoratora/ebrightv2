@@ -1,13 +1,12 @@
-import { BackBar } from "@/components/BackBar";
+import { GameShell } from "@/components/GameShell";
 import { PuzzleBobble } from "@/components/PuzzleBobble";
 
 export const metadata = { title: "Puzzle Bobble" };
 
 export default function PuzzleBobbblePage() {
   return (
-    <main className="page page--game">
-      <BackBar href="/thinking" label="← Games" />
+    <GameShell title="Puzzle Bobble" description="Shoot & match bubbles">
       <PuzzleBobble />
-    </main>
+    </GameShell>
   );
 }

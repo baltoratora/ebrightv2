@@ -1,3 +1,4 @@
+import { candidateRange } from "./guess";
 import { describe, it, expect } from "vitest";
 import { normalize, sortedItems, bucket, resolveGuess, suggest, pickAnswer, evaluateGuess } from "./guess";
 import type { Category } from "./guess";
@@ -139,5 +140,18 @@ describe("evaluateGuess", () => {
   it("sets the colour bucket from distance and list size", () => {
     // N=5: green<=ceil(.05*5)=1, yellow<=ceil(.15*5)=1 -> distance 3 is red
     expect(evaluateGuess("Ant", "Dog", sorted).bucket).toBe("red");
+  });
+});
+
+describe("candidateRange", () => {
+  const items = ["Alpha", "Beta", "Delta", "Gamma", "Omega"];
+  it("starts with the entire list, then narrows from revealed clues only", () => {
+    expect(candidateRange(items, [])).toEqual({ first: "Alpha", last: "Omega", count: 5 });
+    expect(candidateRange(items, [{ item: "Alpha", dir: "down" }, { item: "Gamma", dir: "up" }])).toEqual({ first: "Beta", last: "Delta", count: 2 });
+  });
+  it("handles solved, end-of-list and inconsistent clues", () => {
+    expect(candidateRange(items, [{ item: "Omega", dir: "hit" }])).toEqual({ first: "Omega", last: "Omega", count: 1 });
+    expect(candidateRange(items, [{ item: "Omega", dir: "down" }])).toBeNull();
+    expect(candidateRange([], [])).toBeNull();
   });
 });
