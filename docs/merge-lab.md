@@ -16,6 +16,14 @@ The collection contains eleven species in four tiers (Bubble, Ice, Crystal, Gold
 
 Progress saves to `ebright.merge-lab.v1` in browser local storage, validated on restore. New rounds reset only board and round score; best score, discoveries, coins, claimed rewards and unused tools persist. There are no server accounts or shared rankings. Storage failures show an in-game notice. Real-world evolution is not a literal linear ladder; this collection is a fictional puzzle sequence.
 
+## Upcoming blocks and progression
+
+The tray shows the current block followed by **Next 1** and **Next 2**, in actual draw order. All three levels are saved and restored exactly. A normal drop shifts the queue and appends one weighted roll. Clear, Rearrange and Omni do not consume the normal queue; when Omni is selected, the previews show the normal current block followed by Next 1.
+
+Spawn odds use the highest level reached **this round**, retained even if that specimen is cleared. New rounds reset that peak independently of the lifetime collection. The upper spawn level is `max(3, round peak)`, so the starter pool is 1–3 and the ceiling grows all the way to level 44. Each eligible level L has weight `clamp(2L + 5 - peak, 0, 4)`; divide each weight by the sum to obtain its probability. Newly rolled level-1 odds are 33.3% at peaks 1–3, 20% at peak 4, 11.1% at peak 5, 5% at peak 6 and 0% from peak 7. Level 2 retires at peak 9, level 3 at peak 11, and so on.
+
+Already advertised blocks retain their order unless a milestone makes their weight zero. Those retired entries are replaced immediately, so level 1 cannot remain queued after peak 7. Expanding **Block odds** displays the current probabilities for new rolls. Older saves retain their board and collection, infer the round peak from the current board, and initialize the previously nonexistent previews once; subsequent reloads preserve the queue.
+
 ## Implementation
 
 - `lib/merge-lab.ts`: pure game rules, tools and save validation.

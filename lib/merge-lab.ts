@@ -3,13 +3,33 @@ export const ROWS = 8;
 export const MAX_LEVEL = 44;
 export type Board = number[][];
 export type Tool = 'hammer' | 'shuffle' | 'omni';
-export type LabSave = { version: 1; board: Board; score: number; best: number; coins: number; next: number; discovered: number[]; claimed: number[]; tools: Record<Tool, number>; over: boolean };
+export type LabSave = { version: 1; board: Board; score: number; best: number; coins: number; next: number; upcoming: [number, number]; roundHighest: number; discovered: number[]; claimed: number[]; tools: Record<Tool, number>; over: boolean };
 export const SPECIES = ['Gene', 'Microbe', 'Sponge', 'Jellyfish', 'Fish', 'Mudskipper', 'Axolotl', 'Lizard', 'Dinosaur', 'Egg', 'Chick'];
 export const ICONS = ['🧬', '🦠', '🧽', '🪼', '🐟', '🐸', '🦎', '🦎', '🦖', '🥚', '🐣'];
 export function tileName(level: number) { return level === -1 ? 'Omni-gene' : `${['Bubble', 'Ice', 'Crystal', 'Golden'][Math.floor((level - 1) / 11)]} ${SPECIES[(level - 1) % 11]}`; }
 export function emptyBoard(): Board { return Array.from({ length: ROWS }, () => Array(COLS).fill(0)); }
-export function newLab(): LabSave { return { version: 1, board: emptyBoard(), score: 0, best: 0, coins: 0, next: 1, discovered: [1], claimed: [], tools: { hammer: 2, shuffle: 2, omni: 1 }, over: false }; }
-export function randomLevel(highest: number, random = Math.random): number { return 1 + Math.floor(random() * Math.min(6, Math.max(3, Math.floor(highest / 4) + 2))); }
+export function newLab(random = Math.random): LabSave { return { version: 1, board: emptyBoard(), score: 0, best: 0, coins: 0, next: 1, upcoming: [randomLevel(1, random), randomLevel(1, random)], roundHighest: 1, discovered: [1], claimed: [], tools: { hammer: 2, shuffle: 2, omni: 1 }, over: false }; }
+export function spawnOdds(highest: number): { level: number; weight: number; probability: number }[] {
+  const peak = Math.max(1, Math.min(MAX_LEVEL, Math.floor(highest)));
+  const ceiling = Math.max(3, peak);
+  const pool = Array.from({ length: ceiling }, (_, i) => ({ level: i + 1, weight: Math.max(0, Math.min(4, 2 * (i + 1) + 5 - peak)) }));
+  const total = pool.reduce((sum, item) => sum + item.weight, 0);
+  return pool.filter(item => item.weight > 0).map(item => ({ ...item, probability: item.weight / total }));
+}
+export function randomLevel(highest: number, random = Math.random): number {
+  const pool = spawnOdds(highest);
+  let roll = random() * pool.reduce((sum, item) => sum + item.weight, 0);
+  for (const item of pool) { roll -= item.weight; if (roll < 0) return item.level; }
+  return pool[pool.length - 1].level;
+}
+export function advanceQueue(save: LabSave, highest: number, consume: boolean, random = Math.random): Pick<LabSave, 'next' | 'upcoming'> {
+  const queue = consume ? [save.upcoming[0], save.upcoming[1], randomLevel(highest, random)] : [save.next, ...save.upcoming];
+  const allowed = new Set(spawnOdds(highest).map(item => item.level));
+  // Retire zero-chance queued levels immediately when a new milestone is hit.
+  // Keep every other preview in its promised order; tools never consume it.
+  const eligible = queue.map(level => allowed.has(level) ? level : randomLevel(highest, random));
+  return { next: eligible[0], upcoming: [eligible[1], eligible[2]] };
+}
 const copy = (board: Board) => board.map(row => [...row]);
 export function landingRow(board: Board, column: number): number { if (column < 0 || column >= COLS) return -1; for (let r = ROWS - 1; r >= 0; r--) if (board[r][column] === 0) return r; return -1; }
 export function settle(board: Board): void { for (let c = 0; c < COLS; c++) { const values = board.map(row => row[c]).filter(Boolean); for (let r = 0; r < ROWS; r++) board[r][c] = r < ROWS - values.length ? 0 : values[r - ROWS + values.length]; } }
@@ -98,8 +118,12 @@ export function readLabSave(input: unknown): LabSave | null {
   const count = (n: unknown) => typeof n === 'number' && Number.isSafeInteger(n) && n >= 0;
   const levels = (a: unknown): a is number[] => Array.isArray(a) && a.length <= MAX_LEVEL && a.every(n => Number.isInteger(n) && n >= 1 && n <= MAX_LEVEL) && new Set(a).size === a.length;
   if (s.version !== 1 || !Array.isArray(s.board) || s.board.length !== ROWS || s.board.some(row => !Array.isArray(row) || row.length !== COLS || row.some(n => !Number.isInteger(n) || n < -1 || n > MAX_LEVEL))) return null;
-  if (![s.score, s.best, s.coins].every(count) || !Number.isInteger(s.next) || s.next < 1 || s.next > 6 || !levels(s.discovered) || !s.discovered.includes(1) || !levels(s.claimed) || s.claimed.some(n => !s.discovered.includes(n)) || !s.tools || !['hammer', 'shuffle', 'omni'].every(t => count(s.tools[t as Tool])) || typeof s.over !== 'boolean' || s.over !== isOver(s.board)) return null;
+  if (![s.score, s.best, s.coins].every(count) || !Number.isInteger(s.next) || s.next < 1 || s.next > MAX_LEVEL || !levels(s.discovered) || !s.discovered.includes(1) || !levels(s.claimed) || s.claimed.some(n => !s.discovered.includes(n)) || !s.tools || !['hammer', 'shuffle', 'omni'].every(t => count(s.tools[t as Tool])) || typeof s.over !== 'boolean' || s.over !== isOver(s.board)) return null;
   // Only accept gravity-settled boards.
   for (let c = 0; c < COLS; c++) { let occupied = false; for (let r = 0; r < ROWS; r++) { if (s.board[r][c]) occupied = true; else if (occupied) return null; } }
-  return s;
+  const boardHighest = Math.max(1, ...s.board.flat());
+  const roundHighest = s.roundHighest === undefined ? boardHighest : s.roundHighest;
+  if (!Number.isInteger(roundHighest) || roundHighest < boardHighest || roundHighest > MAX_LEVEL || s.next > Math.max(6, roundHighest)) return null;
+  if (s.upcoming !== undefined && (!Array.isArray(s.upcoming) || s.upcoming.length !== 2 || s.upcoming.some(n => !Number.isInteger(n) || n < 1 || n > Math.max(6, roundHighest)))) return null;
+  return { ...s, roundHighest, upcoming: s.upcoming ?? [randomLevel(roundHighest), randomLevel(roundHighest)] };
 }
