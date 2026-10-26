@@ -3,32 +3,51 @@ export const ROWS = 8;
 export const MAX_LEVEL = 44;
 export type Board = number[][];
 export type Tool = 'hammer' | 'shuffle' | 'omni';
-export type LabSave = { version: 1; board: Board; score: number; best: number; coins: number; next: number; upcoming: [number, number]; roundHighest: number; discovered: number[]; claimed: number[]; tools: Record<Tool, number>; over: boolean };
+export type LabSave = { version: 1; board: Board; score: number; best: number; coins: number; next: number; upcoming: [number, number]; roundHighest: number; rescueWait: number; discovered: number[]; claimed: number[]; tools: Record<Tool, number>; over: boolean };
 export const SPECIES = ['Gene', 'Microbe', 'Sponge', 'Jellyfish', 'Fish', 'Mudskipper', 'Axolotl', 'Lizard', 'Dinosaur', 'Egg', 'Chick'];
 export const ICONS = ['🧬', '🦠', '🧽', '🪼', '🐟', '🐸', '🦎', '🦎', '🦖', '🥚', '🐣'];
 export function tileName(level: number) { return level === -1 ? 'Omni-gene' : `${['Bubble', 'Ice', 'Crystal', 'Golden'][Math.floor((level - 1) / 11)]} ${SPECIES[(level - 1) % 11]}`; }
 export function emptyBoard(): Board { return Array.from({ length: ROWS }, () => Array(COLS).fill(0)); }
-export function newLab(random = Math.random): LabSave { return { version: 1, board: emptyBoard(), score: 0, best: 0, coins: 0, next: 1, upcoming: [randomLevel(1, random), randomLevel(1, random)], roundHighest: 1, discovered: [1], claimed: [], tools: { hammer: 2, shuffle: 2, omni: 1 }, over: false }; }
-export function spawnOdds(highest: number): { level: number; weight: number; probability: number }[] {
-  const peak = Math.max(1, Math.min(MAX_LEVEL, Math.floor(highest)));
-  const ceiling = Math.max(3, peak);
-  const pool = Array.from({ length: ceiling }, (_, i) => ({ level: i + 1, weight: Math.max(0, Math.min(4, 2 * (i + 1) + 5 - peak)) }));
-  const total = pool.reduce((sum, item) => sum + item.weight, 0);
-  return pool.filter(item => item.weight > 0).map(item => ({ ...item, probability: item.weight / total }));
+export function newLab(random = Math.random): LabSave { return { version: 1, board: emptyBoard(), score: 0, best: 0, coins: 0, next: 1, upcoming: [randomLevel(1, random), randomLevel(1, random)], roundHighest: 1, rescueWait: 0, discovered: [1], claimed: [], tools: { hammer: 2, shuffle: 2, omni: 1 }, over: false }; }
+export const RESCUE_ROLL_LIMIT = 4;
+export const spawnCeiling = (highest: number) => Math.max(1, Math.min(MAX_LEVEL, Math.floor(highest)) - 2);
+function cleanupLevels(highest: number, board: Board): number[] {
+  const ceiling = spawnCeiling(highest);
+  return [...new Set(board.flat().filter(level => level > 0 && level <= ceiling && 2 * level + 5 - highest <= 0))].sort((a, b) => a - b);
 }
-export function randomLevel(highest: number, random = Math.random): number {
-  const pool = spawnOdds(highest);
-  let roll = random() * pool.reduce((sum, item) => sum + item.weight, 0);
+export function spawnOdds(highest: number, board: Board = emptyBoard()): { level: number; weight: number; probability: number }[] {
+  const peak = Math.max(1, Math.min(MAX_LEVEL, Math.floor(highest)));
+  const pool = Array.from({ length: spawnCeiling(peak) }, (_, i) => ({ level: i + 1, weight: Math.max(0, Math.min(4, 2 * (i + 1) + 5 - peak)) })).filter(item => item.weight > 0);
+  const total = pool.reduce((sum, item) => sum + item.weight, 0);
+  const cleanup = cleanupLevels(peak, board);
+  // Reserve a quarter of new rolls for retired levels still on the board.
+  // No cleanup mass is allocated when those levels have been cleared.
+  const normalShare = cleanup.length ? .75 : 1;
+  return [
+    ...pool.map(item => ({ level: item.level, weight: item.weight / total * normalShare })),
+    ...cleanup.map(level => ({ level, weight: .25 / cleanup.length })),
+  ].sort((a, b) => a.level - b.level).map(item => ({ ...item, probability: item.weight }));
+}
+export function randomLevel(highest: number, random = Math.random, board: Board = emptyBoard()): number {
+  const pool = spawnOdds(highest, board);
+  let roll = random();
   for (const item of pool) { roll -= item.weight; if (roll < 0) return item.level; }
   return pool[pool.length - 1].level;
 }
-export function advanceQueue(save: LabSave, highest: number, consume: boolean, random = Math.random): Pick<LabSave, 'next' | 'upcoming'> {
-  const queue = consume ? [save.upcoming[0], save.upcoming[1], randomLevel(highest, random)] : [save.next, ...save.upcoming];
-  const allowed = new Set(spawnOdds(highest).map(item => item.level));
-  // Retire zero-chance queued levels immediately when a new milestone is hit.
-  // Keep every other preview in its promised order; tools never consume it.
-  const eligible = queue.map(level => allowed.has(level) ? level : randomLevel(highest, random));
-  return { next: eligible[0], upcoming: [eligible[1], eligible[2]] };
+export function advanceQueue(save: LabSave, highest: number, consume: boolean, random = Math.random, board: Board = save.board): Pick<LabSave, 'next' | 'upcoming' | 'rescueWait'> {
+  const allowed = new Set(spawnOdds(highest, board).map(item => item.level));
+  const queue = (consume ? [...save.upcoming] : [save.next, ...save.upcoming])
+    .map(level => allowed.has(level) ? level : randomLevel(highest, random, board));
+  const stranded = cleanupLevels(highest, board)[0];
+  let rescueWait = !stranded || queue.includes(stranded) ? 0 : save.rescueWait;
+  if (consume) {
+    let drawn: number;
+    if (stranded && !queue.includes(stranded) && rescueWait + 1 >= RESCUE_ROLL_LIMIT) drawn = stranded;
+    else drawn = randomLevel(highest, random, board);
+    queue.push(drawn);
+    rescueWait = !stranded || queue.includes(stranded) ? 0 : rescueWait + 1;
+  }
+  return { next: queue[0], upcoming: [queue[1], queue[2]], rescueWait };
 }
 const copy = (board: Board) => board.map(row => [...row]);
 export function landingRow(board: Board, column: number): number { if (column < 0 || column >= COLS) return -1; for (let r = ROWS - 1; r >= 0; r--) if (board[r][column] === 0) return r; return -1; }
@@ -125,5 +144,9 @@ export function readLabSave(input: unknown): LabSave | null {
   const roundHighest = s.roundHighest === undefined ? boardHighest : s.roundHighest;
   if (!Number.isInteger(roundHighest) || roundHighest < boardHighest || roundHighest > MAX_LEVEL || s.next > Math.max(6, roundHighest)) return null;
   if (s.upcoming !== undefined && (!Array.isArray(s.upcoming) || s.upcoming.length !== 2 || s.upcoming.some(n => !Number.isInteger(n) || n < 1 || n > Math.max(6, roundHighest)))) return null;
-  return { ...s, roundHighest, upcoming: s.upcoming ?? [randomLevel(roundHighest), randomLevel(roundHighest)] };
+  if (s.rescueWait !== undefined && (!count(s.rescueWait) || s.rescueWait >= RESCUE_ROLL_LIMIT)) return null;
+  const migrated = { ...s, roundHighest, rescueWait: s.rescueWait ?? 0, upcoming: s.upcoming ?? [randomLevel(roundHighest, Math.random, s.board), randomLevel(roundHighest, Math.random, s.board)] };
+  // Rebalance old previews that exceed the new ceiling, while preserving every
+  // eligible advertised block and the persisted cleanup wait counter.
+  return { ...migrated, ...advanceQueue(migrated, roundHighest, false) };
 }

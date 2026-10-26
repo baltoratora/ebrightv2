@@ -18,11 +18,15 @@ Progress saves to `ebright.merge-lab.v1` in browser local storage, validated on 
 
 ## Upcoming blocks and progression
 
-The tray shows the current block followed by **Next 1** and **Next 2**, in actual draw order. All three levels are saved and restored exactly. A normal drop shifts the queue and appends one weighted roll. Clear, Rearrange and Omni do not consume the normal queue; when Omni is selected, the previews show the normal current block followed by Next 1.
+The tray shows the current block followed by **Next 1** and **Next 2**, in actual draw order. A normal drop shifts the saved queue and appends one roll. Clear, Rearrange and Omni do not consume the normal queue; selecting Omni previews the normal current block followed by Next 1.
 
-Spawn odds use the highest level reached **this round**, retained even if that specimen is cleared. New rounds reset that peak independently of the lifetime collection. The upper spawn level is `max(3, round peak)`, so the starter pool is 1–3 and the ceiling grows all the way to level 44. Each eligible level L has weight `clamp(2L + 5 - peak, 0, 4)`; divide each weight by the sum to obtain its probability. Newly rolled level-1 odds are 33.3% at peaks 1–3, 20% at peak 4, 11.1% at peak 5, 5% at peak 6 and 0% from peak 7. Level 2 retires at peak 9, level 3 at peak 11, and so on.
+The upper spawn level is `max(1, round peak - 2)`. Reaching 5 allows drops up to 3; reaching 7 allows drops up to 5; reaching 10 allows drops up to 8. The opening level-1-only pool is the necessary exception while the peak is 1. Higher specimens must be earned through merges. The round peak is retained even if that specimen is cleared and resets independently of lifetime collection on a new round.
 
-Already advertised blocks retain their order unless a milestone makes their weight zero. Those retired entries are replaced immediately, so level 1 cannot remain queued after peak 7. Expanding **Block odds** displays the current probabilities for new rolls. Older saves retain their board and collection, infer the round peak from the current board, and initialize the previously nonexistent previews once; subsequent reloads preserve the queue.
+Normal generation uses weight `clamp(2L + 5 - peak, 0, 4)` for level L, normalized over levels up to the spawn cap. Level 1 retires from normal rolls at peak 7, level 2 at peak 9, and so on. Generation reads the **fully resolved board**, including after tool-triggered chains. If retired levels remain on the board, 25% of new-roll probability is reserved for matching cleanup blocks, shared equally among the retired levels present. Once cleared, their cleanup probability disappears.
+
+The lowest retired level on the board has a starvation safeguard: if no matching block is already in the queue, four unsuccessful new draws force a matching block into Next 2. It becomes the current block after two more normal drops. Already queued matches reset the wait; tools do not advance it. This guarantees opportunities to clear stranded specimens without removing or merging them automatically.
+
+Eligible advertised blocks retain their order. Entries above the cap or retired levels no longer present on the board are replaced immediately. This also rebalances previews in existing saves under the harder rules. Exact previews and the cleanup wait persist across reloads. Older saves keep their board and collection, infer missing round peak from the board, initialize missing previews once and default the cleanup wait to zero. The expandable readout shows the drop cap, board-aware new-roll probabilities and cleanup safeguard; forced safeguard draws override the displayed base distribution.
 
 ## Implementation
 
