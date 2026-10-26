@@ -15,20 +15,58 @@ export function landingRow(board: Board, column: number): number { if (column < 
 export function settle(board: Board): void { for (let c = 0; c < COLS; c++) { const values = board.map(row => row[c]).filter(Boolean); for (let r = 0; r < ROWS; r++) board[r][c] = r < ROWS - values.length ? 0 : values[r - ROWS + values.length]; } }
 export type MergeResult = { board: Board; points: number; levels: number[]; merges: number; biggest: number; row: number };
 function resolve(board: Board, row: number, col: number, maxNeighbours = 3): MergeResult {
+  type Tile = { level: number };
+  // Keep object identities through gravity: coordinates alone become stale when
+  // a different column falls or a queued specimen is consumed by another merge.
+  const tiles = board.map(line => line.map(level => level ? { level } : null));
+  const original = tiles[row][col];
+  const pending: Tile[] = [];
+  const enqueue = (tile: Tile | null) => { if (tile && !pending.includes(tile)) pending.push(tile); };
+  enqueue(original);
+  for (let r = ROWS - 1; r >= 0; r--) for (let c = 0; c < COLS; c++) enqueue(tiles[r][c]);
   let points = 0, merges = 0, biggest = 0;
   const levels: number[] = [];
-  for (let step = 0; step < MAX_LEVEL; step++) {
-    const level = board[row][col];
-    // An omni-gene only takes the identity of the block directly above it.
-    if (row + 1 < ROWS && board[row + 1][col] === -1 && level > 0) board[row + 1][col] = level;
-    const adjacent = [[row - 1, col], [row + 1, col], [row, col - 1], [row, col + 1]].filter(([r, c]) => r >= 0 && r < ROWS && c >= 0 && c < COLS && board[r][c] === level).slice(0, maxNeighbours);
-    if (level <= 0 || level >= MAX_LEVEL || !adjacent.length) break;
-    adjacent.forEach(([r, c]) => { board[r][c] = 0; });
-    const upgraded = Math.min(MAX_LEVEL, level + adjacent.length);
-    board[row][col] = upgraded;
-    levels.push(upgraded); merges++; biggest = Math.max(biggest, adjacent.length + 1); points += upgraded * 10 * adjacent.length;
-    const below = board.slice(row + 1).filter(line => line[col] !== 0).length;
-    settle(board); row = ROWS - below - 1;
+  while (pending.length) {
+    const target = pending.shift()!;
+    let r = -1, c = -1;
+    for (let y = 0; y < ROWS; y++) {
+      const x = tiles[y].indexOf(target);
+      if (x >= 0) { r = y; c = x; break; }
+    }
+    if (r < 0 || target.level <= 0 || target.level >= MAX_LEVEL) continue;
+    // Only a normal block directly above an omni can activate it.
+    const below = r + 1 < ROWS ? tiles[r + 1][c] : null;
+    if (below?.level === -1) below.level = target.level;
+    const adjacent = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]
+      .filter(([y, x]) => y >= 0 && y < ROWS && x >= 0 && x < COLS && tiles[y][x]?.level === target.level)
+      .slice(0, maxNeighbours);
+    if (!adjacent.length) continue;
+    adjacent.forEach(([y, x]) => { tiles[y][x] = null; });
+    target.level = Math.min(MAX_LEVEL, target.level + adjacent.length);
+    levels.push(target.level); merges++; biggest = Math.max(biggest, adjacent.length + 1);
+    points += target.level * 10 * adjacent.length;
+    // Resolve the upgraded target first, then every other falling specimen.
+    // Removed tiles can remain queued safely: their identities no longer exist.
+    const moved: Tile[] = [];
+    for (let x = 0; x < COLS; x++) {
+      let destination = ROWS - 1;
+      for (let y = ROWS - 1; y >= 0; y--) {
+        const tile = tiles[y][x];
+        if (!tile) continue;
+        if (destination !== y) {
+          tiles[destination][x] = tile; tiles[y][x] = null;
+          if (tile !== target) moved.push(tile);
+        }
+        destination--;
+      }
+    }
+    const priority = [target, ...moved];
+    const remaining = pending.filter(tile => !priority.includes(tile));
+    pending.splice(0, pending.length, ...priority, ...remaining);
+  }
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+    board[r][c] = tiles[r][c]?.level ?? 0;
+    if (original && tiles[r][c] === original) row = r;
   }
   return { board, points, levels, merges, biggest, row };
 }
@@ -47,12 +85,12 @@ export function rearrange(source: Board, row: number, col: number): MergeResult 
   for (let r = bottom; r > bottom - 3; r--) for (let c = left; c < left + 3; c++) cells.push([r, c]);
   const values = cells.map(([r, c]) => board[r][c]).sort((a, b) => b - a);
   cells.forEach(([r, c], i) => { board[r][c] = values[i]; }); settle(board);
-  const total: MergeResult = { board, points: 0, levels: [], merges: 0, biggest: 0, row: bottom };
-  // Resolve pairs in the selected region after sorting and gravity.
-  for (const [r, c] of cells) if (board[r][c] > 0) { const result = resolve(board, r, c, 1); total.points += result.points; total.levels.push(...result.levels); total.merges += result.merges; total.biggest = Math.max(total.biggest, result.biggest); }
-  return total;
+  return resolve(board, bottom, left, 1);
 }
-export function hammer(source: Board, row: number, col: number): Board { const board = copy(source); board[row][col] = 0; settle(board); return board; }
+export function hammer(source: Board, row: number, col: number): MergeResult {
+  const board = copy(source); board[row][col] = 0; settle(board);
+  return resolve(board, ROWS - 1, col);
+}
 export const isOver = (board: Board) => board[0].some(Boolean);
 export function readLabSave(input: unknown): LabSave | null {
   if (!input || typeof input !== 'object') return null;

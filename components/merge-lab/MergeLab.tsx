@@ -56,7 +56,7 @@ export function MergeLab() {
   function commitResult(result: MergeResult, spent?: Tool) {
     const discovered = [...new Set([...save.discovered, ...result.levels])].sort((a, b) => a - b);
     const score = save.score + result.points;
-    setSave({ ...save, board: result.board, score, best: Math.max(save.best, score), coins: save.coins + Math.floor(result.points / 10), discovered, over: isOver(result.board), next: spent === 'shuffle' ? save.next : randomLevel(Math.max(...discovered)), tools: spent ? { ...save.tools, [spent]: save.tools[spent] - 1 } : save.tools });
+    setSave({ ...save, board: result.board, score, best: Math.max(save.best, score), coins: save.coins + Math.floor(result.points / 10), discovered, over: isOver(result.board), next: spent && spent !== 'omni' ? save.next : randomLevel(Math.max(...discovered)), tools: spent ? { ...save.tools, [spent]: save.tools[spent] - 1 } : save.tools });
     setMessage(result.merges ? `${result.biggest === 4 ? 'Quad merge!' : result.biggest === 3 ? 'Triple merge!' : 'New life!'} +${result.points} points${result.merges > 1 ? ` · ${result.merges}× chain` : ''}` : 'Keep growing. Bring matching neighbours together.');
     setTool(null);
     lock.current = true; setBusy(true);
@@ -71,7 +71,7 @@ export function MergeLab() {
     if (lock.current || save.over || !tool || !save.tools[tool]) return;
     if (tool === 'hammer') {
       if (!save.board[row][col]) { setMessage('Choose a specimen to clear.'); return; }
-      setSave({ ...save, board: hammer(save.board, row, col), tools: { ...save.tools, hammer: save.tools.hammer - 1 } }); setTool(null); setMessage('A little breathing room.');
+      commitResult(hammer(save.board, row, col), 'hammer');
     } else if (tool === 'shuffle') commitResult(rearrange(save.board, row, col), 'shuffle');
   }
   function restart() {

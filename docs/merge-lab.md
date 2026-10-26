@@ -6,11 +6,11 @@ An original cozy laboratory drop-and-merge puzzle inspired by the supplied gamep
 
 ## Play
 
-Tap a column or focus the board and use Left/Right then Enter/Space. Blocks fall to the lowest empty cell. The dropped target combines with up to three orthogonally adjacent equal-level blocks: pair +1, triple +2, quad +3. Gravity settles all columns, then the target can chain again. The board has five columns and eight rows; the top row is the warning zone. A round ends if that row remains occupied after resolution. Level 44 is terminal.
+Tap a column or focus the board and use Left/Right then Enter/Space. Blocks fall to the lowest empty cell. The dropped target combines with up to three orthogonally adjacent equal-level blocks: pair +1, triple +2, quad +3. Gravity settles all columns, then the upgraded target and every other falling specimen are rechecked until the board has no further matches. Specimen identities are preserved as columns move, with the upgraded target taking priority over secondary falls. The board has five columns and eight rows; the top row is the warning zone. A round ends if that row remains occupied after resolution. Level 44 is terminal.
 
 The collection contains eleven species in four tiers (Bubble, Ice, Crystal, Golden), for 44 levels. Each merge scores `new level × 10 × consumed neighbours`; coins are one tenth of those points. Each first discovery has a once-only reward of `level × 20` coins. The shop exchanges earned coins for tools. All currency and rewards belong to this game only.
 
-- Clear: remove one chosen block and settle its column.
+- Clear: remove one chosen block, settle its column, and resolve all resulting matches with normal points, coin and discovery credit. Clearing or rearranging preserves the next block.
 - Rearrange: sort a clamped 3×3 region from bottom-left across each row, high to low, settle, then resolve pairwise matches.
 - Omni-gene: a wild block that waits for a block directly above it; it adopts that block's level and merges. Side neighbours alone do not activate it.
 
