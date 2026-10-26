@@ -1,7 +1,78 @@
 import { describe, expect, it } from 'vitest';
-import { emptyBoard, dropBlock, newLab, readLabSave, isOver, hammer, rearrange, randomLevel, MAX_LEVEL } from './merge-lab';
+import { emptyBoard, dropBlock, newLab, readLabSave, isOver, hammer, rearrange, randomLevel, spawnOdds, advanceQueue, MAX_LEVEL } from './merge-lab';
 
 describe('Merge Lab', () => {
+  it('resolves a secondary column after the primary merge without another drop', () => {
+    const board = emptyBoard();
+    board[7][1] = 1; board[6][1] = 4;
+    board[7][0] = 4;
+    const result = dropBlock(board, 2, 1)!;
+    expect(result.board[7][1]).toBe(5);
+    expect(result.board[7][0]).toBe(0);
+    expect(result.board[7][2]).toBe(2);
+    expect(result.merges).toBe(2);
+    expect(result.points).toBe(70);
+    expect(result.levels).toEqual([1, 2, 5]);
+  });
+  it('keeps resolving multiple falling specimens by identity as columns move', () => {
+    const board = emptyBoard();
+    board[7][1] = 1; board[6][1] = 4; board[5][1] = 6;
+    board[7][0] = 4; board[6][0] = 8; board[5][0] = 6;
+    const result = dropBlock(board, 2, 1)!;
+    expect(result.board[7][1]).toBe(5);
+    expect(result.board[6][0]).toBe(7);
+    expect(result.board[7][2]).toBe(2);
+    expect(result.merges).toBe(3);
+    expect(result.points).toBe(140);
+    expect(result.levels).toEqual([1, 2, 5, 7]);
+    expect(board[6][1]).toBe(4);
+  });
+  it('resolves a falling triple in another column', () => {
+    const board = emptyBoard();
+    board[7][0] = 9;
+    board[7][1] = 4; board[6][1] = 1; board[5][1] = 4;
+    board[7][2] = 9; board[6][2] = 4;
+    const result = dropBlock(board, 0, 1)!;
+    expect(result.board[7][1]).toBe(6);
+    expect(result.biggest).toBe(3);
+    expect(result.merges).toBe(2);
+    expect(result.points).toBe(140);
+  });
+  it('credits merges caused by clearing a supporting block', () => {
+    const board = emptyBoard();
+    board[7][1] = 1; board[6][1] = 4; board[7][0] = 4;
+    const result = hammer(board, 7, 1);
+    expect(result.merges).toBe(1);
+    expect(result.points).toBe(50);
+    expect(result.levels).toEqual([5]);
+    expect(result.board[7][1]).toBe(5);
+  });
+  it('does not activate an omni underneath a terminal-level block', () => {
+    const board = emptyBoard(); board[7][1] = -1;
+    const result = dropBlock(board, 1, MAX_LEVEL)!;
+    expect(result.board[7][1]).toBe(-1);
+    expect(result.merges).toBe(0);
+  });
+  it('leaves no mergeable neighbours or floating blocks across seeded rounds', () => {
+    let seed = 271828;
+    const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
+    for (let round = 0; round < 30; round++) {
+      let board = emptyBoard();
+      for (let move = 0; move < 150 && !isOver(board); move++) {
+        const col = Math.floor(random() * 5);
+        const result = dropBlock(board, col, random() < .08 ? -1 : randomLevel(12, random))!;
+        board = result.board;
+        for (let r = 0; r < 8; r++) for (let c = 0; c < 5; c++) {
+          const level = board[r][c];
+          if (!level) continue;
+          if (r < 7) expect(board[r + 1][c]).not.toBe(0);
+          if (level <= 0 || level === MAX_LEVEL) continue;
+          if (r < 7) { expect(board[r + 1][c]).not.toBe(level); expect(board[r + 1][c]).not.toBe(-1); }
+          if (c < 4) expect(board[r][c + 1]).not.toBe(level);
+        }
+      }
+    }
+  });
   it('drops to the floor without mutating the original', () => { const b = emptyBoard(); const r = dropBlock(b, 2, 1)!; expect(r.board[7][2]).toBe(1); expect(b[7][2]).toBe(0); });
   it('merges a pair into the dropped target', () => { const b = emptyBoard(); b[7][1] = 1; const r = dropBlock(b, 2, 1)!; expect(r.board[7][2]).toBe(2); expect(r.board[7][1]).toBe(0); expect(r.points).toBe(20); });
   it('merges a triple by two levels', () => { const b = emptyBoard(); b[7][1] = b[7][3] = 1; const r = dropBlock(b, 2, 1)!; expect(r.board[7][2]).toBe(3); expect(r.biggest).toBe(3); });
@@ -12,8 +83,60 @@ describe('Merge Lab', () => {
   it('rejects full columns and invalid drops', () => { const b = emptyBoard(); b.forEach(r => { r[0] = 2; }); expect(dropBlock(b, 0, 1)).toBeNull(); expect(dropBlock(b, 5, 1)).toBeNull(); expect(dropBlock(b, 1, 45)).toBeNull(); });
   it('lets an omni match above but not sideways', () => { const b = emptyBoard(); b[7][2] = -1; b[7][1] = 3; expect(dropBlock(b, 3, 3)!.board[7][2]).toBe(-1); const r = dropBlock(b, 2, 1)!; expect(r.board[7][2]).toBe(2); });
   it('caps at level 44', () => { const b = emptyBoard(); b[7][1] = 43; b[7][3] = 43; expect(dropBlock(b, 2, 43)!.board[7][2]).toBe(MAX_LEVEL); b[7][1] = 44; expect(dropBlock(b, 2, 44)!.merges).toBe(0); });
-  it('clears and settles a column', () => { const b = emptyBoard(); b[7][2] = 1; b[6][2] = 4; expect(hammer(b, 7, 2)[7][2]).toBe(4); expect(b[7][2]).toBe(1); });
+  it('clears and settles a column', () => { const b = emptyBoard(); b[7][2] = 1; b[6][2] = 4; expect(hammer(b, 7, 2).board[7][2]).toBe(4); expect(b[7][2]).toBe(1); });
   it('rearranges a 3×3 region without changing the source', () => { const b = emptyBoard(); b[7][0] = 1; b[7][1] = 1; b[7][2] = 3; const r = rearrange(b, 7, 1); expect(r.merges).toBeGreaterThan(0); expect(b[7][1]).toBe(1); });
   it('validates saves and rejects corrupt or floating boards', () => { const s = newLab(); expect(readLabSave(s)).toEqual(s); expect(readLabSave({ ...s, coins: -1 })).toBeNull(); expect(readLabSave({ ...s, over: true })).toBeNull(); expect(readLabSave({ ...s, discovered: [99] })).toBeNull(); expect(readLabSave({ ...s, next: 0 })).toBeNull(); expect(readLabSave({ ...s, tools: {} })).toBeNull(); s.board[3][2] = 1; expect(readLabSave(s)).toBeNull(); });
-  it('keeps drops in the intended low-level pool', () => { expect(randomLevel(1, () => 0)).toBe(1); expect(randomLevel(44, () => .999)).toBe(6); });
+  it('tapers level 1 from one third to zero at round peak 7', () => {
+    const chance = (peak: number) => spawnOdds(peak).find(item => item.level === 1)?.probability ?? 0;
+    expect(chance(1)).toBeCloseTo(1 / 3);
+    expect(chance(4)).toBeCloseTo(.2);
+    expect(chance(5)).toBeCloseTo(1 / 9);
+    expect(chance(6)).toBeCloseTo(.05);
+    expect(chance(7)).toBe(0);
+    for (let peak = 8; peak <= MAX_LEVEL; peak++) expect(chance(peak)).toBe(0);
+    expect(spawnOdds(9).some(item => item.level === 2)).toBe(false);
+  });
+  it('raises the spawn ceiling with the round peak instead of capping at 4', () => {
+    for (const peak of [5, 7, 10, 20, 44]) expect(randomLevel(peak, () => .999)).toBe(peak);
+  });
+  it('normalizes every peak distribution and samples only positive weights', () => {
+    for (let peak = 1; peak <= MAX_LEVEL; peak++) {
+      const pool = spawnOdds(peak);
+      expect(pool.reduce((total, item) => total + item.probability, 0)).toBeCloseTo(1);
+      expect(pool.every(item => item.weight > 0 && item.level <= MAX_LEVEL)).toBe(true);
+      for (let i = 0; i < 100; i++) expect(pool.some(item => item.level === randomLevel(peak, () => i / 100))).toBe(true);
+    }
+    expect(randomLevel(5, () => .11)).toBe(1);
+    expect(randomLevel(5, () => .12)).toBe(2);
+    expect(randomLevel(5, () => .34)).toBe(3);
+    expect(randomLevel(44, () => .999)).toBe(44);
+  });
+  it('advances the two advertised previews in order and appends one new draw', () => {
+    const save = { ...newLab(), next: 1, upcoming: [2, 3] as [number, number] };
+    expect(advanceQueue(save, 5, true, () => .99)).toEqual({ next: 2, upcoming: [3, 5] });
+    expect(advanceQueue(save, 5, false, () => .99)).toEqual({ next: 1, upcoming: [2, 3] });
+    expect(save.upcoming).toEqual([2, 3]);
+  });
+  it('replaces retired previews immediately without reordering eligible ones', () => {
+    const save = { ...newLab(), next: 1, upcoming: [1, 3] as [number, number] };
+    expect(advanceQueue(save, 7, false, () => 0)).toEqual({ next: 2, upcoming: [2, 3] });
+    expect(advanceQueue(save, 7, true, () => 0)).toEqual({ next: 2, upcoming: [3, 2] });
+  });
+  it('saves the exact preview order and round peak independently of collection', () => {
+    const save = { ...newLab(), roundHighest: 7, next: 2, upcoming: [3, 4] as [number, number], discovered: [1, 7, 44] };
+    expect(readLabSave(JSON.parse(JSON.stringify(save)))).toEqual(save);
+    expect(newLab(() => 0).roundHighest).toBe(1);
+    expect(readLabSave({ ...save, roundHighest: 45 })).toBeNull();
+    expect(readLabSave({ ...save, upcoming: [2] })).toBeNull();
+    expect(readLabSave({ ...save, upcoming: [0, 2] })).toBeNull();
+  });
+  it('upgrades older saves without discarding the board or discoveries', () => {
+    const legacy: Record<string, unknown> = { ...newLab(), discovered: [1, 44] };
+    delete legacy.roundHighest; delete legacy.upcoming;
+    const restored = readLabSave(legacy)!;
+    expect(restored.board).toEqual(legacy.board);
+    expect(restored.discovered).toEqual([1, 44]);
+    expect(restored.roundHighest).toBe(1);
+    expect(restored.upcoming).toHaveLength(2);
+  });
 });
