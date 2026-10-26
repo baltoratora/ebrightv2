@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { emptyBoard, dropBlock, newLab, readLabSave, isOver, hammer, rearrange, randomLevel, spawnOdds, advanceQueue, MAX_LEVEL } from './merge-lab';
+import { emptyBoard, dropBlock, newLab, readLabSave, isOver, hammer, rearrange, randomLevel, spawnOdds, advanceQueue, spawnCeiling, RESCUE_ROLL_LIMIT, MAX_LEVEL } from './merge-lab';
 
 describe('Merge Lab', () => {
   it('resolves a secondary column after the primary merge without another drop', () => {
@@ -86,18 +86,18 @@ describe('Merge Lab', () => {
   it('clears and settles a column', () => { const b = emptyBoard(); b[7][2] = 1; b[6][2] = 4; expect(hammer(b, 7, 2).board[7][2]).toBe(4); expect(b[7][2]).toBe(1); });
   it('rearranges a 3×3 region without changing the source', () => { const b = emptyBoard(); b[7][0] = 1; b[7][1] = 1; b[7][2] = 3; const r = rearrange(b, 7, 1); expect(r.merges).toBeGreaterThan(0); expect(b[7][1]).toBe(1); });
   it('validates saves and rejects corrupt or floating boards', () => { const s = newLab(); expect(readLabSave(s)).toEqual(s); expect(readLabSave({ ...s, coins: -1 })).toBeNull(); expect(readLabSave({ ...s, over: true })).toBeNull(); expect(readLabSave({ ...s, discovered: [99] })).toBeNull(); expect(readLabSave({ ...s, next: 0 })).toBeNull(); expect(readLabSave({ ...s, tools: {} })).toBeNull(); s.board[3][2] = 1; expect(readLabSave(s)).toBeNull(); });
-  it('tapers level 1 from one third to zero at round peak 7', () => {
+  it('retires level 1 from normal rolls at round peak 7', () => {
     const chance = (peak: number) => spawnOdds(peak).find(item => item.level === 1)?.probability ?? 0;
-    expect(chance(1)).toBeCloseTo(1 / 3);
-    expect(chance(4)).toBeCloseTo(.2);
-    expect(chance(5)).toBeCloseTo(1 / 9);
-    expect(chance(6)).toBeCloseTo(.05);
+    expect(chance(1)).toBe(1);
+    expect(chance(4)).toBeCloseTo(3 / 7);
+    expect(chance(5)).toBeCloseTo(.2);
+    expect(chance(6)).toBeCloseTo(1 / 12);
     expect(chance(7)).toBe(0);
     for (let peak = 8; peak <= MAX_LEVEL; peak++) expect(chance(peak)).toBe(0);
     expect(spawnOdds(9).some(item => item.level === 2)).toBe(false);
   });
-  it('raises the spawn ceiling with the round peak instead of capping at 4', () => {
-    for (const peak of [5, 7, 10, 20, 44]) expect(randomLevel(peak, () => .999)).toBe(peak);
+  it('keeps the growing ceiling two levels below the peak, with a level-1 starter exception', () => {
+    for (const peak of [5, 7, 10, 20, 44]) expect(randomLevel(peak, () => .999)).toBe(peak - 2);
   });
   it('normalizes every peak distribution and samples only positive weights', () => {
     for (let peak = 1; peak <= MAX_LEVEL; peak++) {
@@ -106,21 +106,65 @@ describe('Merge Lab', () => {
       expect(pool.every(item => item.weight > 0 && item.level <= MAX_LEVEL)).toBe(true);
       for (let i = 0; i < 100; i++) expect(pool.some(item => item.level === randomLevel(peak, () => i / 100))).toBe(true);
     }
-    expect(randomLevel(5, () => .11)).toBe(1);
-    expect(randomLevel(5, () => .12)).toBe(2);
-    expect(randomLevel(5, () => .34)).toBe(3);
-    expect(randomLevel(44, () => .999)).toBe(44);
+    expect(randomLevel(5, () => .19)).toBe(1);
+    expect(randomLevel(5, () => .2)).toBe(2);
+    expect(randomLevel(5, () => .61)).toBe(3);
+    expect(randomLevel(44, () => .999)).toBe(42);
   });
   it('advances the two advertised previews in order and appends one new draw', () => {
     const save = { ...newLab(), next: 1, upcoming: [2, 3] as [number, number] };
-    expect(advanceQueue(save, 5, true, () => .99)).toEqual({ next: 2, upcoming: [3, 5] });
-    expect(advanceQueue(save, 5, false, () => .99)).toEqual({ next: 1, upcoming: [2, 3] });
+    expect(advanceQueue(save, 5, true, () => .99)).toEqual({ next: 2, upcoming: [3, 3], rescueWait: 0 });
+    expect(advanceQueue(save, 5, false, () => .99)).toEqual({ next: 1, upcoming: [2, 3], rescueWait: 0 });
     expect(save.upcoming).toEqual([2, 3]);
   });
   it('replaces retired previews immediately without reordering eligible ones', () => {
     const save = { ...newLab(), next: 1, upcoming: [1, 3] as [number, number] };
-    expect(advanceQueue(save, 7, false, () => 0)).toEqual({ next: 2, upcoming: [2, 3] });
-    expect(advanceQueue(save, 7, true, () => 0)).toEqual({ next: 2, upcoming: [3, 2] });
+    expect(advanceQueue(save, 7, false, () => 0)).toEqual({ next: 2, upcoming: [2, 3], rescueWait: 0 });
+    expect(advanceQueue(save, 7, true, () => 0)).toEqual({ next: 2, upcoming: [3, 2], rescueWait: 0 });
+  });
+  it('reserves cleanup chance only for retired levels still on the board', () => {
+    const board = emptyBoard(); board[7][0] = 1; board[7][4] = 7;
+    expect(spawnOdds(7, board).find(item => item.level === 1)?.probability).toBe(.25);
+    expect(spawnOdds(7, board).every(item => item.level <= 5)).toBe(true);
+    board[7][0] = 0;
+    expect(spawnOdds(7, board).some(item => item.level === 1)).toBe(false);
+    board[7][0] = 1; board[7][1] = 2;
+    expect(spawnOdds(9, board).filter(item => item.level <= 2).map(item => item.probability)).toEqual([.125, .125]);
+  });
+  it('guarantees a stranded level enters the previews within four new draws', () => {
+    const board = emptyBoard(); board[7][0] = 1;
+    let save = { ...newLab(), board, roundHighest: 7, next: 3, upcoming: [4, 5] as [number, number] };
+    for (let i = 1; i <= RESCUE_ROLL_LIMIT; i++) {
+      save = { ...save, ...advanceQueue(save, 7, true, () => .999) };
+      if (i < RESCUE_ROLL_LIMIT) expect([save.next, ...save.upcoming]).not.toContain(1);
+    }
+    expect(save.upcoming[1]).toBe(1);
+    expect(save.rescueWait).toBe(0);
+    const first = advanceQueue(save, 7, true, () => .999);
+    const second = advanceQueue({ ...save, ...first }, 7, true, () => .999);
+    expect(second.next).toBe(1);
+  });
+  it('does not reroll an eligible cleanup preview on tool use or reload', () => {
+    const board = emptyBoard(); board[7][0] = 1;
+    const save = { ...newLab(), board, roundHighest: 7, next: 3, upcoming: [1, 5] as [number, number] };
+    expect(advanceQueue(save, 7, false, () => .999)).toEqual({ next: 3, upcoming: [1, 5], rescueWait: 0 });
+    expect(readLabSave(JSON.parse(JSON.stringify(save)))).toEqual(save);
+  });
+  it('reads the resolved board rather than the old board when cleanup is removed', () => {
+    const board = emptyBoard(); board[7][0] = 1;
+    const save = { ...newLab(), board, roundHighest: 7, next: 3, upcoming: [1, 5] as [number, number], rescueWait: 3 };
+    expect(advanceQueue(save, 7, false, () => .999, emptyBoard())).toEqual({ next: 3, upcoming: [5, 5], rescueWait: 0 });
+  });
+  it('migrates overpowered previews and persists the cleanup wait', () => {
+    const board = emptyBoard(); board[7][0] = 1;
+    const save = { ...newLab(), board, roundHighest: 7, next: 7, upcoming: [6, 5] as [number, number], rescueWait: 3 };
+    const restored = readLabSave(save)!;
+    expect([restored.next, ...restored.upcoming].every(level => level <= spawnCeiling(7))).toBe(true);
+    expect(restored.upcoming[1]).toBe(5);
+    const waiting = { ...save, next: 3, upcoming: [4, 5] as [number, number] };
+    expect(readLabSave(JSON.parse(JSON.stringify(waiting)))?.rescueWait).toBe(3);
+    expect(readLabSave({ ...waiting, rescueWait: -1 })).toBeNull();
+    expect(readLabSave({ ...waiting, rescueWait: 4 })).toBeNull();
   });
   it('saves the exact preview order and round peak independently of collection', () => {
     const save = { ...newLab(), roundHighest: 7, next: 2, upcoming: [3, 4] as [number, number], discovered: [1, 7, 44] };
