@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { COLS, ROWS, MAX_LEVEL, type LabSave, type Tool, type MergeResult, newLab, readLabSave, tileName, landingRow, dropBlock, advanceQueue, spawnOdds, spawnCeiling, isOver, hammer, rearrange } from '@/lib/merge-lab';
+import { COLS, ROWS, MAX_LEVEL, type LabSave, type Tool, type MergeResult, newLab, readLabSave, tileName, landingRow, dropBlock, advanceQueue, spawnOdds, spawnCeiling, spawnFloor, isOver, hammer, rearrange, rearrangeCells } from '@/lib/merge-lab';
 
 const SAVE_KEY = 'ebright.merge-lab.v1';
 type Panel = 'guide' | 'collection' | 'rewards' | 'shop' | 'restart' | null;
@@ -9,8 +9,8 @@ const TIERS = ['Bubble', 'Ice', 'Crystal', 'Golden'];
 const SPRITES = ['gene', 'microbe', 'sponge', 'jellyfish', 'fish', 'mudskipper', 'axolotl', 'lizard', 'dinosaur', 'egg', 'chick'];
 const TOOLS: { id: Tool; icon: string; name: string; cost: number; description: string }[] = [
   { id: 'hammer', icon: '🔨', name: 'Clear specimen', cost: 150, description: 'Remove one block. The column settles.' },
-  { id: 'shuffle', icon: '🌀', name: 'Rearrange', cost: 250, description: 'Sort a 3×3 area, then trigger merges.' },
-  { id: 'omni', icon: '🫧', name: 'Omni-gene', cost: 200, description: 'Drop a wild block. It merges only with a block above it.' },
+  { id: 'shuffle', icon: '🌀', name: 'Rearrange', cost: 250, description: 'Choose a highlighted 3×3 area to sort and merge pairs. Empty or unchanged areas use no charge.' },
+  { id: 'omni', icon: '🫧', name: 'Omni-gene', cost: 200, description: 'Drop a wild block. It waits for a block directly above, then merges as a pair.' },
 ];
 function Specimen({ level, small = false }: { level: number; small?: boolean }) {
   return <span className={`ml-specimen ml-tier-${level < 0 ? 'omni' : Math.floor((level - 1) / 11)} ${small ? 'ml-small' : ''}`} aria-label={tileName(level)}><span className="ml-creature" aria-hidden="true" style={{ backgroundImage: `url('/merge-lab/${level < 0 ? 'omni' : SPRITES[(level - 1) % 11]}.webp')` }} /><b>{level < 0 ? '✧' : level}</b></span>;
@@ -21,6 +21,7 @@ export function MergeLab() {
   const [panel, setPanel] = useState<Panel>(null);
   const [selected, setSelected] = useState(2);
   const [tool, setTool] = useState<Tool | null>(null);
+  const [toolTarget, setToolTarget] = useState<[number, number]>([ROWS - 2, 2]);
   const [message, setMessage] = useState('A little life starts with one drop.');
   const [storageError, setStorageError] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -53,6 +54,7 @@ export function MergeLab() {
   }, [panel]);
   const highest = Math.max(...save.discovered);
   const preview = tool === 'omni' ? -1 : save.next;
+  const rearrangeArea = tool === 'shuffle' ? rearrangeCells(...toolTarget) : [];
   const upcoming = tool === 'omni' ? [save.next, save.upcoming[0]] : save.upcoming;
   function commitResult(result: MergeResult, spent?: Tool) {
     const discovered = [...new Set([...save.discovered, ...result.levels])].sort((a, b) => a - b);
@@ -74,7 +76,11 @@ export function MergeLab() {
     if (tool === 'hammer') {
       if (!save.board[row][col]) { setMessage('Choose a specimen to clear.'); return; }
       commitResult(hammer(save.board, row, col), 'hammer');
-    } else if (tool === 'shuffle') commitResult(rearrange(save.board, row, col), 'shuffle');
+    } else if (tool === 'shuffle') {
+      const result = rearrange(save.board, row, col);
+      if (!result) { setMessage('That area has nothing to rearrange. Choose another area; no charge used.'); return; }
+      commitResult(result, 'shuffle');
+    }
   }
   function restart() {
     setSave({ ...newLab(), best: save.best, coins: save.coins, discovered: save.discovered, claimed: save.claimed, tools: save.tools });
@@ -96,15 +102,15 @@ export function MergeLab() {
       <div className="ml-tray"><div><span className="ml-eyebrow">DROP NOW</span><strong>{tileName(preview)}</strong></div><Specimen level={preview} small /><div className="ml-upcoming" aria-label="Next two blocks in order">{upcoming.map((level, i) => <div key={i}><small>Next {i + 1}</small>{ready ? <Specimen level={level} small /> : <span className="ml-queue-loading">…</span>}</div>)}</div></div>
       <div className="ml-board-frame"><div className="ml-warning"><span>KEEP BELOW THE LINE</span><span>⚑</span></div>
         <div className={`ml-board ${busy ? 'ml-pulse' : ''}`} style={{ '--cols': COLS, '--rows': ROWS } as React.CSSProperties} tabIndex={0} role="group" aria-label="Merge board. Arrow keys choose a column; Enter or Space drops a block." onKeyDown={e => { if (panel) return; if (['ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(e.key)) e.preventDefault(); if (e.key === 'ArrowLeft') setSelected(c => Math.max(0, c - 1)); if (e.key === 'ArrowRight') setSelected(c => Math.min(COLS - 1, c + 1)); if (e.key === 'Enter' || e.key === ' ') drop(selected); }}>
-          {save.board.flatMap((line, r) => line.map((level, c) => <div className={`ml-cell ${r === 0 ? 'ml-danger' : ''} ${c === selected ? 'ml-selected' : ''}`} key={`${r}-${c}`}>
+          {save.board.flatMap((line, r) => line.map((level, c) => <div className={`ml-cell ${r === 0 ? 'ml-danger' : ''} ${c === selected ? 'ml-selected' : ''} ${rearrangeArea.some(([y, x]) => r === y && c === x) ? 'ml-rearrange-selected' : ''}`} key={`${r}-${c}`}>
             {level !== 0 ? <Specimen level={level} /> : (r === landingRow(save.board, selected) && c === selected && !save.over && !tool ? <span className="ml-ghost" aria-hidden="true">✧</span> : null)}
           </div>))}
           <div className="ml-column-controls">{Array.from({ length: COLS }, (_, c) => <button key={c} disabled={!ready || save.over || busy || !!panel || (!!tool && tool !== 'omni')} aria-label={`Drop ${tileName(preview)} into column ${c + 1}`} onPointerEnter={() => setSelected(c)} onFocus={() => setSelected(c)} onClick={() => { setSelected(c); drop(c); }} />)}</div>
-          {(tool === 'hammer' || tool === 'shuffle') && <div className="ml-cell-controls">{save.board.flatMap((line, r) => line.map((level, c) => <button key={`${r}-${c}`} aria-label={`${tool === 'hammer' ? 'Clear' : 'Rearrange around'} row ${r + 1}, column ${c + 1}${level ? `, ${tileName(level)}` : ', empty'}`} onClick={() => applyTool(r, c)} />))}</div>}
+          {(tool === 'hammer' || tool === 'shuffle') && <div className="ml-cell-controls">{save.board.flatMap((line, r) => line.map((level, c) => <button key={`${r}-${c}`} aria-label={`${tool === 'hammer' ? 'Clear' : 'Rearrange around'} row ${r + 1}, column ${c + 1}${level ? `, ${tileName(level)}` : ', empty'}`} onPointerEnter={() => setToolTarget([r, c])} onFocus={() => setToolTarget([r, c])} onClick={() => applyTool(r, c)} />))}</div>}
           {save.over && <div className="ml-gameover"><span>✦</span><h3>Every ending<br />is a beginning.</h3><p>Your experiment reached the warning line.<br />Round score: {save.score.toLocaleString()}</p><button onClick={restart}>Start a new experiment ↗</button><button className="ml-secondary" onClick={() => setPanel('collection')}>View your discoveries</button></div>}
         </div>
       </div>
-      <details className="ml-odds"><summary>Round peak: Lv. {save.roundHighest} · Drop cap: Lv. {spawnCeiling(save.roundHighest)}</summary><p>{spawnOdds(save.roundHighest, save.board).map(item => `Lv. ${item.level}: ${(item.probability * 100).toFixed(1)}%`).join(" · ")}</p><small>Cleanup rolls help retired levels still on your board. A matching low block is queued within four new rolls, plus the two-block preview delay.</small></details>
+      <details className="ml-odds"><summary>Round peak: Lv. {save.roundHighest} · Drop range: Lv. {spawnFloor(save.roundHighest)}–{spawnCeiling(save.roundHighest)}</summary><p>{spawnOdds(save.roundHighest, save.board).map(item => `Lv. ${item.level}: ${(item.probability * 100).toFixed(1)}%`).join(" · ")}</p><small>Three normal levels, plus at most one cleanup level still on your board. A matching low block is queued within four new rolls, plus the two-block preview delay.</small></details>
       <p className="ml-message" role="status" aria-live="polite">{message}</p>
       <div className="ml-tools" aria-label="Lab tools">{TOOLS.map(t => <button key={t.id} disabled={!ready || save.over || busy || !save.tools[t.id]} className={tool === t.id ? 'ml-active' : ''} aria-pressed={tool === t.id} onClick={() => { setTool(tool === t.id ? null : t.id); setMessage(tool === t.id ? 'Tool cancelled.' : t.description); }}><span>{t.icon}<b>{save.tools[t.id]}</b></span><small>{t.id === 'hammer' ? 'Clear' : t.id === 'shuffle' ? 'Rearrange' : 'Omni-gene'}</small></button>)}</div>
       {tool && <button className="ml-cancel" onClick={() => { setTool(null); setMessage('Tool cancelled.'); }}>Cancel tool</button>}
@@ -113,7 +119,7 @@ export function MergeLab() {
     </div>
     <aside className="ml-right"><div className="ml-next-life"><span className="ml-eyebrow">LATEST DISCOVERY</span><Specimen level={highest} /><h3>{tileName(highest)}</h3><span>LEVEL {highest} · {TIERS[Math.floor((highest - 1) / 11)].toUpperCase()}</span></div><div className="ml-rules"><h3>The art of merging</h3><p><b>02</b> Matching pair <span>+1 level</span></p><p><b>03</b> Triple merge <span>+2 levels</span></p><p><b>04</b> Quad merge <span>+3 levels</span></p><small>The dropped block is the target. Only touching blocks above, below, left or right can merge.</small></div><p className="ml-save-note">{ready ? '◌ Progress saved on this device' : 'Opening your notebook…'}</p></aside></div>
     {panel && <div className="ml-overlay" onClick={e => { if (e.target === e.currentTarget) setPanel(null); }}><div className="ml-modal" role="dialog" aria-modal="true" aria-labelledby="ml-dialog-title" ref={modal}><header><div><span className="ml-eyebrow">MERGE LAB</span><h3 id="ml-dialog-title">{titles[panel]}</h3></div><button ref={closeButton} aria-label="Close dialog" onClick={() => setPanel(null)}>×</button></header><div className="ml-modal-body">
-      {panel === 'guide' && <><div className="ml-guide-demo"><Specimen level={1} /><b>+</b><Specimen level={1} /><b>→</b><Specimen level={2} /></div><ol className="ml-guide"><li><b>Pick a column. Drop a specimen.</b><p>Tap any column to drop. On a keyboard, focus the board, choose with ← → and press Enter or Space.</p></li><li><b>Bring matching life together.</b><p>The dropped block merges with up to three matching neighbours. A pair gains 1 level, a triple gains 2, a quad gains 3. Gravity can create chain reactions. Drops stay at least two levels below your round peak (level 1 while starting). Retired low levels stop spawning once cleared, but can return as cleanup matches while still on your board. Cleanup rolls have a four-roll wait limit. The next two previews advance in order.</p></li><li><b>Make room for discovery.</b><p>The top row is the danger zone. If any specimen stays above the dashed line after a move resolves, the round ends.</p></li><li><b>A little help from the workbench.</b><p>Clear removes a block. Rearrange sorts a 3×3 area and resolves matches. An Omni-gene waits for a block directly above it, then matches that block’s level.</p></li><li><b>Keep your discoveries.</b><p>44 levels across Bubble, Ice, Crystal and Golden collections. Earn coins by merging, claim each discovery reward once, and buy tools with those coins. New rounds keep your collection, coins and tools.</p></li></ol><button className="ml-primary" onClick={() => setPanel(null)}>Let’s grow something ↗</button></>}
+      {panel === 'guide' && <><div className="ml-guide-demo"><Specimen level={1} /><b>+</b><Specimen level={1} /><b>→</b><Specimen level={2} /></div><ol className="ml-guide"><li><b>Pick a column. Drop a specimen.</b><p>Tap any column to drop. On a keyboard, focus the board, choose with ← → and press Enter or Space.</p></li><li><b>Bring matching life together.</b><p>The dropped block merges with up to three matching neighbours. A pair gains 1 level, a triple gains 2, a quad gains 3. Gravity can create chain reactions. Normal drops use at most three consecutive levels, capped two levels below your round peak (level 1 while starting). Only the lowest retired level on the board can appear as an extra cleanup level. Retired low levels stop spawning once cleared, but can return as cleanup matches while still on your board. Cleanup rolls have a four-roll wait limit. The next two previews advance in order.</p></li><li><b>Make room for discovery.</b><p>The top row is the danger zone. If any specimen stays above the dashed line after a move resolves, the round ends.</p></li><li><b>A little help from the workbench.</b><p>Clear removes a block. Rearrange highlights a 3×3 area and resolves sorted pairs before gravity. Empty or unchanged areas use no charge. An Omni-gene waits for a block directly above it and merges as a pair. Blocks beside or below it cannot activate it.</p></li><li><b>Keep your discoveries.</b><p>44 levels across Bubble, Ice, Crystal and Golden collections. Earn coins by merging, claim each discovery reward once, and buy tools with those coins. New rounds keep your collection, coins and tools.</p></li></ol><button className="ml-primary" onClick={() => setPanel(null)}>Let’s grow something ↗</button></>}
       {panel === 'collection' && <><p className="ml-intro">{save.discovered.length} of 44 specimens discovered. What will you find next?</p>{TIERS.map((tier, t) => <section key={tier}><h4 className="ml-tier-title">{tier} collection</h4><div className="ml-collection">{Array.from({ length: 11 }, (_, i) => t * 11 + i + 1).map(level => <div key={level} className={!save.discovered.includes(level) ? 'ml-locked' : ''}><small>Lv. {level}</small>{save.discovered.includes(level) ? <Specimen level={level} /> : <span className="ml-unknown">?</span>}<b>{save.discovered.includes(level) ? tileName(level) : 'Undiscovered'}</b></div>)}</div></section>)}</>}
       {panel === 'rewards' && <><p className="ml-intro">Every first discovery has a little reward. Yours to keep between rounds.</p>{Array.from({ length: MAX_LEVEL }, (_, i) => i + 1).map(level => <div className="ml-reward" key={level}><Specimen level={level} small /><div><b>{tileName(level)}</b><small>First reach level {level} · ◉ {level * 20}</small></div><button disabled={!save.discovered.includes(level) || save.claimed.includes(level)} onClick={() => claim(level)}>{save.claimed.includes(level) ? 'Claimed' : save.discovered.includes(level) ? 'Claim' : 'Locked'}</button></div>)}</>}
       {panel === 'shop' && <><p className="ml-intro">Your balance: <b>◉ {save.coins.toLocaleString()}</b>. Earn coins from merges and discovery rewards.</p>{TOOLS.map(t => <div className="ml-shop-item" key={t.id}><span>{t.icon}</span><div><h4>{t.name}</h4><p>{t.description}</p><small>In your cupboard: {save.tools[t.id]}</small></div><button disabled={save.coins < t.cost} onClick={() => buy(t.id, t.cost)}>◉ {t.cost}<small>Buy one</small></button></div>)}</>}

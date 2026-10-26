@@ -11,17 +11,19 @@ export function emptyBoard(): Board { return Array.from({ length: ROWS }, () => 
 export function newLab(random = Math.random): LabSave { return { version: 1, board: emptyBoard(), score: 0, best: 0, coins: 0, next: 1, upcoming: [randomLevel(1, random), randomLevel(1, random)], roundHighest: 1, rescueWait: 0, discovered: [1], claimed: [], tools: { hammer: 2, shuffle: 2, omni: 1 }, over: false }; }
 export const RESCUE_ROLL_LIMIT = 4;
 export const spawnCeiling = (highest: number) => Math.max(1, Math.min(MAX_LEVEL, Math.floor(highest)) - 2);
+export const spawnFloor = (highest: number) => Math.max(1, spawnCeiling(highest) - 2);
 function cleanupLevels(highest: number, board: Board): number[] {
   const ceiling = spawnCeiling(highest);
-  return [...new Set(board.flat().filter(level => level > 0 && level <= ceiling && 2 * level + 5 - highest <= 0))].sort((a, b) => a - b);
+  return [...new Set(board.flat().filter(level => level > 0 && level <= ceiling && (level < spawnFloor(highest) || 2 * level + 5 - highest <= 0)))].sort((a, b) => a - b).slice(0, 1);
 }
 export function spawnOdds(highest: number, board: Board = emptyBoard()): { level: number; weight: number; probability: number }[] {
   const peak = Math.max(1, Math.min(MAX_LEVEL, Math.floor(highest)));
-  const pool = Array.from({ length: spawnCeiling(peak) }, (_, i) => ({ level: i + 1, weight: Math.max(0, Math.min(4, 2 * (i + 1) + 5 - peak)) })).filter(item => item.weight > 0);
+  const floor = spawnFloor(peak);
+  const pool = Array.from({ length: spawnCeiling(peak) - floor + 1 }, (_, i) => ({ level: floor + i, weight: Math.max(0, Math.min(4, 2 * (floor + i) + 5 - peak)) })).filter(item => item.weight > 0);
   const total = pool.reduce((sum, item) => sum + item.weight, 0);
   const cleanup = cleanupLevels(peak, board);
-  // Reserve a quarter of new rolls for retired levels still on the board.
-  // No cleanup mass is allocated when those levels have been cleared.
+  // Reserve a quarter of new rolls for the lowest retired level still on the board.
+  // Serve one cleanup level at a time, keeping the total pool to four levels.
   const normalShare = cleanup.length ? .75 : 1;
   return [
     ...pool.map(item => ({ level: item.level, weight: item.weight / total * normalShare })),
@@ -65,7 +67,28 @@ function resolve(board: Board, row: number, col: number, maxNeighbours = 3): Mer
   for (let r = ROWS - 1; r >= 0; r--) for (let c = 0; c < COLS; c++) enqueue(tiles[r][c]);
   let points = 0, merges = 0, biggest = 0;
   const levels: number[] = [];
-  while (pending.length) {
+  const applyGravity = (): Tile[] => {
+    const moved: Tile[] = [];
+    for (let x = 0; x < COLS; x++) {
+      let destination = ROWS - 1;
+      for (let y = ROWS - 1; y >= 0; y--) {
+        const tile = tiles[y][x];
+        if (!tile) continue;
+        if (destination !== y) {
+          tiles[destination][x] = tile; tiles[y][x] = null;
+          moved.push(tile);
+        }
+        destination--;
+      }
+    }
+    return moved;
+  };
+  while (true) {
+    if (!pending.length) {
+      const moved = applyGravity();
+      if (!moved.length) break;
+      moved.forEach(enqueue);
+    }
     const target = pending.shift()!;
     let r = -1, c = -1;
     for (let y = 0; y < ROWS; y++) {
@@ -75,8 +98,7 @@ function resolve(board: Board, row: number, col: number, maxNeighbours = 3): Mer
     if (r < 0 || target.level <= 0 || target.level >= MAX_LEVEL) continue;
     // Only a normal block directly above an omni can activate it.
     const below = r + 1 < ROWS ? tiles[r + 1][c] : null;
-    if (below?.level === -1) below.level = target.level;
-    const adjacent = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]
+    const adjacent = below?.level === -1 ? [[r + 1, c]] : [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]]
       .filter(([y, x]) => y >= 0 && y < ROWS && x >= 0 && x < COLS && tiles[y][x]?.level === target.level)
       .slice(0, maxNeighbours);
     if (!adjacent.length) continue;
@@ -86,19 +108,7 @@ function resolve(board: Board, row: number, col: number, maxNeighbours = 3): Mer
     points += target.level * 10 * adjacent.length;
     // Resolve the upgraded target first, then every other falling specimen.
     // Removed tiles can remain queued safely: their identities no longer exist.
-    const moved: Tile[] = [];
-    for (let x = 0; x < COLS; x++) {
-      let destination = ROWS - 1;
-      for (let y = ROWS - 1; y >= 0; y--) {
-        const tile = tiles[y][x];
-        if (!tile) continue;
-        if (destination !== y) {
-          tiles[destination][x] = tile; tiles[y][x] = null;
-          if (tile !== target) moved.push(tile);
-        }
-        destination--;
-      }
-    }
+    const moved = applyGravity().filter(tile => tile !== target);
     const priority = [target, ...moved];
     const remaining = pending.filter(tile => !priority.includes(tile));
     pending.splice(0, pending.length, ...priority, ...remaining);
@@ -117,14 +127,26 @@ export function dropBlock(source: Board, column: number, level: number): MergeRe
   if (level > 0) result.levels.unshift(level);
   return result;
 }
-export function rearrange(source: Board, row: number, col: number): MergeResult {
-  const board = copy(source), cells: number[][] = [];
+export function rearrangeCells(row: number, col: number): [number, number][] {
+  if (!Number.isInteger(row) || !Number.isInteger(col) || row < 0 || row >= ROWS || col < 0 || col >= COLS) return [];
   const bottom = Math.max(2, Math.min(ROWS - 1, row + 1));
   const left = Math.max(0, Math.min(COLS - 3, col - 1));
+  const cells: [number, number][] = [];
   for (let r = bottom; r > bottom - 3; r--) for (let c = left; c < left + 3; c++) cells.push([r, c]);
-  const values = cells.map(([r, c]) => board[r][c]).sort((a, b) => b - a);
-  cells.forEach(([r, c], i) => { board[r][c] = values[i]; }); settle(board);
-  return resolve(board, bottom, left, 1);
+  return cells;
+}
+export function rearrange(source: Board, row: number, col: number): MergeResult | null {
+  const cells = rearrangeCells(row, col);
+  if (!cells.some(([r, c]) => source[r][c] !== 0)) return null;
+  const board = copy(source);
+  // Omni is the lowest occupied rank; empty slots must sort after it.
+  const rank = (level: number) => level === -1 ? .5 : level;
+  const values = cells.map(([r, c]) => board[r][c]).sort((a, b) => rank(b) - rank(a));
+  cells.forEach(([r, c], i) => { board[r][c] = values[i]; });
+  // Resolve sorted pairs before gravity can separate a newly formed match.
+  const result = resolve(board, cells[0][0], cells[0][1], 1);
+  if (result.points === 0 && result.board.every((line, r) => line.every((level, c) => level === source[r][c]))) return null;
+  return result;
 }
 export function hammer(source: Board, row: number, col: number): MergeResult {
   const board = copy(source); board[row][col] = 0; settle(board);
