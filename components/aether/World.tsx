@@ -63,9 +63,9 @@ export default function World(props: Props) {
     scene.fog = new T.FogExp2(0x080e19, 0.025);
     const camera = new T.OrthographicCamera(-10, 10, 8, -8, 0.1, 100);
     scene.add(
-      new T.HemisphereLight(0xe3eeff, 0x8b8197, props.studio ? 2.3 : 2),
+      new T.HemisphereLight(0xe3eeff, 0x8b8197, props.studio ? 1.2 : 2),
     );
-    const light = new T.DirectionalLight(0xffeee0, props.studio ? 2 : 3);
+    const light = new T.DirectionalLight(0xffeee0, props.studio ? 1.4 : 3);
     light.position.set(5, 12, 7);
     light.castShadow = true;
     light.shadow.mapSize.set(1024, 1024);
