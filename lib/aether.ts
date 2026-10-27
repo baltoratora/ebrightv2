@@ -1,4 +1,5 @@
 export type Look = {
+  gender: "female" | "male";
   skin: string;
   hair: string;
   color: string;
@@ -9,6 +10,7 @@ export type Look = {
   wings: boolean;
 };
 export const DEFAULT_LOOK: Look = {
+  gender: "female",
   skin: "#cf9874",
   hair: "#252238",
   color: "#354b70",
@@ -169,6 +171,7 @@ export function parseLook(v: unknown): Look {
   const hex = (x: unknown, d: string) =>
     typeof x === "string" && /^#[0-9a-f]{6}$/i.test(x) ? x : d;
   return {
+    gender: a.gender === "male" ? "male" : "female",
     skin: hex(a.skin, DEFAULT_LOOK.skin),
     hair: hex(a.hair, DEFAULT_LOOK.hair),
     color: hex(a.color, DEFAULT_LOOK.color),

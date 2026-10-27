@@ -90,3 +90,16 @@ describe("Aether progression", () => {
     expect(level({ ...s, xp: 1e8 })).toBe(50);
   });
 });
+
+it("preserves gender in saves and saved looks while migrating older looks", () => {
+  const male = { ...DEFAULT_LOOK, gender: "male" as const };
+  expect(parseLook(male).gender).toBe("male");
+  expect(readSave(JSON.stringify({ ...fresh(), look: male })).look.gender).toBe(
+    "male",
+  );
+  const { gender, ...legacy } = DEFAULT_LOOK;
+  expect(gender).toBe("female");
+  expect(parseLook(legacy).gender).toBe("female");
+  expect(parseLook({ ...legacy, gender: "invalid" }).gender).toBe("female");
+  expect(stats({ ...fresh(), look: male })).toEqual(stats(fresh()));
+});

@@ -53,6 +53,18 @@ function LookControls({
 }) {
   return (
     <div className="ae-controls">
+      <label>
+        Gender
+        <select
+          value={look.gender}
+          onChange={(e) =>
+            setLook({ ...look, gender: e.target.value as Look["gender"] })
+          }
+        >
+          <option value="female">Female</option>
+          <option value="male">Male</option>
+        </select>
+      </label>
       {(["style", "hairstyle", "weapon"] as const).map((k) => (
         <label key={k}>
           {k === "style"
@@ -565,6 +577,24 @@ export default function Aether({ studio = false }: { studio?: boolean }) {
                           setSave((s) => ({ ...s, name: e.target.value }))
                         }
                       />
+                    </label>
+                    <label>
+                      Gender
+                      <select
+                        value={save.look.gender}
+                        onChange={(e) =>
+                          setSave((s) => ({
+                            ...s,
+                            look: {
+                              ...s.look,
+                              gender: e.target.value as Look["gender"],
+                            },
+                          }))
+                        }
+                      >
+                        <option value="female">Female</option>
+                        <option value="male">Male</option>
+                      </select>
                     </label>
                     <label>
                       Class

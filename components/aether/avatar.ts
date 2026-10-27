@@ -1,20 +1,27 @@
 import * as T from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { faceMaterial } from "./face-material";
 import { prepareLitGeometry } from "./material-geometry";
 import { Look } from "@/lib/aether";
 import { avatar as lowPolyAvatar } from "./low-poly-avatar";
 
-let template: Promise<T.Group> | undefined;
-function loadTemplate() {
+const templates = new Map<Look["gender"], Promise<T.Group>>();
+function loadTemplate(gender: Look["gender"]) {
+  let template = templates.get(gender);
   if (!template) {
     template = new GLTFLoader()
-      .loadAsync("/aether/shino-base.glb")
+      .loadAsync(
+        gender === "male"
+          ? "/aether/fumiriya-base.glb"
+          : "/aether/shino-base.glb",
+      )
       .then((g) => g.scene)
       .catch((error) => {
-        template = undefined;
+        templates.delete(gender);
         throw error;
       });
+    templates.set(gender, template);
   }
   return template;
 }
@@ -25,7 +32,7 @@ export function avatar(look: Look) {
   root.userData.arms = [];
   root.userData.ready = false;
   root.userData.disposed = false;
-  const ready = loadTemplate()
+  const ready = loadTemplate(look.gender)
     .then((source) => {
       if (root.userData.disposed) return;
       const model = clone(source) as T.Group;
@@ -55,16 +62,18 @@ export function avatar(look: Look) {
           else if (/Shoes/.test(name)) color = "#29313f";
           else if (/SKIN/.test(name))
             color = new T.Color(look.skin).lerp(new T.Color("#ffffff"), 0.48);
-          const material = new T.MeshToonMaterial({
-            name,
-            color,
-            map,
-            side: T.DoubleSide,
-            transparent: old.transparent,
-            opacity: old.opacity,
-            alphaTest: old.alphaTest,
-            depthWrite: !old.transparent,
-          });
+          const material =
+            faceMaterial(old, map, look) ??
+            new T.MeshToonMaterial({
+              name,
+              color,
+              map,
+              side: T.DoubleSide,
+              transparent: old.transparent,
+              opacity: old.opacity,
+              alphaTest: old.alphaTest,
+              depthWrite: !old.transparent,
+            });
           materials.set(old, material);
           return material;
         };
@@ -85,7 +94,11 @@ export function avatar(look: Look) {
             if (y < 1.43)
               p.setY(
                 i,
-                1.43 - (1.43 - y) * (look.hairstyle === "short" ? 0.19 : 0.45),
+                (() => {
+                  const t = T.MathUtils.smoothstep(y, 1.15, 1.43);
+                  const scale = look.hairstyle === "short" ? 0.45 : 0.7;
+                  return y + (1.43 - y) * (1 - scale) * (1 - t);
+                })(),
               );
           }
           p.needsUpdate = true;
