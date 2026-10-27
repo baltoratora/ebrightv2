@@ -1,6 +1,7 @@
 import * as T from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
+import { prepareLitGeometry } from "./material-geometry";
 import { Look } from "@/lib/aether";
 import { avatar as lowPolyAvatar } from "./low-poly-avatar";
 
@@ -33,8 +34,11 @@ export function avatar(look: Look) {
       const geometries = new Map<T.BufferGeometry, T.BufferGeometry>();
       model.traverse((object) => {
         if (!(object instanceof T.Mesh)) return;
-        if (!geometries.has(object.geometry))
-          geometries.set(object.geometry, object.geometry.clone());
+        if (!geometries.has(object.geometry)) {
+          const geometry = object.geometry.clone();
+          prepareLitGeometry(geometry);
+          geometries.set(object.geometry, geometry);
+        }
         object.geometry = geometries.get(object.geometry)!;
         const convert = (old: T.MeshStandardMaterial) => {
           if (materials.has(old)) return materials.get(old)!;
