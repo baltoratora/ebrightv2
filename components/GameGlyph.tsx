@@ -1,5 +1,7 @@
 /** Small, original SVG symbols stay crisp without platform emoji fonts. */
 const PATHS: Record<string, string[]> = {
+  "aether-rift": ["M4 3l14 14 M15 14l5 5 M3 4l2 5 11 9 2-2L9 5z M13 19l6-6 M4 21l5-5"],
+  "aether-atelier": ["M9 3h6l1 6 5 12H3L8 9z M8 9h8 M9 3L5 6 M15 3l4 3"],
   "merge-lab": ["M8 3v6l-5 9q-1 3 2 3h14q3 0 2-3l-5-9V3 M6 3h12 M6 15h12 M9 18h.01 M14 12h.01 M15 18h.01"],
   "blast-arena": ["M17 14a7 7 0 1 1-14 0 7 7 0 0 1 14 0 M13 8l2-4 3 1 M19 2v3 M19 8h3 M21 3l-2 2"],
   sudoku: ["M4 4h16v16H4z M9 4v16 M15 4v16 M4 9h16 M4 15h16"],
