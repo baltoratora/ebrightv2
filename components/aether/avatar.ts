@@ -1,173 +1,361 @@
 import * as T from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { Look } from "@/lib/aether";
+import { avatar as lowPolyAvatar } from "./low-poly-avatar";
+
+let template: Promise<T.Group> | undefined;
+function loadTemplate() {
+  if (!template) {
+    template = new GLTFLoader()
+      .loadAsync("/aether/shino-base.glb")
+      .then((g) => g.scene)
+      .catch((error) => {
+        template = undefined;
+        throw error;
+      });
+  }
+  return template;
+}
+
+/** The CC0 VRoid base supplies the face, topology and skeleton. Fantasy accessories are original. */
 export function avatar(look: Look) {
   const root = new T.Group();
-  const armor = new T.MeshStandardMaterial({
+  root.userData.arms = [];
+  root.userData.ready = false;
+  root.userData.disposed = false;
+  const ready = loadTemplate()
+    .then((source) => {
+      if (root.userData.disposed) return;
+      const model = clone(source) as T.Group;
+      const textures = new Map<T.Texture, T.Texture>();
+      const materials = new Map<T.Material, T.Material>();
+      const geometries = new Map<T.BufferGeometry, T.BufferGeometry>();
+      model.traverse((object) => {
+        if (!(object instanceof T.Mesh)) return;
+        if (!geometries.has(object.geometry))
+          geometries.set(object.geometry, object.geometry.clone());
+        object.geometry = geometries.get(object.geometry)!;
+        const convert = (old: T.MeshStandardMaterial) => {
+          if (materials.has(old)) return materials.get(old)!;
+          let map = old.map;
+          if (map) {
+            if (!textures.has(map)) textures.set(map, map.clone());
+            map = textures.get(map)!;
+          }
+          const name = old.name;
+          let color: T.ColorRepresentation = old.color;
+          if (/HAIR|FaceBrow/.test(name)) color = look.hair;
+          else if (/Tops|Bottoms/.test(name)) color = look.color;
+          else if (/AccessoryNeck|EyeIris/.test(name)) color = look.trim;
+          else if (/Shoes/.test(name)) color = "#29313f";
+          else if (/SKIN/.test(name))
+            color = new T.Color(look.skin).lerp(new T.Color("#ffffff"), 0.48);
+          const material = new T.MeshToonMaterial({
+            name,
+            color,
+            map,
+            side: T.DoubleSide,
+            transparent: old.transparent,
+            opacity: old.opacity,
+            alphaTest: old.alphaTest,
+            depthWrite: !old.transparent,
+          });
+          materials.set(old, material);
+          return material;
+        };
+        object.material = Array.isArray(object.material)
+          ? object.material.map((m) => convert(m as T.MeshStandardMaterial))
+          : convert(object.material as T.MeshStandardMaterial);
+        object.castShadow = true;
+        object.receiveShadow = false;
+        object.frustumCulled = false;
+        // Hair geometry remains skinned. Compress long strands below the jaw for the bob / swept styles.
+        const name = Array.isArray(object.material)
+          ? object.material.map((m) => m.name).join(" ")
+          : object.material.name;
+        if (/HAIR/.test(name) && look.hairstyle !== "long") {
+          const p = object.geometry.getAttribute("position");
+          for (let i = 0; i < p.count; i++) {
+            const y = p.getY(i);
+            if (y < 1.43)
+              p.setY(
+                i,
+                1.43 - (1.43 - y) * (look.hairstyle === "short" ? 0.19 : 0.45),
+              );
+          }
+          p.needsUpdate = true;
+          object.geometry.computeVertexNormals();
+        }
+      });
+      const armL = model.getObjectByName("J_Bip_L_UpperArm");
+      const armR = model.getObjectByName("J_Bip_R_UpperArm");
+      if (armL) armL.rotation.z = 1.22;
+      if (armR) armR.rotation.z = -1.22;
+      const head = model.getObjectByName("J_Bip_C_Head");
+      if (head) head.rotation.z = 0.035;
+      // VRM 0.x faces -Z. Normalise the game-facing orientation and overall height.
+      model.rotation.y = Math.PI;
+      model.scale.setScalar(1.5);
+      root.add(model);
+      root.userData.arms = [armL, armR].filter(Boolean);
+      root.userData.head = head;
+      root.userData.legs = [
+        model.getObjectByName("J_Bip_L_UpperLeg"),
+        model.getObjectByName("J_Bip_R_UpperLeg"),
+      ].filter(Boolean);
+      root.userData.baseArmZ = [1.22, -1.22];
+      addWardrobe(model, look);
+      root.userData.ready = true;
+    })
+    .catch(() => {
+      if (root.userData.disposed) return;
+      const fallback = lowPolyAvatar(look);
+      root.add(fallback);
+      root.userData.arms = fallback.userData.arms;
+      root.userData.loadError =
+        "Anime model could not load. Showing the lightweight character; reload to retry.";
+      root.userData.ready = true;
+    });
+  root.userData.loading = ready;
+  return root;
+}
+
+function addWardrobe(model: T.Group, look: Look) {
+  const cloth = new T.MeshToonMaterial({
     color: look.color,
-    metalness: 0.65,
-    roughness: 0.32,
+    side: T.DoubleSide,
   });
-  const trim = new T.MeshStandardMaterial({
+  const lining = new T.MeshToonMaterial({
+    color: "#eee4ce",
+    side: T.DoubleSide,
+  });
+  const leather = new T.MeshToonMaterial({ color: "#443143" });
+  const gold = new T.MeshToonMaterial({ color: "#cfae76" });
+  const glow = new T.MeshToonMaterial({
     color: look.trim,
     emissive: look.trim,
-    emissiveIntensity: 0.6,
-    metalness: 0.4,
-    roughness: 0.25,
+    emissiveIntensity: 0.2,
   });
-  const skin = new T.MeshStandardMaterial({ color: look.skin, roughness: 0.8 });
-  const hair = new T.MeshStandardMaterial({ color: look.hair, roughness: 0.7 });
-  const dark = new T.MeshStandardMaterial({ color: 0x18202c, roughness: 0.6 });
-  function part(
+  function mesh(
     g: T.BufferGeometry,
     m: T.Material,
     x: number,
     y: number,
     z: number,
-    parent: T.Object3D = root,
+    parent: T.Object3D = model,
   ) {
-    const p = new T.Mesh(g, m);
-    p.position.set(x, y, z);
-    p.castShadow = true;
-    p.receiveShadow = true;
-    parent.add(p);
-    return p;
+    const o = new T.Mesh(g, m);
+    o.position.set(x, y, z);
+    o.castShadow = true;
+    parent.add(o);
+    return o;
   }
-  const sphere = (
-    x: number,
-    y: number,
-    z: number,
+  function ribbon(
+    points: T.Vector3[],
+    radius: number,
     m: T.Material,
-    sx: number,
-    sy: number,
-    sz: number,
-  ) => {
-    const p = part(new T.SphereGeometry(1, 16, 12), m, x, y, z);
-    p.scale.set(sx, sy, sz);
-    return p;
-  };
-  for (const x of [-0.23, 0.23]) {
-    part(new T.CylinderGeometry(0.16, 0.13, 0.65, 10), dark, x, 0.72, 0);
-    part(new T.CylinderGeometry(0.19, 0.14, 0.5, 8), armor, x, 0.28, 0);
-    sphere(x, 0.13, 0.12, armor, 0.19, 0.13, 0.3);
-    part(new T.BoxGeometry(0.11, 0.4, 0.08), trim, x, 0.37, 0.16);
+    parent: T.Object3D = model,
+  ) {
+    return mesh(
+      new T.TubeGeometry(new T.CatmullRomCurve3(points), 24, radius, 6, false),
+      m,
+      0,
+      0,
+      0,
+      parent,
+    );
   }
-  const torso = part(
-    new T.CylinderGeometry(0.43, 0.28, 0.7, 8),
-    armor,
+  const chest =
+    model.getObjectByName("J_Bip_C_UpperChest") ??
+    model.getObjectByName("J_Bip_C_Chest") ??
+    model;
+  if (look.style === "robe") {
+    // Open-front cape, with an ivory hem; the original fully clothed base stays underneath.
+    const points = [];
+    for (let i = 0; i <= 16; i++) {
+      const t = i / 16;
+      points.push(new T.Vector2(0.15 + t * 0.26, 1.32 - t * 0.85));
+    }
+    const cape = mesh(
+      new T.LatheGeometry(points, 32, -Math.PI * 0.52, Math.PI * 1.04),
+      cloth,
+      0,
+      0,
+      0.06,
+    );
+    cape.scale.z = 0.75;
+    const hem = [];
+    for (let i = 0; i <= 30; i++) {
+      const a = -Math.PI * 0.52 + (i / 30) * Math.PI * 1.04;
+      hem.push(
+        new T.Vector3(0.41 * Math.sin(a), 0.47, 0.06 + 0.3075 * Math.cos(a)),
+      );
+    }
+    ribbon(hem, 0.012, gold);
+    const collar = mesh(
+      new T.TorusGeometry(0.115, 0.035, 8, 32),
+      lining,
+      0,
+      0.07,
+      0,
+      chest,
+    );
+    collar.rotation.x = Math.PI / 2;
+    collar.scale.x = 1.35;
+  } else if (look.style === "plate") {
+    const breast = mesh(
+      new T.SphereGeometry(1, 20, 16),
+      cloth,
+      0,
+      -0.04,
+      -0.055,
+      chest,
+    );
+    breast.scale.set(0.145, 0.13, 0.075);
+    for (const side of [-1, 1]) {
+      const arm = model.getObjectByName(
+        side < 0 ? "J_Bip_L_UpperArm" : "J_Bip_R_UpperArm",
+      );
+      if (arm) {
+        const pauldron = mesh(
+          new T.SphereGeometry(1, 16, 12),
+          lining,
+          side * 0.025,
+          0,
+          0,
+          arm,
+        );
+        pauldron.scale.set(0.08, 0.07, 0.085);
+        const band = mesh(
+          new T.TorusGeometry(0.07, 0.009, 6, 24),
+          gold,
+          side * 0.04,
+          0,
+          0,
+          arm,
+        );
+        band.rotation.y = Math.PI / 2;
+      }
+    }
+  } else {
+    const strap = mesh(
+      new T.BoxGeometry(0.035, 0.3, 0.018),
+      leather,
+      0,
+      -0.07,
+      -0.105,
+      chest,
+    );
+    strap.rotation.z = -0.4;
+    mesh(new T.BoxGeometry(0.12, 0.12, 0.075), leather, 0.16, 0.84, -0.08);
+    mesh(new T.BoxGeometry(0.035, 0.045, 0.01), gold, 0.16, 0.85, -0.123);
+  }
+  const clasp = mesh(
+    new T.OctahedronGeometry(0.027),
+    glow,
     0,
-    1.36,
+    0.015,
+    -0.105,
+    chest,
+  );
+  clasp.scale.y = 1.3;
+  const belt = mesh(
+    new T.CylinderGeometry(0.112, 0.115, 0.034, 32),
+    leather,
+    0,
+    0.96,
     0,
   );
-  torso.scale.z = 0.66;
-  part(new T.CylinderGeometry(0.3, 0.32, 0.15, 10), dark, 0, 0.96, 0);
-  part(new T.OctahedronGeometry(0.14), trim, 0, 1.42, 0.3);
-  if (look.style === "robe") {
-    const skirt = part(
-      new T.CylinderGeometry(0.28, 0.61, 0.8, 12),
-      armor,
-      0,
-      0.63,
-      0,
-    );
-    skirt.scale.z = 0.72;
-  } else if (look.style === "ranger") {
-    part(new T.BoxGeometry(0.12, 0.75, 0.51), dark, 0.17, 1.32, 0).rotation.z =
-      0.4;
+  belt.scale.z = 0.75;
+  mesh(new T.BoxGeometry(0.045, 0.038, 0.018), gold, 0, 0.96, -0.087);
+  if (look.hairstyle === "crest") {
+    const head = model.getObjectByName("J_Bip_C_Head");
+    if (head) {
+      const arc = [];
+      for (let i = 0; i <= 20; i++) {
+        const a = (i / 20) * Math.PI;
+        arc.push(
+          new T.Vector3(
+            Math.cos(a) * 0.095,
+            0.065 + Math.sin(a) * 0.105,
+            -0.015,
+          ),
+        );
+      }
+      ribbon(arc, 0.008, gold, head);
+      mesh(new T.OctahedronGeometry(0.024), glow, 0, 0.18, -0.018, head);
+    }
   }
-  const arms: T.Group[] = [];
-  for (const x of [-0.53, 0.53]) {
-    const a = new T.Group();
-    a.position.set(x, 1.55, 0);
-    root.add(a);
-    arms.push(a);
-    const shoulder = part(
-      new T.IcosahedronGeometry(look.style === "plate" ? 0.29 : 0.19, 0),
-      armor,
-      0,
-      0,
-      0,
-      a,
-    );
-    shoulder.scale.y = 0.7;
-    part(new T.CylinderGeometry(0.12, 0.1, 0.65, 10), armor, 0, -0.38, 0, a);
-    part(new T.SphereGeometry(0.12, 12, 8), skin, 0, -0.76, 0, a);
-    part(
-      new T.TorusGeometry(0.14, 0.035, 6, 16),
-      trim,
-      0,
-      -0.5,
-      0,
-      a,
-    ).rotation.x = Math.PI / 2;
-  }
-  part(new T.CylinderGeometry(0.12, 0.13, 0.16, 12), skin, 0, 1.79, 0);
-  sphere(0, 2.02, 0, skin, 0.25, 0.31, 0.23);
-  sphere(0, 2.19, -0.025, hair, 0.26, 0.18, 0.24);
-  for (const x of [-0.09, 0.09]) {
-    sphere(x, 2.04, 0.211, dark, 0.037, 0.025, 0.025);
-    sphere(x, 2.045, 0.232, trim, 0.016, 0.015, 0.01);
-  }
-  sphere(0, 1.98, 0.235, skin, 0.035, 0.055, 0.045);
-  if (look.hairstyle === "long") sphere(0, 1.84, -0.18, hair, 0.27, 0.44, 0.13);
-  if (look.hairstyle === "crest")
-    for (let i = 0; i < 5; i++)
-      part(new T.ConeGeometry(0.1, 0.35, 5), hair, 0, 2.38, -0.17 + i * 0.08);
-  for (let i = 0; i < 5; i++) {
-    const p = part(
-      new T.ConeGeometry(0.09, 0.23, 5),
-      hair,
-      -0.2 + i * 0.1,
-      2.13,
-      0.16,
-    );
-    p.rotation.z = 0.5;
-    p.rotation.x = Math.PI;
-  }
-  const weapon = (a: T.Group) => {
-    part(new T.CylinderGeometry(0.045, 0.045, 0.32, 8), dark, 0, -0.8, 0.08, a);
+  const equip = (left: boolean) => {
+    const hand = model.getObjectByName(left ? "J_Bip_L_Hand" : "J_Bip_R_Hand");
+    if (!hand) return;
+    const g = new T.Group();
+    hand.add(g);
+    g.rotation.z = left ? -1.22 : 1.22;
     if (look.weapon === "staff") {
-      part(
-        new T.CylinderGeometry(0.04, 0.05, 1.7, 8),
-        armor,
+      mesh(
+        new T.CylinderGeometry(0.015, 0.021, 1.1, 12),
+        leather,
         0,
-        -0.65,
-        0.08,
-        a,
+        0.12,
+        0,
+        g,
       );
-      part(new T.OctahedronGeometry(0.23), trim, 0, 0.3, 0.08, a);
-      part(new T.TorusGeometry(0.29, 0.025, 6, 24), trim, 0, 0.3, 0.08, a);
+      mesh(new T.TorusGeometry(0.11, 0.012, 8, 32), gold, 0, 0.72, 0, g);
+      mesh(new T.OctahedronGeometry(0.07), glow, 0, 0.72, 0, g);
     } else {
-      part(new T.BoxGeometry(0.42, 0.07, 0.13), armor, 0, -0.6, 0.08, a);
-      part(new T.ConeGeometry(0.16, 1.1, 4), trim, 0, -0.02, 0.08, a);
+      mesh(new T.CylinderGeometry(0.018, 0.018, 0.12, 8), leather, 0, 0, 0, g);
+      mesh(new T.BoxGeometry(0.18, 0.025, 0.035), gold, 0, 0.075, 0, g);
+      const blade = mesh(
+        new T.ConeGeometry(0.045, look.weapon === "blades" ? 0.4 : 0.6, 4),
+        lining,
+        0,
+        look.weapon === "blades" ? 0.29 : 0.39,
+        0,
+        g,
+      );
+      blade.scale.z = 0.3;
+      mesh(new T.OctahedronGeometry(0.025), glow, 0, 0.075, -0.025, g);
     }
   };
-  weapon(arms[1]);
-  if (look.weapon === "blades") weapon(arms[0]);
+  equip(false);
+  if (look.weapon === "blades") equip(true);
   if (look.wings)
     for (const sign of [-1, 1])
-      for (let i = 0; i < 5; i++) {
-        const feather = part(
-          new T.ConeGeometry(0.13, 1.1 - i * 0.1, 4),
-          trim,
-          sign * (0.43 + i * 0.15),
-          1.6 - i * 0.12,
-          -0.23,
+      for (let i = 0; i < 6; i++) {
+        const feather = mesh(
+          new T.SphereGeometry(1, 12, 8),
+          i % 2 ? lining : glow,
+          sign * (0.16 + i * 0.045),
+          1.22 - i * 0.045,
+          0.12 + i * 0.018,
         );
-        feather.rotation.z = -sign * (0.65 + i * 0.13);
+        feather.scale.set(0.035, 0.22 - i * 0.015, 0.014);
+        feather.rotation.z = -sign * (0.6 + i * 0.13);
       }
-  root.userData.arms = arms;
-  return root;
 }
+
 export function disposeScene(root: T.Object3D) {
+  root.userData.disposed = true;
   const geometries = new Set<T.BufferGeometry>(),
-    materials = new Set<T.Material>();
+    materials = new Set<T.Material>(),
+    textures = new Set<T.Texture>(),
+    skeletons = new Set<T.Skeleton>();
   root.traverse((o) => {
+    o.userData.disposed = true;
+    if (o instanceof T.SkinnedMesh) skeletons.add(o.skeleton);
     if (o instanceof T.Mesh) {
       geometries.add(o.geometry);
-      for (const m of Array.isArray(o.material) ? o.material : [o.material])
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) {
         materials.add(m);
+        for (const v of Object.values(m))
+          if (v instanceof T.Texture) textures.add(v);
+      }
     }
   });
   geometries.forEach((g) => g.dispose());
   materials.forEach((m) => m.dispose());
+  textures.forEach((t) => t.dispose());
+  skeletons.forEach((s) => s.dispose());
 }

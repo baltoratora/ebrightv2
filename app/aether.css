@@ -603,3 +603,4 @@
   font-size: 12px;
   margin-bottom: 24px;
 }
+.ae-style-picks{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}.ae-style-picks button{font-size:10px;padding:9px 10px;border-color:#5a697e;background:#253248}.ae-studio .ae-caption{background:linear-gradient(90deg,#152236cc,transparent);padding:12px 18px;border-left:2px solid #8ee5dd;left:22px;top:22px}.ae-studio .ae-caption h2{margin-bottom:0;font-size:22px}

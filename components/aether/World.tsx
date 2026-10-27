@@ -50,7 +50,7 @@ export default function World(props: Props) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = T.PCFSoftShadowMap;
-    renderer.setClearColor(0x080e19);
+    renderer.setClearColor(props.studio ? 0x192236 : 0x080e19);
     el.appendChild(renderer.domElement);
     renderer.domElement.tabIndex = 0;
     renderer.domElement.setAttribute(
@@ -62,8 +62,10 @@ export default function World(props: Props) {
     const scene = new T.Scene();
     scene.fog = new T.FogExp2(0x080e19, 0.025);
     const camera = new T.OrthographicCamera(-10, 10, 8, -8, 0.1, 100);
-    scene.add(new T.HemisphereLight(0xadcfff, 0x243026, 2));
-    const light = new T.DirectionalLight(0xffdfb2, 3);
+    scene.add(
+      new T.HemisphereLight(0xe3eeff, 0x8b8197, props.studio ? 2.3 : 2),
+    );
+    const light = new T.DirectionalLight(0xffeee0, props.studio ? 2 : 3);
     light.position.set(5, 12, 7);
     light.castShadow = true;
     light.shadow.mapSize.set(1024, 1024);
@@ -331,7 +333,7 @@ export default function World(props: Props) {
       const w = el.clientWidth,
         h = el.clientHeight;
       renderer.setSize(w, h);
-      const scale = props.studio ? 2.8 : 10;
+      const scale = props.studio ? Math.max(1.68, (1.15 * h) / w) : 10;
       camera.left = (-scale * w) / h;
       camera.right = (scale * w) / h;
       camera.top = scale;
@@ -349,6 +351,10 @@ export default function World(props: Props) {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       const current = latest.current;
+      if (hero.userData.loadError) {
+        setError(hero.userData.loadError);
+        hero.userData.loadError = null;
+      }
       const newKey = JSON.stringify(current.look);
       if (newKey !== lookKey) {
         const pos = hero.position.clone(),
@@ -364,8 +370,8 @@ export default function World(props: Props) {
       if (props.studio) {
         hero.rotation.y = current.rotation ?? 0;
         hero.position.y = Math.sin(now * 0.001) * 0.025;
-        camera.position.set(4, 3.1, 7);
-        camera.lookAt(0, 1.1, 0);
+        camera.position.set(0.6, 2.35, 7);
+        camera.lookAt(0, 1.22, 0);
       } else {
         camera.position.copy(hero.position).add(new T.Vector3(11, 14, 11));
         camera.lookAt(hero.position.x, 0, hero.position.z);
@@ -407,6 +413,13 @@ export default function World(props: Props) {
           hero.position.y = moving
             ? Math.abs(Math.sin(elapsed * 12)) * 0.08
             : 0;
+          const legs = (hero.userData.legs ?? []) as T.Object3D[];
+          legs.forEach(
+            (leg, i) =>
+              (leg.rotation.x = moving
+                ? Math.sin(elapsed * 10 + i * Math.PI) * 0.3
+                : 0),
+          );
           const arms = hero.userData.arms as T.Group[];
           arms.forEach(
             (arm, i) =>
