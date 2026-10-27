@@ -6,16 +6,22 @@ import { prepareLitGeometry } from "./material-geometry";
 import { Look } from "@/lib/aether";
 import { avatar as lowPolyAvatar } from "./low-poly-avatar";
 
-let template: Promise<T.Group> | undefined;
-function loadTemplate() {
+const templates = new Map<Look["gender"], Promise<T.Group>>();
+function loadTemplate(gender: Look["gender"]) {
+  let template = templates.get(gender);
   if (!template) {
     template = new GLTFLoader()
-      .loadAsync("/aether/shino-base.glb")
+      .loadAsync(
+        gender === "male"
+          ? "/aether/fumiriya-base.glb"
+          : "/aether/shino-base.glb",
+      )
       .then((g) => g.scene)
       .catch((error) => {
-        template = undefined;
+        templates.delete(gender);
         throw error;
       });
+    templates.set(gender, template);
   }
   return template;
 }
@@ -26,7 +32,7 @@ export function avatar(look: Look) {
   root.userData.arms = [];
   root.userData.ready = false;
   root.userData.disposed = false;
-  const ready = loadTemplate()
+  const ready = loadTemplate(look.gender)
     .then((source) => {
       if (root.userData.disposed) return;
       const model = clone(source) as T.Group;

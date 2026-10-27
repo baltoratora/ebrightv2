@@ -42,3 +42,5 @@ Research references:
 - https://mushokutensei.jp/character/ — visual direction reference only; no character artwork/models copied.
 
 Verification: static export builds and focused progression tests pass. The static export can be served through the managed preview service using a separate static preview directory, with no changes to the repo's Next.js dev command. Preset controls were exercised in the cloud browser. Its WebGL context creation fails, so 3D appearance, accessory placement, and animation remain unverified visually on a GPU-enabled browser.
+
+Gender selection is available in Atelier's wardrobe controls and the RPG Character panel. Female uses the Shino base; Male uses the separately bundled CC0 Sakurada Fumiriya base. Gender persists through saved looks, reloads, and Wear in RPG; presets keep the current gender. Older saves default to Female, preserving their prior model. Gender is cosmetic and does not affect stats. The bases have their own original clothing silhouettes; shared fantasy accessories are adaptations rather than a complete modular clothing library.
