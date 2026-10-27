@@ -29,3 +29,16 @@ This is an initial playable prototype with stylised procedural 3D characters and
 Nine progression tests cover costs, prerequisite enforcement, point budgets, milestones, rewards, caps, corrupt-save handling, and cosmetic/stat separation. Full suite: 596 tests across 61 files. TypeScript and changed-file ESLint pass. Production static export succeeds with both routes.
 
 Browser visual and interactive QA remains unverified: the managed preview daemon appends Vite-specific `--host` / `--strictPort` arguments to this Next.js repo's existing `next dev` script, which rejects them. No working application scripts were changed to compensate for the preview infrastructure. Combat feel, 3D framing, touch controls, and portrait export need browser review before calling this production-ready.
+
+## Anime character revision
+
+Replaces the default geometric mannequin with pixiv's CC0 Sendagaya Shino base (`public/aether/ASSET-LICENSE.md`). The old model remains only as a graceful asset-load fallback. All asset requests use a bundled same-origin GLB; no runtime dependency on a third-party model host. The cached source scene is cloned with independent skeletons, geometry, materials, and textures. Disposed avatars ignore pending loads. Added relaxed arm pose, walking leg motion, toon materials, closer studio framing, and gentler studio lighting. Existing saves remain compatible.
+
+Wardrobe controls tint clothing, hair, skin and irises/accents. Hair choices are long layers, a compressed bob, and a swept variant with a headband. The three outfit presets add cape/hem, light armour, or traveller accessories over the fully clothed base. These are stylised adaptations of a shared base, not three independently authored clothing meshes. The prior glow colour also drives iris colour. Fantasy presets provide coordinated palettes. Combat stats are unchanged.
+
+Research references:
+- https://github.com/M3-org/CharacterStudio — MIT web-based modular VRM/avatar studio; architecture reference, no code or assets copied.
+- https://github.com/pixiv/three-vrm — MIT VRM rendering library; investigated as the full VRM path. This revision uses Three.js GLTFLoader directly for the simplified bundled model.
+- https://mushokutensei.jp/character/ — visual direction reference only; no character artwork/models copied.
+
+Verification: static export builds and focused progression tests pass. The static export can be served through the managed preview service using a separate static preview directory, with no changes to the repo's Next.js dev command. Preset controls were exercised in the cloud browser. Its WebGL context creation fails, so 3D appearance, accessory placement, and animation remain unverified visually on a GPU-enabled browser.

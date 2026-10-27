@@ -70,7 +70,15 @@ function LookControls({
                 ? ["short", "long", "crest"]
                 : ["sword", "staff", "blades"]
             ).map((v) => (
-              <option key={v}>{v}</option>
+              <option key={v} value={v}>
+                {v === "crest"
+                  ? "Swept + headband"
+                  : v === "short"
+                    ? "Soft bob"
+                    : v === "long"
+                      ? "Long layers"
+                      : v}
+              </option>
             ))}
           </select>
         </label>
@@ -279,6 +287,51 @@ export default function Aether({ studio = false }: { studio?: boolean }) {
           <aside className="ae-panel">
             <p className="ae-eyebrow">WARDROBE</p>
             <h2>Make it yours</h2>
+            <div className="ae-style-picks" aria-label="Fantasy outfit presets">
+              {[
+                {
+                  name: "Moonlit mage",
+                  style: "robe",
+                  hairstyle: "long",
+                  weapon: "staff",
+                  color: "#46557f",
+                  hair: "#9daed4",
+                  trim: "#b4e5ef",
+                },
+                {
+                  name: "Rose knight",
+                  style: "plate",
+                  hairstyle: "crest",
+                  weapon: "sword",
+                  color: "#845264",
+                  hair: "#e4c3aa",
+                  trim: "#eed6a0",
+                },
+                {
+                  name: "Forest traveller",
+                  style: "ranger",
+                  hairstyle: "short",
+                  weapon: "blades",
+                  color: "#547268",
+                  hair: "#bca894",
+                  trim: "#bdd8b3",
+                },
+              ].map((p) => (
+                <button
+                  key={p.name}
+                  onClick={() =>
+                    setLook({
+                      ...look,
+                      ...p,
+                      skin: "#f2d1bc",
+                      wings: false,
+                    } as Look)
+                  }
+                >
+                  {p.name}
+                </button>
+              ))}
+            </div>
             <LookControls look={look} setLook={setLook} />
             <div className="ae-actions">
               <button
