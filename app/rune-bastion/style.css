@@ -1,0 +1,454 @@
+.rb {
+  --rb-line: #34334f;
+  --rb-muted: #a6a3ba;
+  color: #ebe6f4;
+  background: #111220;
+  border: 1px solid #34334f;
+  border-radius: 18px;
+  padding: 24px;
+}
+.rb * {
+  box-sizing: border-box;
+}
+.rb h2,
+.rb h3,
+.rb h4,
+.rb h5,
+.rb p {
+  margin-top: 0;
+}
+.rb h2 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 44px;
+  margin-bottom: 8px;
+}
+.rb h3 {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  font-size: 25px;
+  margin-bottom: 12px;
+}
+.rb p {
+  color: var(--rb-muted);
+  line-height: 1.6;
+  font-size: 13px;
+}
+.rb button {
+  font: inherit;
+  color: #e8e1f5;
+  background: #25243c;
+  border: 1px solid #4e496b;
+  border-radius: 6px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.rb button:hover:not(:disabled) {
+  background: #3e3558;
+  border-color: #b7a0dc;
+}
+.rb button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.rb button[aria-pressed="true"] {
+  background: #42355c;
+  border-color: #cbb0ed;
+}
+.rb button:focus-visible,
+.rb canvas:focus-visible {
+  outline: 2px solid #b6e7e6;
+  outline-offset: 3px;
+}
+.rb-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.rb-header p:last-child {
+  margin-bottom: 0;
+}
+.rb-eyebrow {
+  font-size: 9px !important;
+  letter-spacing: 2.5px;
+  color: #c5b3e2 !important;
+}
+.rb-wallet {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rb-wallet > b {
+  font-size: 28px;
+  color: #d2b3f0;
+}
+.rb-wallet > span {
+  font-size: 11px;
+  color: var(--rb-muted);
+}
+.rb-wallet small {
+  font-size: 10px;
+  color: #b0c7cc;
+}
+.rb-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.rb-arena {
+  position: relative;
+  aspect-ratio: 3/2;
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #4b4262;
+}
+.rb-arena canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+.rb-arena-top {
+  position: absolute;
+  top: 15px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  text-shadow: 0 2px 5px #000;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+}
+.rb-arena-top b {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0;
+  margin-top: 5px;
+}
+.rb-integrity {
+  position: absolute;
+  bottom: 18px;
+  left: 20%;
+  width: 60%;
+  pointer-events: none;
+}
+.rb-integrity span {
+  font-size: 10px;
+  display: flex;
+  justify-content: space-between;
+  color: #bce3e7;
+  text-shadow: 0 1px 5px #000;
+}
+.rb-integrity meter {
+  width: 100%;
+  height: 13px;
+  accent-color: #9adbe1;
+}
+.rb-overlay {
+  position: absolute;
+  inset: 0;
+  background: #0b1021ce;
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  padding: 30px;
+}
+.rb-overlay p {
+  font-size: 13px;
+}
+.rb-sigil {
+  font-size: 55px;
+  line-height: 1.2;
+  color: #b7dce8;
+  margin-bottom: 15px;
+  text-shadow: 0 0 30px #94c3eb;
+}
+.rb-overlay h3 {
+  font-size: 30px;
+}
+.rb-primary {
+  background: #75608f !important;
+  border-color: #bfa0db !important;
+  padding: 12px 24px !important;
+}
+.rb-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.rb-actions button {
+  font-size: 11px;
+}
+.rb-intermission {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #e8d3fa;
+  text-shadow: 0 2px 6px #000;
+  font-size: 19px;
+  pointer-events: none;
+}
+.rb-spells {
+  display: flex;
+  gap: 7px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.rb-spells > button {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  padding: 9px;
+  font-size: 11px;
+  justify-content: center;
+  min-width: 55px;
+}
+.rb-spells kbd {
+  font-size: 9px;
+  align-self: start;
+  color: #c5b2db;
+}
+.rb-spells small {
+  font-size: 9px;
+  color: var(--rb-muted);
+}
+.rb-help {
+  font-size: 10px !important;
+  margin: 12px 0;
+}
+.rb-side {
+  background: #191928;
+  border: 1px solid var(--rb-line);
+  border-radius: 12px;
+  padding: 20px;
+}
+.rb-side nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.rb-side nav button {
+  flex: 1;
+  font-size: 12px;
+}
+.rb-stages {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+}
+.rb-stages button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 3px;
+}
+.rb-stages b {
+  font-family: Georgia, serif;
+  font-size: 20px;
+  font-weight: 400;
+}
+.rb-stages small {
+  font-size: 9px;
+  color: #c8b6df;
+}
+.rb-stage-title {
+  margin: 15px 0 !important;
+  text-align: center;
+  color: #d5c3df !important;
+}
+.rb-tree {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.rb-tree h4 {
+  font-size: 10px;
+  text-align: center;
+  color: #b7d3d6;
+}
+.rb-node {
+  position: relative;
+  border: 1px solid #40374e;
+  background: #222033;
+  padding: 12px 7px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.rb-link {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  color: #9576b2;
+  font-size: 24px;
+}
+.rb-node-icon {
+  font-size: 24px;
+  color: #cdb4ec;
+  display: block;
+  margin-bottom: 8px;
+}
+.rb-node h5 {
+  font-size: 11px;
+  line-height: 1.4;
+  min-height: 30px;
+  margin-bottom: 5px;
+}
+.rb-ranks {
+  font-size: 10px;
+  color: #b2d6dd;
+}
+.rb-node p {
+  font-size: 10px;
+  min-height: 65px;
+  margin: 10px 0;
+}
+.rb-node button {
+  width: 100%;
+  font-size: 9px;
+  padding: 8px 2px;
+}
+.rb-refund {
+  width: 100%;
+  font-size: 11px !important;
+}
+.rb-build {
+  border-top: 1px solid var(--rb-line);
+  margin-top: 22px;
+  padding-top: 18px;
+}
+.rb-build h4 {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #a49eb9;
+}
+.rb-build > div {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  padding: 6px 0;
+}
+.rb-build span {
+  color: var(--rb-muted);
+}
+.rb-build b {
+  font-weight: 400;
+  color: #c5dee1;
+}
+.rb-notice {
+  padding: 12px;
+  background: #302c46;
+  border: 1px solid #534d6b;
+  border-radius: 5px;
+}
+.rb-notice button {
+  float: right;
+  padding: 0 7px;
+  font-size: 15px;
+}
+.rb-battle-panel {
+  position: sticky;
+  top: 15px;
+}
+@media (max-width: 1100px) {
+  .rb-layout {
+    grid-template-columns: 1fr;
+  }
+  .rb-battle-panel {
+    position: static;
+  }
+  .rb-side {
+    padding: 20px;
+  }
+  .rb-node p {
+    min-height: 30px;
+  }
+  .rb-tree {
+    gap: 15px;
+  }
+  .rb-node h5 {
+    min-height: 0;
+  }
+}
+@media (max-width: 600px) {
+  .rb {
+    padding: 12px;
+  }
+  .rb-header {
+    align-items: flex-start;
+  }
+  .rb h2 {
+    font-size: 32px;
+  }
+  .rb-wallet > b {
+    font-size: 22px;
+  }
+  .rb-wallet small {
+    max-width: 120px;
+    line-height: 1.5;
+  }
+  .rb-header > div > p:last-child {
+    font-size: 11px;
+    max-width: 190px;
+  }
+  .rb-arena {
+    aspect-ratio: 1/1;
+  }
+  .rb-arena-top b {
+    font-size: 14px;
+  }
+  .rb-overlay {
+    padding: 16px;
+  }
+  .rb-overlay h3 {
+    font-size: 24px;
+  }
+  .rb-overlay p {
+    font-size: 11px;
+  }
+  .rb-overlay .rb-sigil {
+    font-size: 36px;
+    margin-bottom: 8px;
+  }
+  .rb-spells {
+    gap: 4px;
+  }
+  .rb-side {
+    padding: 12px;
+  }
+  .rb-tree {
+    gap: 6px;
+  }
+  .rb-node p {
+    min-height: 65px;
+  }
+  .rb-node h5 {
+    min-height: 30px;
+  }
+  .rb-node {
+    padding: 10px 5px;
+  }
+  .rb-spells > button {
+    font-size: 10px;
+  }
+  .rb-spells small {
+    font-size: 8px;
+  }
+}
