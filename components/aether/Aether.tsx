@@ -136,7 +136,7 @@ export default function Aether({ studio = false }: { studio?: boolean }) {
   const [paused, setPaused] = useState(false);
   const [command, setCommand] = useState({ id: 0, action: 0 });
   const [look, setLook] = useState<Look>({ ...DEFAULT_LOOK });
-  const [rotation, setRotation] = useState(0.3);
+  const [zoom, setZoom] = useState(1);
   const [presets, setPresets] = useState<Look[]>([]);
   const [challenge, setChallenge] = useState(0);
   useEffect(() => {
@@ -191,13 +191,29 @@ export default function Aether({ studio = false }: { studio?: boolean }) {
     setHUD({ ...EMPTY, hp: st.hp, mana: st.mana });
   };
   const exportImage = () => {
-    const canvas =
-      document.querySelector<HTMLCanvasElement>(".ae-world canvas");
-    if (!canvas) return;
-    const a = document.createElement("a");
-    a.download = "aether-outfit.png";
-    a.href = canvas.toDataURL("image/png");
-    a.click();
+    const svg = document.querySelector<SVGSVGElement>(".ae-illustration svg");
+    if (!svg) return;
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 800;
+      canvas.height = 1300;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        setNotice("Portrait export is unavailable.");
+        return;
+      }
+      ctx.drawImage(image, 0, 0, 800, 1300);
+      const a = document.createElement("a");
+      a.download = "aether-outfit.png";
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    };
+    image.onerror = () =>
+      setNotice("Could not export the portrait. Please try again.");
+    image.src =
+      "data:image/svg+xml;charset=utf-8," +
+      encodeURIComponent(new XMLSerializer().serializeToString(svg));
   };
   if (!ready) return <div className="ae-loading">Opening your journal…</div>;
   const upgradeCard = (
@@ -273,7 +289,7 @@ export default function Aether({ studio = false }: { studio?: boolean }) {
       {studio ? (
         <div className="ae-studio-layout">
           <section className="ae-portrait">
-            <World studio look={look} save={save} rotation={rotation} />
+            <World studio look={look} save={save} zoom={zoom} />
             <div className="ae-caption">
               <span>01 / YOUR MUSE</span>
               <h2>
@@ -285,14 +301,14 @@ export default function Aether({ studio = false }: { studio?: boolean }) {
               </h2>
             </div>
             <label className="ae-rotation">
-              Rotate character
+              Portrait zoom
               <input
                 type="range"
-                min="-3.14"
-                max="3.14"
+                min="0.8"
+                max="1.2"
                 step=".01"
-                value={rotation}
-                onChange={(e) => setRotation(+e.target.value)}
+                value={zoom}
+                onChange={(e) => setZoom(+e.target.value)}
               />
             </label>
           </section>
