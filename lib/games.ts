@@ -2,8 +2,8 @@ export type GameGroup = "Puzzles" | "Words" | "Cards" | "Strategy" | "Arcade" | 
 export type GameEntry = { name: string; desc: string; icon: string; href: string; group: GameGroup };
 
 export const GAMES: GameEntry[] = [
-  { name: "Aether Rift", desc: "A solo 3D adventure of skills and ascension", icon: "⚔️", href: "/aether-rift", group: "Adventure" },
-  { name: "Aether Atelier", desc: "Dress your 3D fantasy alter ego", icon: "👗", href: "/aether-atelier", group: "Adventure" },
+  { name: "Aether Rift", desc: "A solo 2D adventure of skills and ascension", icon: "⚔️", href: "/aether-rift", group: "Adventure" },
+  { name: "Aether Atelier", desc: "Dress your 2D fantasy alter ego", icon: "👗", href: "/aether-atelier", group: "Adventure" },
   { name: "Merge Lab", desc: "Drop, merge and discover a little life", icon: "🧬", href: "/merge-lab", group: "Puzzles" },
   { name: "Blast Arena", desc: "Bombs, bots and clever escapes", icon: "💥", href: "/blast-arena", group: "Arcade" },
   { name: "Evolve", desc: "Guide a lineage across a changing Earth", icon: "🐟", href: "/evolve", group: "Adventure" },
