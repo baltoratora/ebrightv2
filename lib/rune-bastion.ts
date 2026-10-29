@@ -1,5 +1,21 @@
 export const SAVE_KEY = "ebright.rune-bastion.v1";
-export const STAGES = 30;
+export const STAGES = 100;
+export const CHAPTER_SIZE = 10;
+export const CHAPTERS = [
+  "The awakening",
+  "Beyond the veil",
+  "The hollow crown",
+  "Astral frontier",
+  "The iron eclipse",
+  "Stormbound depths",
+  "The broken heavens",
+  "Cinder dominion",
+  "The ancient siege",
+  "Dawn eternal",
+];
+export const stageTitle = (stage: number) =>
+  `${CHAPTERS[Math.floor((stage - 1) / CHAPTER_SIZE)]} · Trial ${((stage - 1) % CHAPTER_SIZE) + 1}`;
+export const isMastery = (index: number) => index >= 9;
 export const SKILLS = [
   {
     name: "Runic force",
@@ -64,6 +80,27 @@ export const SKILLS = [
     parent: 7,
     max: 6,
   },
+  {
+    name: "Astral resonance",
+    desc: "+12% bolt damage per rank; +1 target every 10 ranks",
+    branch: "Assault",
+    parent: 2,
+    max: 20,
+  },
+  {
+    name: "Living bastion",
+    desc: "+25 integrity, +1 armour and +0.5 regeneration per second per rank",
+    branch: "Sanctuary",
+    parent: 5,
+    max: 20,
+  },
+  {
+    name: "Eclipse nova",
+    desc: "+20% Nova damage and +4 radius per rank",
+    branch: "Arcana",
+    parent: 8,
+    max: 20,
+  },
 ] as const;
 export type Progress = {
   version: 1;
@@ -77,39 +114,49 @@ export const freshProgress = (): Progress => ({
   version: 1,
   essence: 0,
   cleared: [],
-  ranks: Array(9).fill(0),
+  ranks: Array(SKILLS.length).fill(0),
   kills: 0,
   runs: 0,
 });
-export const skillCost = (rank: number) => 8 + rank * rank * 3 + rank * 5;
+export const skillCost = (rank: number, index = 0) =>
+  isMastery(index)
+    ? 80 + rank * 20 + rank * rank * 8
+    : 8 + rank * rank * 3 + rank * 5;
 export function buySkill(p: Progress, index: number): Progress {
   const node = SKILLS[index];
   if (
     !node ||
+    (isMastery(index) && !p.cleared.includes(30)) ||
     p.ranks[index] >= node.max ||
-    p.essence < skillCost(p.ranks[index]) ||
+    p.essence < skillCost(p.ranks[index], index) ||
     (node.parent >= 0 && p.ranks[node.parent] < 2)
   )
     return p;
   const ranks = [...p.ranks];
   ranks[index]++;
-  return { ...p, essence: p.essence - skillCost(p.ranks[index]), ranks };
+  return { ...p, essence: p.essence - skillCost(p.ranks[index], index), ranks };
 }
 export function refundSkills(p: Progress): Progress {
   let total = 0;
-  for (const n of p.ranks) for (let r = 0; r < n; r++) total += skillCost(r);
-  return { ...p, essence: p.essence + total, ranks: Array(9).fill(0) };
+  for (let i = 0; i < p.ranks.length; i++)
+    for (let r = 0; r < p.ranks[i]; r++) total += skillCost(r, i);
+  return {
+    ...p,
+    essence: p.essence + total,
+    ranks: Array(SKILLS.length).fill(0),
+  };
 }
 export const unlockedStage = (p: Progress) =>
   Math.min(STAGES, (p.cleared.length ? Math.max(...p.cleared) : 0) + 1);
 export const buildStats = (p: Progress) => ({
-  damage: 14 + p.ranks[0] * 3,
+  damage: Math.round((14 + p.ranks[0] * 3) * (1 + (p.ranks[9] ?? 0) * 0.12)),
   interval: 0.72 / (1 + p.ranks[1] * 0.08),
-  targets: 1 + Math.floor(p.ranks[2] / 2),
-  hp: 100 + p.ranks[3] * 20,
-  armor: p.ranks[4],
-  nova: 34 + p.ranks[6] * 12,
-  radius: 165 + p.ranks[6] * 8,
+  targets: 1 + Math.floor(p.ranks[2] / 2) + Math.floor((p.ranks[9] ?? 0) / 10),
+  hp: 100 + p.ranks[3] * 20 + (p.ranks[10] ?? 0) * 25,
+  armor: p.ranks[4] + (p.ranks[10] ?? 0),
+  regen: (p.ranks[10] ?? 0) * 0.5,
+  nova: Math.round((34 + p.ranks[6] * 12) * (1 + (p.ranks[11] ?? 0) * 0.2)),
+  radius: Math.min(330, 165 + p.ranks[6] * 8 + (p.ranks[11] ?? 0) * 4),
   cooldown: 1 - p.ranks[7] * 0.04,
   mend: p.ranks[5] > 0 ? 0.25 + p.ranks[5] * 0.05 : 0,
   frost: p.ranks[8] > 0 ? 3 + p.ranks[8] * 0.5 : 0,
@@ -121,13 +168,14 @@ export function readProgress(raw: string | null): Progress {
     const p = freshProgress();
     for (const k of ["essence", "kills", "runs"] as const)
       if (Number.isSafeInteger(v[k]) && v[k] >= 0) p[k] = Math.min(v[k], 1e9);
-    if (Array.isArray(v.ranks) && v.ranks.length === 9)
-      p.ranks = v.ranks.map((n: unknown, i: number) =>
-        Number.isInteger(n)
+    if (Array.isArray(v.ranks) && [9, SKILLS.length].includes(v.ranks.length))
+      p.ranks = Array.from({ length: SKILLS.length }, (_, i: number) => {
+        const n = v.ranks[i];
+        return Number.isInteger(n)
           ? Math.max(0, Math.min(Number(n), SKILLS[i].max))
-          : 0,
-      );
-    for (let i = 0; i < 9; i++)
+          : 0;
+      });
+    for (let i = 0; i < SKILLS.length; i++)
       if (SKILLS[i].parent >= 0 && p.ranks[SKILLS[i].parent] < 2)
         p.ranks[i] = 0;
     if (Array.isArray(v.cleared)) {
@@ -148,6 +196,7 @@ export type Enemy = {
   speed: number;
   damage: number;
   boss: boolean;
+  trait: "normal" | "swift" | "armored" | "siege";
 };
 export type Effect = {
   x: number;
@@ -208,7 +257,8 @@ function random(b: Battle) {
   b.seed = (Math.imul(b.seed, 1664525) + 1013904223) >>> 0;
   return b.seed / 4294967296;
 }
-export const waveCount = (b: Battle) => 5 + b.stage + 2 * (b.wave - 1);
+export const waveCount = (b: Battle) =>
+  5 + Math.min(b.stage, 30) + 2 * (b.wave - 1);
 function hurt(b: Battle, e: Enemy, damage: number) {
   if (e.hp <= 0) return;
   e.hp -= damage;
@@ -257,6 +307,7 @@ export function stepBattle(b: Battle, delta: number) {
   if (b.status !== "playing") return;
   const dt = Math.max(0, Math.min(0.1, delta));
   b.time += dt;
+  b.hp = Math.min(b.stats.hp, b.hp + b.stats.regen * dt);
   b.fire -= dt;
   b.slow = Math.max(0, b.slow - dt);
   b.cool = b.cool.map((n) => Math.max(0, n - dt));
@@ -270,16 +321,32 @@ export function stepBattle(b: Battle, delta: number) {
   if (b.spawned < count && b.spawnTimer <= 0) {
     const boss = b.wave === 3 && b.spawned === count - 1;
     const a = random(b) * Math.PI * 2;
-    const hp = (15 + b.stage * 6 + b.wave * 3) * (boss ? 4 : 1);
+    const trait =
+      b.stage <= 30
+        ? "normal"
+        : (["swift", "armored", "siege"] as const)[
+            Math.floor((b.stage - 31) / 10) % 3
+          ];
+    const hp =
+      (15 + b.stage * 6 + b.wave * 3) *
+      (boss ? (b.stage > 30 && b.stage % 10 === 0 ? 6 : 4) : 1) *
+      (trait === "armored" ? 1.25 : 1);
     b.enemies.push({
       id: b.nextID++,
       x: Math.cos(a) * 350,
       y: Math.sin(a) * 260,
       hp,
       max: hp,
-      speed: (12 + b.stage * 0.65 + b.wave) * (boss ? 0.65 : 1),
-      damage: (9 + Math.floor(b.stage / 2)) * (boss ? 3 : 1),
+      speed:
+        Math.min(40, 12 + b.stage * 0.65 + b.wave) *
+        (boss ? 0.65 : 1) *
+        (trait === "swift" ? 1.25 : 1),
+      damage:
+        (9 + Math.floor(b.stage / 2)) *
+        (boss ? 3 : 1) *
+        (trait === "siege" ? 1.25 : 1),
       boss,
+      trait,
     });
     b.spawned++;
     b.spawnTimer = Math.max(0.55, 1.7 - b.stage * 0.025);

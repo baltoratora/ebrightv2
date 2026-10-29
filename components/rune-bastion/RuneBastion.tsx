@@ -6,6 +6,10 @@ import {
   SAVE_KEY,
   SKILLS,
   STAGES,
+  CHAPTERS,
+  CHAPTER_SIZE,
+  stageTitle,
+  isMastery,
   buildStats,
   buySkill,
   cast,
@@ -54,6 +58,7 @@ export default function RuneBastion() {
   const [progress, setProgress] = useState<Progress>(freshProgress);
   const [ready, setReady] = useState(false);
   const [stage, setStage] = useState(1);
+  const [chapter, setChapter] = useState(0);
   const [tab, setTab] = useState<"stages" | "tree">("stages");
   const [active, setActive] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -86,6 +91,7 @@ export default function RuneBastion() {
       const p = readProgress(localStorage.getItem(SAVE_KEY));
       setProgress(p);
       setStage(unlockedStage(p));
+      setChapter(Math.floor((unlockedStage(p) - 1) / CHAPTER_SIZE));
     } catch {
       setNotice("Storage is unavailable; progress may not persist.");
     }
@@ -243,7 +249,13 @@ export default function RuneBastion() {
             ? "#e1a09d"
             : b.slow > 0
               ? "#a7e6f3"
-              : "#a995d8";
+              : e.trait === "swift"
+                ? "#80ddda"
+                : e.trait === "armored"
+                  ? "#e4c385"
+                  : e.trait === "siege"
+                    ? "#f3a18b"
+                    : "#a995d8";
           ctx.beginPath();
           for (let i = 0; i < 6; i++) {
             const a = (i * Math.PI) / 3 + time;
@@ -334,6 +346,7 @@ export default function RuneBastion() {
     };
     // The battle snapshot remains fixed for an attempt. Progress only changes when that attempt settles.
   }, [ready]);
+  useEffect(() => setChapter(Math.floor((stage - 1) / CHAPTER_SIZE)), [stage]);
   const stats = buildStats(progress);
   if (!ready) return <p>Opening the runic archive…</p>;
   return (
@@ -342,7 +355,7 @@ export default function RuneBastion() {
         <div>
           <p className="rb-eyebrow">THE OBSERVATORY CHRONICLES</p>
           <h2>Rune Bastion</h2>
-          <p>One crystal. Thirty trials. A legacy that stays with you.</p>
+          <p>One crystal. One hundred trials. A legacy that stays with you.</p>
         </div>
         <div className="rb-wallet">
           <b>✧ {progress.essence}</b>
@@ -378,7 +391,9 @@ export default function RuneBastion() {
             <div className="rb-arena-top">
               <span>
                 STAGE {stage.toString().padStart(2, "0")}
-                <b>{STAGE_NAMES[stage - 1]}</b>
+                <b>
+                  {stage <= 30 ? STAGE_NAMES[stage - 1] : stageTitle(stage)}
+                </b>
               </span>
               <span>WAVE {hud.wave}/3</span>
             </div>
@@ -446,8 +461,14 @@ export default function RuneBastion() {
                   <button
                     onClick={() => {
                       setResult(null);
-                      if (result.won)
-                        setStage(Math.min(unlockedStage(progress), stage + 1));
+                      if (result.won) {
+                        const next = Math.min(
+                          unlockedStage(progress),
+                          stage + 1,
+                        );
+                        setStage(next);
+                        setChapter(Math.floor((next - 1) / CHAPTER_SIZE));
+                      }
                     }}
                   >
                     {" "}
@@ -521,8 +542,37 @@ export default function RuneBastion() {
                 Clear three waves to unlock the next stage. Replay any cleared
                 stage to earn more Essence.
               </p>
+              <label className="rb-chapter">
+                Chapter
+                <select
+                  disabled={active}
+                  value={chapter}
+                  onChange={(e) => setChapter(+e.target.value)}
+                >
+                  {CHAPTERS.map((name, i) => (
+                    <option key={name} value={i}>
+                      {i + 1}. {name} ({i * 10 + 1}–{i * 10 + 10})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {chapter >= 3 && (
+                <p className="rb-modifier">
+                  {
+                    [
+                      "Swift enemies move 25% faster.",
+                      "Armoured enemies have 25% more health.",
+                      "Siege enemies deal 25% more damage.",
+                    ][(chapter - 3) % 3]
+                  }{" "}
+                  Every chapter ends with a tougher elite.
+                </p>
+              )}
               <div className="rb-stages">
-                {Array.from({ length: STAGES }, (_, i) => i + 1).map((n) => (
+                {Array.from(
+                  { length: CHAPTER_SIZE },
+                  (_, i) => chapter * CHAPTER_SIZE + i + 1,
+                ).map((n) => (
                   <button
                     key={n}
                     disabled={active || n > unlockedStage(progress)}
@@ -547,7 +597,9 @@ export default function RuneBastion() {
                   </button>
                 ))}
               </div>
-              <p className="rb-stage-title">{STAGE_NAMES[stage - 1]}</p>
+              <p className="rb-stage-title">
+                {stage <= 30 ? STAGE_NAMES[stage - 1] : stageTitle(stage)}
+              </p>
             </>
           ) : (
             <>
@@ -555,7 +607,7 @@ export default function RuneBastion() {
               <h3>Your power takes root</h3>
               <p>
                 Upgrades carry between attempts. Each deeper node requires 2
-                ranks in the node above it.
+                ranks in the node above it. Mastery nodes unlock after Stage 30.
               </p>
               {active && (
                 <p className="rb-notice">Finish or retreat to spend Essence.</p>
@@ -564,9 +616,16 @@ export default function RuneBastion() {
                 {[0, 3, 6].map((startIndex) => (
                   <div key={startIndex}>
                     <h4>{SKILLS[startIndex].branch}</h4>
-                    {SKILLS.slice(startIndex, startIndex + 3).map((node, j) => {
-                      const i = startIndex + j,
-                        rank = progress.ranks[i],
+                    {[
+                      startIndex,
+                      startIndex + 1,
+                      startIndex + 2,
+                      9 + startIndex / 3,
+                    ].map((i, j) => {
+                      const node = SKILLS[i];
+                      const masteryLocked =
+                        isMastery(i) && !progress.cleared.includes(30);
+                      const rank = progress.ranks[i],
                         parentReady =
                           node.parent < 0 || progress.ranks[node.parent] >= 2;
                       return (
@@ -588,16 +647,19 @@ export default function RuneBastion() {
                             disabled={
                               active ||
                               !parentReady ||
+                              masteryLocked ||
                               rank === node.max ||
-                              progress.essence < skillCost(rank)
+                              progress.essence < skillCost(rank, i)
                             }
                             onClick={() => setProgress((p) => buySkill(p, i))}
                           >
                             {rank === node.max
                               ? "Mastered"
-                              : !parentReady
-                                ? "Requires 2 above"
-                                : `✧ ${skillCost(rank)}`}
+                              : masteryLocked
+                                ? "Clear Stage 30"
+                                : !parentReady
+                                  ? "Requires 2 above"
+                                  : `✧ ${skillCost(rank, i)}`}
                           </button>
                         </article>
                       );

@@ -114,7 +114,7 @@ describe("Rune Bastion", () => {
       }),
     );
     expect(p.cleared).toEqual([1]);
-    expect(p.ranks).toEqual(Array(9).fill(0));
+    expect(p.ranks).toEqual(Array(SKILLS.length).fill(0));
     expect(p.essence).toBe(0);
   });
   it("round trips upgrades and caps node ranks", () => {
@@ -126,7 +126,7 @@ describe("Rune Bastion", () => {
     };
     expect(readProgress(JSON.stringify(p))).toEqual(p);
     expect(buySkill(p, 0)).toBe(p);
-    expect(buildStats(p).targets).toBe(4);
+    expect(buildStats(p).targets).toBe(6);
   });
   it("stops changing the battle after a terminal state", () => {
     const b = newBattle(freshProgress(), 1);
@@ -136,4 +136,66 @@ describe("Rune Bastion", () => {
     expect(b).toEqual(snapshot);
     expect(cast(b, 0)).toBe(false);
   });
+});
+
+describe("extended campaign", () => {
+  it("migrates a fully completed original save and unlocks Stage 31", () => {
+    const old = {
+      version: 1,
+      essence: 563,
+      kills: 2073,
+      runs: 30,
+      cleared: Array.from({ length: 30 }, (_, i) => i + 1),
+      ranks: SKILLS.slice(0, 9).map((n) => n.max),
+    };
+    const p = readProgress(JSON.stringify(old));
+    expect(p.essence).toBe(563);
+    expect(p.kills).toBe(2073);
+    expect(p.cleared).toEqual(old.cleared);
+    expect(p.ranks.slice(0, 9)).toEqual(old.ranks);
+    expect(p.ranks.slice(9)).toEqual([0, 0, 0]);
+    expect(unlockedStage(p)).toBe(31);
+    expect(newBattle(p, 31).stage).toBe(31);
+  });
+  it("gates mastery by Stage 30 and refunds mastery costs exactly", () => {
+    const p = {
+      ...freshProgress(),
+      essence: 1000,
+      ranks: SKILLS.map((s, i) => (i < 9 ? s.max : 0)),
+    };
+    expect(buySkill(p, 9)).toBe(p);
+    const unlocked = {
+      ...p,
+      cleared: Array.from({ length: 30 }, (_, i) => i + 1),
+    };
+    const n = buySkill(unlocked, 9);
+    expect(n.essence).toBe(920);
+    expect(n.ranks[9]).toBe(1);
+    expect(buildStats(n).damage).toBeGreaterThan(buildStats(p).damage);
+    const refund = refundSkills(n);
+    expect(refund.essence).toBe(refundSkills(unlocked).essence);
+    expect(refund.ranks).toEqual(Array(12).fill(0));
+  });
+  it.each([31, 40, 70, 100])(
+    "supports a winnable max-build Stage %i with timed spells",
+    (stage) => {
+      const p = {
+        ...freshProgress(),
+        ranks: SKILLS.map((n) => n.max),
+        cleared: Array.from({ length: stage - 1 }, (_, i) => i + 1),
+      };
+      const b = newBattle(p, stage);
+      for (let i = 0; i < 12000 && b.status === "playing"; i++) {
+        if (b.enemies.some((e) => Math.hypot(e.x, e.y) < b.stats.radius))
+          cast(b, 0);
+        if (b.enemies.length > 3) cast(b, 1);
+        if (b.hp < b.stats.hp * 0.7) cast(b, 2);
+        stepBattle(b, 0.1);
+      }
+      expect(b.status).toBe("won");
+      expect(b.time).toBeLessThan(300);
+      const result = settleBattle(p, b);
+      expect(unlockedStage(result.progress)).toBe(Math.min(100, stage + 1));
+    },
+  );
 });
