@@ -4,7 +4,7 @@ import "./style.css";
 export const metadata = {
   title: "Rune Bastion — Stages & permanent upgrades",
   description:
-    "Defend the crystal through thirty stages and grow a permanent branching skill tree.",
+    "Defend the crystal through one hundred stages and grow a permanent branching skill tree.",
 };
 export default function Page() {
   return (
