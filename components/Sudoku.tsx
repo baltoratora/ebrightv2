@@ -6,6 +6,9 @@ import {
   isComplete,
   cloneBoard,
   computeCandidates,
+  wouldDuplicate,
+  getEntryState,
+  remainingDigits,
   type Board,
   type Difficulty,
 } from "@/lib/sudoku";
@@ -26,28 +29,6 @@ function cloneNotes(notes: Notes): Notes {
   return notes.map((row) => row.map((cell) => [...cell]));
 }
 
-/** Would placing `num` at (r,c) duplicate within its row/col/box? Ignores the
- *  cell's own current value (we may be replacing it). */
-function wouldDuplicate(
-  board: Board,
-  r: number,
-  c: number,
-  num: number,
-): boolean {
-  for (let i = 0; i < 9; i++) {
-    if (i !== c && board[r][i] === num) return true;
-    if (i !== r && board[i][c] === num) return true;
-  }
-  const br = Math.floor(r / 3) * 3;
-  const bc = Math.floor(c / 3) * 3;
-  for (let rr = br; rr < br + 3; rr++) {
-    for (let cc = bc; cc < bc + 3; cc++) {
-      if ((rr !== r || cc !== c) && board[rr][cc] === num) return true;
-    }
-  }
-  return false;
-}
-
 const DIFFICULTIES = SUDOKU_DIFFICULTIES;
 
 export function Sudoku() {
@@ -64,9 +45,11 @@ export function Sudoku() {
   const [generating, setGenerating] = useState(true);
   const [seconds, setSeconds] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [feedback, setFeedback] = useState("");
 
   const newGame = useCallback((diff: Difficulty) => {
     setGenerating(true);
+    setFeedback("");
     setPaused(false);
     setNotesMode(false);
     setBoard(null);
@@ -145,14 +128,7 @@ export function Sudoku() {
     return { hiRows: rows, hiCols: cols };
   }, [board, highlightDigit]);
 
-  const remaining = useMemo(() => {
-    const rem = Array<number>(10).fill(9);
-    if (board) {
-      for (let r = 0; r < 9; r++)
-        for (let c = 0; c < 9; c++) if (board[r][c]) rem[board[r][c]]--;
-    }
-    return rem;
-  }, [board]);
+  const remaining = useMemo(() => remainingDigits(board, solution), [board, solution]);
 
   const isGiven = (r: number, c: number) => !!puzzle && puzzle[r][c] !== 0;
 
@@ -184,6 +160,7 @@ export function Sudoku() {
   const applyValue = useCallback(
     (r: number, c: number, num: number): boolean => {
       if (!board || won || paused || isGiven(r, c)) return false;
+      setFeedback("");
 
       if (notesMode && num !== 0) {
         if (board[r][c] !== 0) return false; // can't pencil into a filled cell
@@ -200,7 +177,13 @@ export function Sudoku() {
       }
 
       // Block placements that would duplicate in the row/col/box.
-      if (num !== 0 && wouldDuplicate(board, r, c, num)) return false;
+      if (num !== 0 && wouldDuplicate(board, r, c, num)) {
+        setFeedback(`${num} already appears in this row, column or box. Choose another number.`);
+        return false;
+      }
+      if (num !== 0 && solution && num !== solution[r][c]) {
+        setFeedback(`Row ${r + 1}, column ${c + 1}: ${num} is incorrect. Erase or replace the red underlined entry.`);
+      }
       if (num === 0 && board[r][c] === 0 && notes[r][c].length === 0)
         return false; // nothing to erase
 
@@ -216,27 +199,39 @@ export function Sudoku() {
       return true;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [board, notes, notesMode, won, paused, puzzle, pushHistory],
+    [board, notes, notesMode, won, paused, puzzle, solution, pushHistory],
   );
 
-  // Cell-first input keeps selection stable for both touch and keyboard.
+  // Restore the original hybrid input: arm a digit, then tap empty cells.
+  // A successful pad fill clears selection so choosing the next digit cannot
+  // accidentally overwrite the previous cell. Keyboard editing stays selected.
   const onPad = useCallback((n: number) => {
+    if (paused || won || generating) return;
     setHighlightDigit(n);
-    if (selected) applyValue(selected[0], selected[1], n);
-  }, [selected, applyValue]);
+    if (selected && applyValue(selected[0], selected[1], n)) setSelected(null);
+  }, [selected, applyValue, paused, won, generating]);
 
   const onCell = useCallback((r: number, c: number) => {
-    if (!board || paused) return;
-    setSelected([r, c]);
-    setHighlightDigit(board[r][c] || null);
-  }, [board, paused]);
+    if (!board || paused || won) return;
+    const value = board[r][c];
+    if (value !== 0) {
+      setSelected([r, c]);
+      setHighlightDigit(value);
+    } else if (highlightDigit !== null) {
+      const changed = applyValue(r, c, highlightDigit);
+      setSelected(changed ? null : [r, c]);
+    } else {
+      setSelected([r, c]);
+    }
+  }, [board, paused, won, highlightDigit, applyValue]);
 
   const onErase = useCallback(() => {
     if (selected) applyValue(selected[0], selected[1], 0);
   }, [selected, applyValue]);
 
   const undo = useCallback(() => {
-    if (history.length === 0) return;
+    if (paused || generating || history.length === 0) return;
+    setFeedback("");
     const last = history[history.length - 1];
     // Push current state to redo stack before restoring.
     if (board) {
@@ -248,10 +243,11 @@ export function Sudoku() {
     setBoard(last.board);
     setNotes(last.notes);
     setHistory((h) => h.slice(0, -1));
-  }, [history, board, notes]);
+  }, [history, board, notes, paused, generating]);
 
   const redo = useCallback(() => {
-    if (redoStack.length === 0) return;
+    if (paused || generating || redoStack.length === 0) return;
+    setFeedback("");
     const next = redoStack[redoStack.length - 1];
     // Push current state to history.
     if (board) {
@@ -263,7 +259,7 @@ export function Sudoku() {
     setBoard(next.board);
     setNotes(next.notes);
     setRedoStack((r) => r.slice(0, -1));
-  }, [redoStack, board, notes]);
+  }, [redoStack, board, notes, paused, generating]);
 
   const smartNotes = useCallback(() => {
     if (!board || won || paused) return;
@@ -296,6 +292,8 @@ export function Sudoku() {
     }
     if (!target) return;
     const [r, c] = target;
+    setFeedback("Hint revealed. 42 seconds added to the timer.");
+    setHighlightDigit(solution[r][c]);
     setSeconds((s) => s + 42); // hint penalty
     pushHistory();
     setBoard((prev) => {
@@ -310,7 +308,7 @@ export function Sudoku() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (paused || e.altKey || e.isComposing) return;
+      if (paused || generating || e.altKey || e.isComposing) return;
       // Don't hijack keys while typing (e.g. the high-score name field).
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable || t.closest("nav, summary, [role=dialog]"))) return;
@@ -342,7 +340,7 @@ export function Sudoku() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [applyValue, undo, redo, selected, paused]);
+  }, [applyValue, undo, redo, selected, paused, generating]);
 
   return (
     <div className="game-layout">
@@ -355,7 +353,7 @@ export function Sudoku() {
           { key: "Ctrl+Y", desc: "Redo" },
           { key: "Del", desc: "Erase cell" },
         ]}
-        tips={["Start with rows or columns that already have 7+ numbers", "Hints reveal a correct number and add 42 seconds to your time.", "Your puzzle and difficulty save automatically on this device."]}
+        tips={["Choose a number, then tap empty cells to place it. You can also select a cell first.", "Blue entries match the solution; red underlined entries need correcting. Duplicates are blocked.", "Start with rows or columns that already have 7+ numbers", "Hints reveal a correct number and add 42 seconds to your time.", "Your puzzle and difficulty save automatically on this device."]}
       />
     <div className="sudoku">
       <div className="sudoku-bar">
@@ -371,13 +369,13 @@ export function Sudoku() {
             {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
           </span>
         ) : null}
-        <button className="btn ghost" onClick={() => { if (!history.length || won || window.confirm("Start a new puzzle? Your current progress will be replaced.")) newGame(difficulty); }}>
+        <button className="btn ghost" disabled={generating} onClick={() => { if (!history.length || won || window.confirm("Start a new puzzle? Your current progress will be replaced.")) newGame(difficulty); }}>
           New puzzle
         </button>
       </div>
 
       <div className="sudoku-play-state">
-        <span>{notesMode ? "Notes mode · pencil in possibilities" : "Select a cell, then choose a number"}</span>
+        <span>{notesMode ? "Notes mode · pencil in possibilities" : highlightDigit ? `Number ${highlightDigit} ready · tap an empty cell` : "Choose a number, then tap an empty cell"}</span>
         <button className="btn ghost" disabled={generating || won} onClick={() => setPaused((p) => !p)}>{paused ? "Resume" : "Pause"}</button>
       </div>
       <div className="sudoku-main">
@@ -403,18 +401,15 @@ export function Sudoku() {
                   const inLine =
                     highlightDigit !== null &&
                     (hiRows.has(r) || hiCols.has(c));
-                  const wrong =
-                    val !== 0 &&
-                    !given &&
-                    !!solution &&
-                    val !== solution[r][c];
+                  const entryState = getEntryState(puzzle!, solution!, board, r, c);
+                  const wrong = entryState === "incorrect";
                   const cls = [
                     "cell",
                     given ? "given" : "",
                     isSel ? "sel" : "",
                     same && !isSel ? "same" : "",
                     inLine && !same && !isSel ? "peer" : "",
-                    wrong ? "wrong" : "",
+                    wrong ? "wrong" : entryState === "correct" ? "correct" : "",
                     c % 3 === 2 && c !== 8 ? "br" : "",
                     r % 3 === 2 && r !== 8 ? "bb" : "",
                   ]
@@ -425,11 +420,12 @@ export function Sudoku() {
                       key={key}
                       className={cls}
                       aria-pressed={!!isSel}
+                      data-entry-state={entryState}
                       disabled={paused || won}
                       onClick={() => onCell(r, c)}
                       aria-label={`Row ${r + 1}, column ${c + 1}${
                         val !== 0
-                          ? `, ${val}${given ? " given" : ""}`
+                          ? `, ${val}${given ? " given" : wrong ? ", incorrect" : ", correct"}`
                           : notes[r][c].length > 0
                             ? `, notes ${notes[r][c].join(" ")}`
                             : ", empty"
@@ -472,6 +468,7 @@ export function Sudoku() {
                   ]
                     .filter(Boolean)
                     .join(" ")}
+                  disabled={paused || won || generating}
                   // Arm the digit + highlight; fills the selected cell if any.
                   onClick={() => onPad(n)}
                   aria-pressed={highlightDigit === n}
@@ -506,6 +503,7 @@ export function Sudoku() {
             <button
               className={`btn ghost${notesMode ? " on" : ""}`}
               onClick={() => setNotesMode((m) => !m)}
+              disabled={paused || won || generating}
               aria-pressed={notesMode}
             >
               Notes {notesMode ? "on" : "off"}
@@ -520,6 +518,11 @@ export function Sudoku() {
         </div>
       </div>
 
+      <div className="sudoku-feedback" role="status" aria-live="polite">{feedback}</div>
+      <div className="sudoku-legend" aria-label="Entry colours">
+        <span className="sudoku-legend-correct">Blue · correct entry</span>
+        <span className="sudoku-legend-wrong">Red + underline · incorrect entry</span>
+      </div>
       {won ? <div className="sudoku-win" aria-live="polite">🎉 Solved! Nice thinking.</div> : null}
 
       <div className="sudoku-foot">

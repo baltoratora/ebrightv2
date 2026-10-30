@@ -156,16 +156,31 @@ export function computeCandidates(board: Board): Notes {
   );
 }
 
+/** Validate without temporarily mutating React's board state. */
 export function isComplete(board: Board): boolean {
-  for (let r = 0; r < 9; r++) {
-    for (let c = 0; c < 9; c++) {
-      const num = board[r][c];
-      if (num === 0) return false;
-      board[r][c] = 0;
-      const ok = isValidPlacement(board, r, c, num);
-      board[r][c] = num;
-      if (!ok) return false;
-    }
-  }
-  return true;
+  return board.length === 9 && board.every((row) => row.length === 9) &&
+    board.every((row, r) => row.every((digit, c) =>
+      Number.isInteger(digit) && digit >= 1 && digit <= 9 && !wouldDuplicate(board, r, c, digit)));
+}
+
+/** Check a replacement without treating the cell's previous value as a peer. */
+export function wouldDuplicate(board: Board, r: number, c: number, num: number): boolean {
+  return board.some((row, rr) => row.some((value, cc) =>
+    (rr !== r || cc !== c) && value === num &&
+    (rr === r || cc === c || (Math.floor(rr / 3) === Math.floor(r / 3) && Math.floor(cc / 3) === Math.floor(c / 3)))));
+}
+
+export function getEntryState(puzzle: Board, solution: Board, board: Board, r: number, c: number): "given" | "empty" | "correct" | "incorrect" {
+  if (puzzle[r][c] !== 0) return "given";
+  if (board[r][c] === 0) return "empty";
+  return board[r][c] === solution[r][c] ? "correct" : "incorrect";
+}
+
+/** A wrong guess must not make a digit appear completed on the keypad. */
+export function remainingDigits(board: Board | null, solution: Board | null): number[] {
+  const remaining = Array<number>(10).fill(9);
+  if (board && solution) board.forEach((row, r) => row.forEach((digit, c) => {
+    if (digit !== 0 && digit === solution[r][c]) remaining[digit]--;
+  }));
+  return remaining;
 }

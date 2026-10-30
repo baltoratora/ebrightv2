@@ -8,6 +8,9 @@ import {
   isComplete,
   cloneBoard,
   computeCandidates,
+  wouldDuplicate,
+  getEntryState,
+  remainingDigits,
   type Board,
 } from "./sudoku";
 
@@ -138,5 +141,53 @@ describe("computeCandidates", () => {
         }
       }
     }
+  });
+});
+
+describe("Sudoku entry feedback", () => {
+  it("flags a wrong answer even when it creates no row, column or box duplicate", () => {
+    const solution = cloneBoard(PUZZLE); solve(solution);
+    const board = cloneBoard(PUZZLE);
+    board[0][2] = 1; // Legal locally, but the unique solution requires 4.
+    expect(wouldDuplicate(board, 0, 2, 1)).toBe(false);
+    expect(getEntryState(PUZZLE, solution, board, 0, 2)).toBe("incorrect");
+    expect(getEntryState(PUZZLE, solution, board, 0, 0)).toBe("given");
+    expect(getEntryState(PUZZLE, solution, board, 0, 3)).toBe("empty");
+    board[0][2] = 4;
+    expect(getEntryState(PUZZLE, solution, board, 0, 2)).toBe("correct");
+  });
+
+  it("blocks peers in every region while ignoring the cell being replaced", () => {
+    expect(wouldDuplicate(PUZZLE, 0, 2, 5)).toBe(true);
+    expect(wouldDuplicate(PUZZLE, 2, 0, 6)).toBe(true);
+    expect(wouldDuplicate(PUZZLE, 1, 1, 8)).toBe(true);
+    expect(wouldDuplicate(PUZZLE, 0, 0, 5)).toBe(false);
+    expect(wouldDuplicate(PUZZLE, 0, 2, 4)).toBe(false);
+  });
+
+  it("does not count incorrect entries as completed keypad digits", () => {
+    const solution = cloneBoard(PUZZLE); solve(solution);
+    const board = cloneBoard(PUZZLE);
+    const before = remainingDigits(board, solution);
+    board[0][2] = 1;
+    expect(remainingDigits(board, solution)).toEqual(before);
+    board[0][2] = 4;
+    expect(remainingDigits(board, solution)[4]).toBe(before[4] - 1);
+    expect(remainingDigits(solution, solution).slice(1)).toEqual(Array(9).fill(0));
+  });
+
+  it("validates completion without mutating even a frozen board", () => {
+    const solution = cloneBoard(PUZZLE); solve(solution);
+    solution.forEach(Object.freeze); Object.freeze(solution);
+    expect(isComplete(solution)).toBe(true);
+    expect(isComplete(PUZZLE)).toBe(false);
+  });
+
+  it("rejects complete grids containing out-of-range digits or duplicates", () => {
+    const solution = cloneBoard(PUZZLE); solve(solution);
+    expect(isComplete(solution.map((row) => row.map((n) => n === 1 ? 10 : n)))).toBe(false);
+    const duplicate = cloneBoard(solution); duplicate[0][0] = duplicate[0][1];
+    expect(isComplete(duplicate)).toBe(false);
+    expect(isComplete([[1, 2, 3]])).toBe(false);
   });
 });
