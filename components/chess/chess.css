@@ -20,8 +20,8 @@
 .cs-player-tag { font-size: 8px; letter-spacing: .08em; border: 1px solid #9eb49f3d; border-radius: 5px; padding: 6px 8px; color: #b7c7af; white-space: nowrap; }
 .cs-player-active .cs-player-tag { color: #253c2c; background: #dece96; border-color: #dece96; }
 .cs-you { font-size: 7px; letter-spacing: .1em; font-weight: 400; color: #d8cc9f; }
-.cs-captured { flex-basis: 100%; display: flex; height: 0; padding-left: 51px; position: relative; top: -7px; }
-.cs-captured:has(svg) { height: 17px; }
+.cs-captured { flex-basis: 100%; display: flex; height: 17px; padding-left: 51px; position: relative; top: -7px; }
+.cs-captured:empty { visibility: hidden; }
 .cs-captured svg { width: 16px; height: 19px; margin-right: -4px; filter: none; }
 .cs-board-frame { border: 1px solid #10251e; padding: 5px; background: #162e25; border-radius: 5px; box-shadow: 0 6px 18px #081c264d; }
 .cs-board { width: 100%; aspect-ratio: 1; display: grid; grid-template-columns: repeat(8,minmax(0,1fr)); grid-template-rows: repeat(8,minmax(0,1fr)); border-radius: 2px; overflow: hidden; position: relative; isolation: isolate; }
