@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   generatePuzzle,
   isComplete,
@@ -15,6 +15,8 @@ import {
 import { readSudokuProgress, pruneNotes, SUDOKU_DIFFICULTIES } from "@/lib/sudoku-progress";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
 import { GameInfo } from "@/components/GameInfo";
+import { useGameFullscreen } from "@/lib/useGameFullscreen";
+import { GameFullscreenButton } from "@/components/GameFullscreenButton";
 
 type Notes = number[][][]; // notes[r][c] = candidate numbers
 type GameState = { board: Board; notes: Notes };
@@ -32,6 +34,28 @@ function cloneNotes(notes: Notes): Notes {
 const DIFFICULTIES = SUDOKU_DIFFICULTIES;
 
 export function Sudoku() {
+  const { containerRef, expanded, windowFullscreen, toggleFullscreen } = useGameFullscreen();
+  const mainRef = useRef<HTMLDivElement>(null);
+  const sideRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const main = mainRef.current;
+    const side = sideRef.current;
+    const root = containerRef.current;
+    if (!main || !side || !root) return;
+    const fit = () => {
+      const style = getComputedStyle(main);
+      const stacked = style.flexDirection === "column";
+      const gap = parseFloat(stacked ? style.rowGap : style.columnGap) || 0;
+      const availableWidth = main.clientWidth - (stacked ? 0 : side.offsetWidth + gap);
+      const availableHeight = main.clientHeight - (stacked ? side.offsetHeight + gap : 0);
+      root.style.setProperty("--sudoku-fitted-size", `${Math.max(0, Math.floor(Math.min(availableWidth, availableHeight)))}px`);
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(main);
+    observer.observe(side);
+    fit();
+    return () => observer.disconnect();
+  }, [containerRef, expanded]);
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const [puzzle, setPuzzle] = useState<Board | null>(null);
   const [solution, setSolution] = useState<Board | null>(null);
@@ -355,8 +379,9 @@ export function Sudoku() {
         ]}
         tips={["Choose a number, then tap empty cells to place it. You can also select a cell first.", "Blue entries match the solution; red underlined entries need correcting. Duplicates are blocked.", "Start with rows or columns that already have 7+ numbers", "Hints reveal a correct number and add 42 seconds to your time.", "Your puzzle and difficulty save automatically on this device."]}
       />
-    <div className="sudoku">
+    <div ref={containerRef} className={`sudoku${expanded ? " sudoku-expanded" : ""}${windowFullscreen ? " sudoku-window-fullscreen" : ""}`}>
       <div className="sudoku-bar">
+        <strong className="sudoku-fullscreen-title">Sudoku</strong>
         <label className="game-select-label">Difficulty
           <select className="game-select" value={difficulty} disabled={generating} onChange={(e) => {
             const d = e.target.value as Difficulty;
@@ -372,13 +397,14 @@ export function Sudoku() {
         <button className="btn ghost" disabled={generating} onClick={() => { if (!history.length || won || window.confirm("Start a new puzzle? Your current progress will be replaced.")) newGame(difficulty); }}>
           New puzzle
         </button>
+        <GameFullscreenButton className="btn ghost" expanded={expanded} onToggle={toggleFullscreen} />
       </div>
 
       <div className="sudoku-play-state">
         <span>{notesMode ? "Notes mode · pencil in possibilities" : highlightDigit ? `Number ${highlightDigit} ready · tap an empty cell` : "Choose a number, then tap an empty cell"}</span>
         <button className="btn ghost" disabled={generating || won} onClick={() => setPaused((p) => !p)}>{paused ? "Resume" : "Pause"}</button>
       </div>
-      <div className="sudoku-main">
+      <div className="sudoku-main" ref={mainRef}>
         <div className="sudoku-grid-wrap">
           {paused && <button className="sudoku-pause" onClick={() => setPaused(false)}>Paused · Tap to resume</button>}
           {generating || !board ? (
@@ -452,7 +478,7 @@ export function Sudoku() {
           )}
         </div>
 
-        <div className="sudoku-side">
+        <div className="sudoku-side" ref={sideRef}>
           <div className="pad">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
               const cantPlace = blocked.has(n); // would duplicate in selected cell

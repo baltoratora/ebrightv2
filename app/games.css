@@ -283,3 +283,62 @@
 /* Motion owns card transforms; CSS only transitions visual decoration. */
 .library-grid a.game-card { transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease; }
 .library-grid a.game-card:hover { transform: none; }
+
+/* Sudoku keeps the whole playing surface in the viewport, in both modes. */
+.game-fullscreen-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 7px; white-space: nowrap; }
+.game-fullscreen-toggle svg { flex-shrink: 0; }
+.sudoku-fullscreen-title { display: none; }
+.page--game .sudoku { height: calc(100dvh - 240px); display: flex; flex-direction: column; min-height: 0; }
+.page--game .sudoku > :not(.sudoku-main) { flex-shrink: 0; }
+.page--game .sudoku .sudoku-main { flex: 1 1 0; min-height: 0; overflow: hidden; }
+.page--game .sudoku .sudoku-grid-wrap { width: var(--sudoku-fitted-size,min(48vw,460px)); height: var(--sudoku-fitted-size,auto); max-width: 100%; }
+.page--game .sudoku .sudoku-side { max-height: 100%; min-height: 0; }
+.page--game .sudoku .sudoku-grid { width: 100%; }
+.page--game .sudoku .sudoku-feedback { min-height: 0; font-size: 11px; }
+.page--game .sudoku .sudoku-feedback:empty { display: none; }
+.page--game .sudoku .sudoku-legend { margin-top: 8px; }
+.page--game .sudoku .sudoku-bar { flex-shrink: 0; }
+.page--game .sudoku .sudoku-controls { flex-shrink: 0; }
+.sudoku::backdrop { background: #0d101b; }
+.page--game .sudoku.sudoku-expanded { width: 100%; max-width: none; height: 100dvh; margin: 0; padding: max(18px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left)); background: #0d101b; color: var(--text); overflow: hidden; align-items: center; }
+.sudoku-window-fullscreen { position: fixed; inset: 0; z-index: 150; }
+.sudoku-expanded .sudoku-fullscreen-title { display: block; font-size: 18px; letter-spacing: -.04em; margin-right: auto; }
+.page--game .sudoku-expanded > :is(.sudoku-bar,.sudoku-play-state,.sudoku-feedback,.sudoku-legend,.sudoku-foot,.sudoku-win) { width: min(100%,1100px); }
+.page--game .sudoku-expanded .sudoku-bar { background: #0d101b; padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 12px; gap: 12px; }
+.page--game .sudoku-expanded .sudoku-main { flex-direction: row; width: 100%; gap: 26px; align-items: flex-start; }
+.page--game .sudoku-expanded .sudoku-side { width: 240px; height: 100%; max-width: 240px; max-height: 450px; display: flex; gap: 16px; }
+.page--game .sudoku-expanded .pad { flex: 1 1 0; min-height: 0; grid-template-columns: repeat(3,minmax(0,1fr)); grid-template-rows: repeat(3,minmax(0,1fr)); gap: 10px; }
+.page--game .sudoku-expanded .pad-key { min-height: 0; aspect-ratio: auto; }
+.page--game .sudoku-expanded .pad-num { font-size: 32px; }
+.page--game .sudoku-expanded .sudoku-controls { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; }
+.page--game .sudoku-expanded .sudoku-controls .btn { min-height: 44px; font-size: 11px; }
+.page--game .sudoku-expanded .sudoku-grid .cell { font-size: clamp(22px,4dvh,45px); }
+.page--game .sudoku-expanded .note { font-size: clamp(10px,1.6dvh,16px); }
+@media (min-width: 1180px) { .page--game .sudoku { height: calc(100dvh - 126px); } }
+@media (max-width: 767px) {
+  .page--game .sudoku { height: calc(100dvh - 152px); }
+  .page--game .sudoku .sudoku-side { max-height: none; }
+  .page--game .sudoku .sudoku-bar { gap: 6px; flex-wrap: nowrap; }
+  .page--game .sudoku .sudoku-bar .btn { padding: 7px; font-size: 10px; }
+  .page--game .sudoku .sudoku-bar .game-select { width: 100px; }
+  .page--game .sudoku .sudoku-bar .sudoku-timer { font-size: 12px; }
+  .page--game .sudoku .sudoku-legend { font-size: 10px; gap: 6px 12px; }
+  .page--game .sudoku .sudoku-main { flex-shrink: 1; }
+}
+@media (max-width: 680px) {
+  .page--game .sudoku.sudoku-expanded { padding: max(10px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); }
+  .sudoku-expanded .sudoku-fullscreen-title { display: none; }
+  .page--game .sudoku-expanded .sudoku-main { flex-direction: column; align-items: center; gap: 12px; }
+  .page--game .sudoku-expanded .sudoku-side { width: 100%; height: auto; max-width: 420px; gap: 10px; }
+  .page--game .sudoku-expanded .pad { flex: none; grid-template-columns: repeat(9,minmax(0,1fr)); grid-template-rows: auto; gap: 3px; }
+  .page--game .sudoku-expanded .pad-key { min-height: 48px; }
+  .page--game .sudoku-expanded .pad-num { font-size: 24px; }
+  .page--game .sudoku-expanded .sudoku-controls { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; }
+  .page--game .sudoku-expanded .sudoku-grid .cell { font-size: clamp(20px,3.8dvh,32px); }
+  .page--game .sudoku-expanded .note { font-size: 10px; }
+}
+@media (min-width: 681px) and (max-height: 650px) {
+  .page--game .sudoku-expanded .pad-key { padding: 2px; }
+  .page--game .sudoku-expanded .pad-num { font-size: 24px; }
+  .page--game .sudoku-expanded .sudoku-controls .btn { min-height: 32px; }
+}
