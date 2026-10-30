@@ -21,3 +21,9 @@ Undo against the bot takes back the bot reply and its preceding human move. Befo
 - Desktop screenshot and a real 16-frame capture of piece motion recorded from the browser.
 - 390-pixel iframe viewport checked: board fits, controls stack, and document has no horizontal overflow. This checks responsive CSS, not a physical phone or touch device.
 - Promotion, castling and en passant identities are unit tested; online two-device play, promotion-dialog keyboard behaviour and system reduced-motion mode have not been manually exercised in this pass.
+
+## Movement refinement
+
+Piece movement uses a 180 ms ease-out tween with position-only layout interpolation, replacing the spring that could overshoot and bounce. Captured-piece rows reserve their height so a capture does not shift the entire board and animate stationary pieces. The difficulty pill also uses a non-spring transition.
+
+Refinement verification: production build and changed-file ESLint pass. Browser replay of Nf3 / d5 / e4 / dxe4 confirms the captured-piece count changes while board top and height remain exactly unchanged.

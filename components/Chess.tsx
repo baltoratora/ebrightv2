@@ -346,7 +346,7 @@ export function Chessboard() {
   const checkSquare = game.inCheck() ? game.board().flat().find((piece) => piece?.type === "k" && piece.color === game.turn())?.square : null;
   const ply = historyMoves.length;
   const phase = online ? "Live room" : ply < 16 ? "Opening" : ply < 50 ? "Middlegame" : "Endgame";
-  const pieceTransition = { type: "spring" as const, stiffness: 340, damping: 30, duration: reduceMotion ? 0 : undefined };
+  const pieceTransition = { type: "tween" as const, ease: "easeOut" as const, duration: reduceMotion ? 0 : .18 };
 
   // Board rendering order — flip so the local player's pieces are at the bottom.
   const board = game.board();
@@ -395,7 +395,7 @@ export function Chessboard() {
                   {selected === sq && <m.span className="cs-selection" layoutId="selection" transition={{ duration: reduceMotion ? 0 : .14 }} aria-hidden="true" />}
                   {isHint && <m.span className="cs-hint-ring" initial={{ opacity: 0 }} animate={{ opacity: 1 }} aria-hidden="true" />}
                   {dests.has(sq) && <m.span className={cell ? "cs-target cs-target-capture" : "cs-target"} initial={{ opacity: 0, scale: .5 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: .15 }} aria-hidden="true" />}
-                  {cell && <m.span className="cs-piece" layoutId={`piece-${pieceIds[sq]}`} initial={false} transition={pieceTransition} style={{ zIndex: selected === sq || lastMove?.to === sq ? 5 : 2 }}>
+                  {cell && <m.span className="cs-piece" layout="position" layoutId={`piece-${pieceIds[sq]}`} initial={false} transition={pieceTransition} style={{ zIndex: selected === sq || lastMove?.to === sq ? 5 : 2 }}>
                     <ChessPiece type={cell.type} color={cell.color} />
                   </m.span>}
                 </button>;
@@ -417,7 +417,7 @@ export function Chessboard() {
               <AnimatePresence mode="wait" initial={false}><m.h3 key={status} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: .13 }}>{status}</m.h3></AnimatePresence>
             </div>
             <p className="cs-status-sub">{game.isGameOver() ? "Every finish is a new beginning. Play again or take a move back." : thinking ? "Looking for a reply. You can still take your move back." : selected ? `${PIECE_NAME[game.get(selected)?.type ?? "p"]} on ${selected} · ${dests.size} legal destinations` : "Take your time. Find the move that feels right."}</p>
-            {!online ? <><span className="cs-setting-label">YOUR OPPONENT</span><div className="cs-difficulty" role="group" aria-label="Bot difficulty">{(["easy", "medium", "hard"] as Difficulty[]).map((level) => <button key={level} aria-pressed={difficulty === level} onClick={() => setDifficulty(level)}>{difficulty === level && <m.span layoutId="difficulty" className="cs-difficulty-active" transition={{ type: "spring", stiffness: 350, damping: 30 }} />}<span>{level[0].toUpperCase() + level.slice(1)}</span></button>)}</div></> : <div className="cs-room">Room <strong>{code}</strong><button className="cs-link" onClick={copyCode}>{copied ? "Copied" : "Copy code"}</button></div>}
+            {!online ? <><span className="cs-setting-label">YOUR OPPONENT</span><div className="cs-difficulty" role="group" aria-label="Bot difficulty">{(["easy", "medium", "hard"] as Difficulty[]).map((level) => <button key={level} aria-pressed={difficulty === level} onClick={() => setDifficulty(level)}>{difficulty === level && <m.span layoutId="difficulty" className="cs-difficulty-active" transition={{ type: "tween", duration: .18, ease: "easeOut" }} />}<span>{level[0].toUpperCase() + level.slice(1)}</span></button>)}</div></> : <div className="cs-room">Room <strong>{code}</strong><button className="cs-link" onClick={copyCode}>{copied ? "Copied" : "Copy code"}</button></div>}
             <div className="cs-actions">
               {!online && <m.button className="cs-action cs-undo" whileTap={{ scale: .97 }} onClick={undo} disabled={ply === 0 && !pendingPromo} title="Take back your move and the computer's reply"><span aria-hidden="true">↶</span> Undo turn</m.button>}
               {!online && <m.button className="cs-action" whileTap={{ scale: .97 }} onClick={showHint} disabled={thinking || game.turn() !== "w" || game.isGameOver() || !!pendingPromo}><span aria-hidden="true">✧</span> Hint</m.button>}
