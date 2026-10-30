@@ -10,6 +10,8 @@ import * as m from "motion/react-m";
 import "@/components/chess/chess.css";
 import { GameLeaderboard } from "@/components/GameLeaderboard";
 import { GameInfo } from "@/components/GameInfo";
+import { useGameFullscreen } from "@/lib/useGameFullscreen";
+import { GameFullscreenButton } from "@/components/GameFullscreenButton";
 import { useRoom } from "@/lib/useRoom";
 import {
   genRoomCode,
@@ -41,6 +43,7 @@ type PromoPiece = (typeof PROMO_PIECES)[number];
 
 export function Chessboard() {
   const gameRef = useRef(new Chess());
+  const { containerRef: studioRef, expanded, windowFullscreen, toggleFullscreen } = useGameFullscreen();
   const [version, setVersion] = useState(0);
   const [selected, setSelected] = useState<Square | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
@@ -368,10 +371,13 @@ export function Chessboard() {
     <MotionConfig reducedMotion="user">
     <LazyMotion features={domMax} strict>
     <LayoutGroup id="chess-studio">
-    <div className="cs-studio">
+    <div ref={studioRef} className={`cs-studio${expanded ? " cs-expanded" : ""}${windowFullscreen ? " cs-window-fullscreen" : ""}`}>
       <div className="cs-heading">
         <div><span className="cs-eyebrow">THE CHESS ROOM <span aria-hidden="true">/</span> PLAY WITH INTENTION</span><h2>A little strategy. <em>A beautiful game.</em></h2></div>
-        <div className="cs-edition"><span aria-hidden="true">♔</span><span>64 squares.<br />Endless possibility.</span></div>
+        <div className="cs-heading-tools">
+          <div className="cs-edition"><span aria-hidden="true">♔</span><span>64 squares.<br />Endless possibility.</span></div>
+          <GameFullscreenButton className="cs-fullscreen-toggle" expanded={expanded} onToggle={toggleFullscreen} />
+        </div>
       </div>
       <div className="cs-layout">
         <m.section className="cs-table" aria-label="Chess match" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: .35 }}>
