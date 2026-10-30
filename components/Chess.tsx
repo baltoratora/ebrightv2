@@ -41,6 +41,43 @@ type PromoPiece = (typeof PROMO_PIECES)[number];
 
 export function Chessboard() {
   const gameRef = useRef(new Chess());
+  const studioRef = useRef<HTMLDivElement>(null);
+  const [nativeFullscreen, setNativeFullscreen] = useState(false);
+  const [windowFullscreen, setWindowFullscreen] = useState(false);
+  const expanded = nativeFullscreen || windowFullscreen;
+  useEffect(() => {
+    const changed = () => setNativeFullscreen(document.fullscreenElement === studioRef.current);
+    document.addEventListener("fullscreenchange", changed);
+    return () => document.removeEventListener("fullscreenchange", changed);
+  }, []);
+  useEffect(() => {
+    if (!windowFullscreen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setWindowFullscreen(false);
+    };
+    window.addEventListener("keydown", escape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", escape);
+    };
+  }, [windowFullscreen]);
+  const toggleFullscreen = async () => {
+    if (expanded) {
+      setWindowFullscreen(false);
+      if (document.fullscreenElement === studioRef.current) {
+        try { await document.exitFullscreen(); } catch { /* Browser Escape still exits. */ }
+      }
+      return;
+    }
+    const studio = studioRef.current;
+    if (!studio) return;
+    if (studio.requestFullscreen && document.fullscreenEnabled) {
+      try { await studio.requestFullscreen(); return; } catch { /* Use the full browser window below. */ }
+    }
+    setWindowFullscreen(true);
+  };
   const [version, setVersion] = useState(0);
   const [selected, setSelected] = useState<Square | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
@@ -368,10 +405,16 @@ export function Chessboard() {
     <MotionConfig reducedMotion="user">
     <LazyMotion features={domMax} strict>
     <LayoutGroup id="chess-studio">
-    <div className="cs-studio">
+    <div ref={studioRef} className={`cs-studio${expanded ? " cs-expanded" : ""}${windowFullscreen ? " cs-window-fullscreen" : ""}`}>
       <div className="cs-heading">
         <div><span className="cs-eyebrow">THE CHESS ROOM <span aria-hidden="true">/</span> PLAY WITH INTENTION</span><h2>A little strategy. <em>A beautiful game.</em></h2></div>
-        <div className="cs-edition"><span aria-hidden="true">♔</span><span>64 squares.<br />Endless possibility.</span></div>
+        <div className="cs-heading-tools">
+          <div className="cs-edition"><span aria-hidden="true">♔</span><span>64 squares.<br />Endless possibility.</span></div>
+          <button className="cs-fullscreen-toggle" onClick={toggleFullscreen} aria-pressed={expanded} title={expanded ? "Exit fullscreen (Esc)" : "Play Chess fullscreen"}>
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={expanded ? "M4 9h5V4m6 0v5h5M4 15h5v5m6 0v-5h5" : "M9 4H4v5m11-5h5v5M4 15v5h5m6 0h5v-5"} /></svg>
+            <span>{expanded ? "Exit fullscreen" : "Fullscreen"}</span>
+          </button>
+        </div>
       </div>
       <div className="cs-layout">
         <m.section className="cs-table" aria-label="Chess match" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: .35 }}>

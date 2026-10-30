@@ -140,3 +140,39 @@
   .cs-more { grid-column: 1 / -1; }
   .cs-extras { margin-top: 15px; }
 }
+
+/* Expand the same match instance; entering/exiting never resets the position. */
+.cs-heading-tools { display: flex; align-items: center; gap: 14px; }
+.cs-fullscreen-toggle { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 9px 12px; border: 1px solid #bdcbb3; border-radius: 9px; background: #fafbf4; color: #355239; font: inherit; font-size: 10px; white-space: nowrap; cursor: pointer; }
+.cs-fullscreen-toggle:hover { background: #e2e9d7; }
+.cs-studio::backdrop { background: #eff0e7; }
+.cs-studio.cs-expanded { width: 100%; max-width: none; height: 100dvh; min-height: 0; margin: 0; border: 0; border-radius: 0; padding: max(14px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left)); overflow: auto; display: flex; flex-direction: column; box-shadow: none; }
+.cs-window-fullscreen { position: fixed; inset: 0; z-index: 150; }
+.cs-expanded .cs-heading { flex-shrink: 0; position: sticky; top: -1px; z-index: 20; background: #eff0e7; margin: 0 0 14px; padding: 0 0 10px; border-bottom: 1px solid #d4dcc8; min-height: 43px; }
+.cs-expanded .cs-heading h2, .cs-expanded .cs-edition, .cs-expanded .cs-extras { display: none; }
+.cs-expanded .cs-layout { grid-template-columns: minmax(0,calc(min(100dvh - 300px,100vw - 420px) + 42px)) 300px; justify-content: center; gap: 30px; align-items: start; }
+.cs-expanded .cs-player { gap: 6px 10px; padding: 3px 5px 9px; }
+.cs-expanded .cs-board-frame + .cs-player { padding: 10px 5px 3px; }
+.cs-expanded .cs-avatar { width: 32px; height: 32px; flex-basis: 32px; }
+.cs-expanded .cs-avatar svg { width: 25px; height: 29px; }
+.cs-expanded .cs-captured { height: 14px; padding-left: 42px; top: -3px; }
+.cs-expanded .cs-captured svg { height: 15px; width: 14px; }
+.cs-expanded .cs-sidebar { max-height: calc(100dvh - 92px); overflow-y: auto; scrollbar-width: thin; padding-right: 4px; }
+@media (max-width: 1100px) { .cs-heading-tools .cs-edition { display: none; } }
+@media (max-width: 680px) {
+  .cs-heading { align-items: start; }
+  .cs-heading h2 { font-size: 29px; }
+  .cs-heading-tools { flex-shrink: 0; }
+  .cs-fullscreen-toggle { padding: 9px; font-size: 9px; gap: 5px; }
+  .cs-studio.cs-expanded { padding: max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left)); }
+  .cs-expanded .cs-heading { align-items: center; }
+  .cs-expanded .cs-heading .cs-eyebrow { max-width: 160px; }
+  .cs-expanded .cs-layout { grid-template-columns: minmax(0,1fr); gap: 14px; }
+  .cs-expanded .cs-table { width: 100%; }
+  .cs-expanded .cs-sidebar { max-height: none; overflow: visible; padding: 0; }
+}
+@media (min-width: 681px) and (max-height: 600px) {
+  .cs-expanded .cs-layout { grid-template-columns: minmax(0,calc(min(100dvh - 205px,100vw - 370px) + 42px)) 260px; gap: 20px; }
+  .cs-expanded .cs-captured { display: none; }
+  .cs-expanded .cs-board-key { margin-top: 8px; }
+}

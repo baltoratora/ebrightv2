@@ -27,3 +27,11 @@ Undo against the bot takes back the bot reply and its preceding human move. Befo
 Piece movement uses a 180 ms ease-out tween with position-only layout interpolation, replacing the spring that could overshoot and bounce. Captured-piece rows reserve their height so a capture does not shift the entire board and animate stationary pieces. The difficulty pill also uses a non-spring transition.
 
 Refinement verification: production build and changed-file ESLint pass. Browser replay of Nf3 / d5 / e4 / dxe4 confirms the captured-piece count changes while board top and height remain exactly unchanged.
+
+## Fullscreen
+
+A Fullscreen button in the Chess heading expands the existing match using the Fullscreen API where available. If native fullscreen is unavailable or rejected, the same button opens a viewport-filling layout. Exit fullscreen and Escape return to the normal page; the fallback restores the previous body overflow style. Native fullscreen changes update the toggle state. No match component is remounted, so positions, selection, move history, difficulty and pending bot work carry over.
+
+The expanded layout removes the decorative heading and shared extras, scales the board to available desktop height/width, retains the controls/journal alongside it, and stacks controls below the board on narrow screens. The exit button stays visible while scrolling.
+
+Fullscreen verification: production build and changed-file ESLint pass. Browser-window fallback tested for desktop entry, preserved selection, moves, bot reply, undo, Escape/exit, and body-scroll restoration; desktop board grows from 518 to 636 px and fits the viewport without scrolling. A 390 px iframe with native fullscreen disabled verifies fallback entry/exit and no horizontal overflow. Native fullscreen is implemented but the cloud browser rejects it, so native-mode entry/exit remains unverified here.
