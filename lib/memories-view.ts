@@ -85,10 +85,10 @@ function memoryFields(memory?: Memory) {
     <label>Story <textarea name="body" rows="8" maxlength="15000" required>${escape(memory?.body ?? "")}</textarea></label>`;
 }
 
-export function adminIndex(memories: Memory[]) {
+export function adminIndex(memories: Memory[], siteOrigin: string) {
   const items = memories.map((memory) => `<li><a href="${editorPath}/${escape(memory.slug)}">
     ${escape(memory.title)}</a><span>${memory.published_at ? "Published" : "Draft"}</span></li>`).join("");
-  return page("Manage memories", `<a class="back" href="${memoriesPath}">← Public memories</a>
+  return page("Manage memories", `<a class="back" href="${escape(new URL(memoriesPath, siteOrigin).href)}">← Public memories</a>
     <h1>Manage memories</h1>
     ${items ? `<ul class="manage-list">${items}</ul>` : ""}
     <section class="panel"><h2>New memory</h2>
@@ -102,7 +102,7 @@ export function adminIndex(memories: Memory[]) {
     </section>`, 200, true);
 }
 
-export function editor(memory: Memory, photos: Photo[]) {
+export function editor(memory: Memory, photos: Photo[], siteOrigin: string) {
   const action = `${editorPath}/${escape(memory.slug)}`;
   const images = photos.map(({ id, alt }) => `<li>
     <img src="${editorPath}/photo/${escape(id)}" alt="${escape(alt)}" loading="lazy">
@@ -113,9 +113,10 @@ export function editor(memory: Memory, photos: Photo[]) {
     </form>
   </li>`).join("");
   const published = Boolean(memory.published_at);
+  const publicUrl = new URL(`${memoriesPath}/${memory.slug}`, siteOrigin);
   return page("Edit " + memory.title, `<a class="back" href="${editorPath}">← Manage memories</a>
     <h1>Edit memory</h1>
-    <p class="status">${published ? `Published · <a href="${memoriesPath}/${escape(memory.slug)}">View public page</a>` : "Draft"}</p>
+    <p class="status">${published ? `Published · <a href="${escape(publicUrl.href)}">View public page</a>` : "Draft"}</p>
     <section class="panel">
       <form method="post" action="${action}">
         ${memoryFields()}
