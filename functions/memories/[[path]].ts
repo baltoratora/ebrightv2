@@ -13,6 +13,7 @@ interface Env {
   MEMORIES_DB?: D1Database;
   MEMORIES_PHOTOS?: R2Bucket;
   MEMORIES_SITE_ORIGIN?: string;
+  MEMORIES_ADMIN_ORIGIN?: string;
   MEMORIES_ACCESS_ISSUER?: string;
   MEMORIES_ACCESS_AUD?: string;
   MEMORIES_OWNER_EMAIL?: string;
@@ -196,7 +197,7 @@ async function editMemory(db: D1Database, bucket: R2Bucket, memory: Memory, oper
   }
 }
 
-async function handleAdmin(request: Request, env: Env, path: string[], db: D1Database, bucket: R2Bucket) {
+async function handleAdmin(request: Request, env: Env, path: string[], db: D1Database, bucket: R2Bucket, siteOrigin: string) {
   const { MEMORIES_ACCESS_ISSUER: issuer, MEMORIES_ACCESS_AUD: audience, MEMORIES_OWNER_EMAIL: email } = env;
   if (!issuer || !audience || !email) return errorPage(503, "The memories editor is being set up.");
   if (!(await isOwner(request, issuer, audience, email.trim().toLowerCase()))) {
@@ -205,17 +206,17 @@ async function handleAdmin(request: Request, env: Env, path: string[], db: D1Dat
 
   const [slug, id] = path;
   if (request.method === "GET") {
-    if (path.length === 0) return adminIndex(await listMemories(db, true));
+    if (path.length === 0) return adminIndex(await listMemories(db, true), siteOrigin);
     if (path.length === 2 && slug === "photo" && photoPattern.test(id)) return servePhoto(db, bucket, id, true);
     if (path.length === 1 && slugPattern.test(slug)) {
       const memory = await getMemory(db, slug, true);
-      if (memory) return editor(memory, await getPhotos(db, slug));
+      if (memory) return editor(memory, await getPhotos(db, slug), siteOrigin);
     }
     return errorPage(404, "Memory not found.", admin);
   }
 
   if (request.method !== "POST") return errorPage(405, "Method not allowed.", admin);
-  if (request.headers.get("Origin") !== env.MEMORIES_SITE_ORIGIN) {
+  if (request.headers.get("Origin") !== env.MEMORIES_ADMIN_ORIGIN) {
     return errorPage(403, "Submit changes from the memories editor.", admin);
   }
 
@@ -237,17 +238,19 @@ async function handleAdmin(request: Request, env: Env, path: string[], db: D1Dat
 }
 
 export const onRequest: PagesFunction<Env, "path"> = async ({ request, env, params }) => {
-  if (!env.MEMORIES_SITE_ORIGIN || new URL(request.url).origin !== env.MEMORIES_SITE_ORIGIN) {
+  const path = Array.isArray(params.path) ? params.path : params.path ? [params.path] : [];
+  const [slug, id] = path;
+  const { MEMORIES_SITE_ORIGIN: siteOrigin, MEMORIES_ADMIN_ORIGIN: adminOrigin } = env;
+  const expectedOrigin = slug === "admin" ? adminOrigin : siteOrigin;
+  if (!siteOrigin || new URL(request.url).origin !== expectedOrigin) {
     return errorPage(404, "Page not found.");
   }
 
   const { MEMORIES_DB: db, MEMORIES_PHOTOS: bucket } = env;
   if (!db || !bucket) return errorPage(503, "Memories is being set up.");
-  const path = Array.isArray(params.path) ? params.path : params.path ? [params.path] : [];
-  const [slug, id] = path;
 
   try {
-    if (slug === "admin") return await handleAdmin(request, env, path.slice(1), db, bucket);
+    if (slug === "admin") return await handleAdmin(request, env, path.slice(1), db, bucket, siteOrigin);
     if (request.method !== "GET") return errorPage(405, "Method not allowed.");
     if (path.length === 0) return memoryIndex(await listMemories(db, false));
     if (path.length === 2 && slug === "photo" && photoPattern.test(id)) return await servePhoto(db, bucket, id, false);
