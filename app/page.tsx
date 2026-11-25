@@ -5,6 +5,7 @@ import Link from "next/link";
 import { DEFAULT_TOPIC } from "@/lib/topics";
 import { BackBar } from "@/components/BackBar";
 import { FunFact } from "@/components/FunFact";
+import { QuoteOfDay } from "@/components/QuoteOfDay";
 import { TopicSelector } from "@/components/TopicSelector";
 import { PaperOfDay } from "@/components/PaperOfDay";
 
@@ -26,6 +27,7 @@ export default function Home() {
       </header>
 
       <FunFact />
+      <QuoteOfDay />
       <TopicSelector active={topicId} onChange={setTopicId} />
       <PaperOfDay topic={topicId} />
     </main>

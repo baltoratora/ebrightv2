@@ -227,6 +227,61 @@ body {
   line-height: 1.5;
 }
 
+/* Quote of the day — shares the fun-fact card language, tilted toward violet
+   so it reads as a sibling rather than a copy. */
+.quote {
+  background: linear-gradient(
+    100deg,
+    rgba(179, 136, 255, 0.12),
+    rgba(255, 93, 143, 0.07)
+  );
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 28px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.quote .icon {
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+.quote-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.quote .label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.quote .text {
+  font-size: 16px;
+  line-height: 1.5;
+  font-style: italic;
+  margin: 0;
+}
+
+.quote .author {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-style: normal;
+  color: var(--muted);
+}
+
+.quote .origin {
+  opacity: 0.7;
+}
+
 /* Topic selector */
 .topics {
   display: flex;
